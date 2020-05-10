@@ -1,0 +1,45 @@
+.container {
+    background-color: white;
+}
+
+.button__container {
+  display: flex;
+  margin: 1em 0;
+}
+
+.button__add {
+    background-color: #428bca;
+    color: #fcfcfc;
+    border: none;
+    border-radius: 0.5em;
+    padding: 1em 2em;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 1em;
+    cursor: pointer;
+    margin-right: 1em;
+}
+
+.button__erase {
+    background-color: #e7e7e7;
+    color: black;
+    border: none;
+    border-radius: 0.5em;
+    padding: 1em 2em;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+    margin-right: 1em;
+}
+
+.button__add:hover {
+  background-color: #111;
+}
+
+.button__erase:hover {
+  color: #fcfcfc;
+  background-color: #111;
+}
