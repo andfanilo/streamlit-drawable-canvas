@@ -16,7 +16,7 @@ image_data = st.drawable_canvas(
     background_color=bg_color,
     height=400,
     width=600,
-    key="canvas",  # key is necessary so Streamlit does not remount component
+    key="canvas",  # key is necessary so Streamlit does not remount component everytime you change a prop
     default=None
 )
 if image_data:
