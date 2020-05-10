@@ -2,6 +2,8 @@
 
 A Streamlit custom component for a free drawing canvas from [Fabric.js](http://fabricjs.com/).
 
+![](./img/demo.gif)
+
 ## Install
 
 ```shell script
