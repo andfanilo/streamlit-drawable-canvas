@@ -4,16 +4,11 @@ import {fabric} from 'fabric'
 
 import styles from "./DrawableCanvas.module.css"
 
-const DEFAULT_BRUSH_WIDTH = 20
-const DEFAULT_BRUSH_COLOR = "black"
-const DEFAULT_BG_COLOR = "#eee";
-const DEFAULT_WIDTH = 400
-const DEFAULT_HEIGHT = 400
 
 const DrawableCanvas = (props: ComponentProps) => {
 
-    const canvasWidth = props.args.width || DEFAULT_WIDTH
-    const canvasHeight = props.args.height || DEFAULT_HEIGHT
+    const canvasWidth = props.args.width
+    const canvasHeight = props.args.height
     const [canvas, setCanvas] = useState(new fabric.Canvas(""))
 
     /**
@@ -31,9 +26,9 @@ const DrawableCanvas = (props: ComponentProps) => {
      * No need to control deps.
      */
     useEffect(() => {
-        canvas.backgroundColor = props.args.background_color || DEFAULT_BG_COLOR;
-        canvas.freeDrawingBrush.width = props.args.brush_width || DEFAULT_BRUSH_WIDTH;
-        canvas.freeDrawingBrush.color = props.args.brush_color || DEFAULT_BRUSH_COLOR;
+        canvas.backgroundColor = props.args.background_color
+        canvas.freeDrawingBrush.width = props.args.brush_width
+        canvas.freeDrawingBrush.color = props.args.brush_color
     })
 
     /**
