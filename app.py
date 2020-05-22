@@ -2,14 +2,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
 
-st.register_component("drawable_canvas", url="http://localhost:3001")
+dc = st.declare_component(url="http://localhost:3001")
+st.register_component("drawable_canvas", dc)
 
 st.title("Drawable Canvas")
 st.sidebar.subheader("Configuration")
 
 brush_width = st.sidebar.slider("Brush width: ", 1, 100, 10)
-brush_color = st.sidebar.text_input("Enter brush color hex: ", "black")
-bg_color = st.sidebar.text_input("Enter background color hex: ", "#eee")
+brush_color = st.sidebar.beta_color_picker("Enter brush color hex: ")
+bg_color = st.sidebar.beta_color_picker("Enter background color hex: ", "#eee")
 image_data = st.drawable_canvas(
     brush_width=brush_width,
     brush_color=brush_color,

@@ -48,7 +48,7 @@ const DrawableCanvas = (props: ComponentProps) => {
             canvas.renderAll()
             const imageData = canvas.getContext().getImageData(0, 0, canvasWidth, canvasHeight)
             const data = Array.from(imageData['data'])
-            Streamlit.setWidgetValue({data: data, width: imageData['width'], height: imageData['height']})
+            Streamlit.setComponentValue({data: data, width: imageData['width'], height: imageData['height']})
         }
         handleMouseUp()
         canvas.on("mouse:up", handleMouseUp)
