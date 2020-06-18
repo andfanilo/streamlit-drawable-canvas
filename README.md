@@ -30,9 +30,10 @@ npm install
 * Python side 
 
 ```shell script
-conda create -n streamlit-d3 python=3.7
-conda activate streamlit-d3
+conda create -n streamlit-drawable-canvas python=3.7
+conda activate streamlit-drawable-canvas
 pip install streamlit-0.61.0-py2.py3-none-any.whl
+pip install -e .
 ```
 
 ### Run
