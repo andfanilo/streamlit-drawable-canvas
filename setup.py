@@ -20,7 +20,7 @@ setuptools.setup(
     author_email="andfanilo@gmail.com",
     description="A Streamlit custom component for a free drawing canvas using Fabric.js.",
     long_description=readme(),
-    long_description_content_type="text/plain",
+    long_description_content_type="text/markdown",
     url="https://github.com/andfanilo/streamlit-drawable-canvas",
     packages=setuptools.find_packages(),
     include_package_data=True,
