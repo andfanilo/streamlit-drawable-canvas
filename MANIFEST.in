@@ -1,0 +1,1 @@
+recursive-include streamlit_drawable_canvas/frontend/build *
