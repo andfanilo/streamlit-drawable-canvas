@@ -1,3 +1,5 @@
+import time
+
 import matplotlib.pyplot as plt
 import streamlit as st
 from streamlit_drawable_canvas import st_canvas
@@ -16,4 +18,5 @@ if image_data is not None:
     st.markdown(f"Displaying numpy data with imshow :")
     fig, ax = plt.subplots()
     ax.imshow(image_data)
-    st.pyplot(fig)
+    time.sleep(0.2) # <-- temporary because MFM
+    st.pyplot(fig, clear_figure=False)
