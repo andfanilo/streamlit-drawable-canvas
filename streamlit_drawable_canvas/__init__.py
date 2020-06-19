@@ -21,7 +21,7 @@ def st_canvas(
     width: int = 600,
     drawing_mode: bool = True,
     key=None,
-):
+) -> np.array:
     """ Validate inputs + Post-process image from canvas
         :param brush_width: Width of drawing brush in pixels
         :param brush_color: Color of drawing brush in hex
@@ -30,7 +30,7 @@ def st_canvas(
         :param width: Width of canvas
         :param drawing_mode: Enter free drawing
         :param key: Assign a key so the component is not remount
-        :return: Reshaped image
+        :return: Reshaped image as numpy array
         """
     component_value = _component_func(
         brushWidth=brush_width,
@@ -43,7 +43,7 @@ def st_canvas(
         default=None,
     )
     if component_value is None:
-        return None
+        return np.array([])
 
     w = component_value["width"]
     h = component_value["height"]

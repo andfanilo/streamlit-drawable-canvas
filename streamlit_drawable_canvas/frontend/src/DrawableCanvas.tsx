@@ -2,8 +2,6 @@ import React, {useEffect, useState} from "react"
 import {ComponentProps, Streamlit, withStreamlitConnection,} from "./streamlit"
 import {fabric} from 'fabric'
 
-import styles from "./DrawableCanvas.module.css"
-
 /**
  * Arguments Streamlit receives from the Python side
  */
@@ -45,8 +43,8 @@ const DrawableCanvas = (props: ComponentProps) => {
     })
 
     /**
-     * Send image data to Streamlit.
-     * Attach this to mouse:up callback on canvas.
+     * Send image data to Streamlit on mouse up on canvas
+     * Delete selected object on mouse doubleclick
      */
     useEffect(() => {
         if (!canvas) {
@@ -60,15 +58,17 @@ const DrawableCanvas = (props: ComponentProps) => {
         }
         handleMouseUp()
         canvas.on("mouse:up", handleMouseUp)
+        canvas.on("mouse:dblclick", () => {canvas.remove(canvas.getActiveObject())})
         return () => {
             canvas.off("mouse:up");
+            canvas.off("mouse:dblclick");
         }
     })
 
     return (
-        <div className={styles.container}>
+        <>
             <canvas id="c" width={canvasWidth} height={canvasHeight}/>
-        </div>
+        </>
     )
 }
 
