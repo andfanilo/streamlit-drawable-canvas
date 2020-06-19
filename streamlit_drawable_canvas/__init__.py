@@ -14,28 +14,31 @@ else:
 
 
 def st_canvas(
-    brush_width=20,
-    brush_color="black",
-    background_color="#eee",
-    height=400,
-    width=600,
-    key="canvas",
+    brush_width: int = 20,
+    brush_color: str = "black",
+    background_color: str = "#eee",
+    height: int = 400,
+    width: int = 600,
+    drawing_mode: bool = True,
+    key=None,
 ):
     """ Validate inputs + Post-process image from canvas
-        :param brush_width:
-        :param brush_color:
-        :param background_color:
-        :param height:
-        :param width:
-        :param key:
+        :param brush_width: Width of drawing brush in pixels
+        :param brush_color: Color of drawing brush in hex
+        :param background_color: Color of canvas background in hex
+        :param height: Height of canvas
+        :param width: Width of canvas
+        :param drawing_mode: Enter free drawing
+        :param key: Assign a key so the component is not remount
         :return: Reshaped image
         """
     component_value = _component_func(
-        brush_width=brush_width,
-        brush_color=brush_color,
-        background_color=background_color,
-        height=height,
-        width=width,
+        brushWidth=brush_width,
+        brushColor=brush_color,
+        backgroundColor=background_color,
+        canvasHeight=height,
+        canvasWidth=width,
+        isDrawingMode=drawing_mode,
         key=key,
         default=None,
     )

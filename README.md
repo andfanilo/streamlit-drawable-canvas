@@ -51,12 +51,6 @@ npm run start
 streamlit run app.py
 ```
 
-### Usage
+## References 
 
-`st_canvas` accepts as arguments :
-* brush_width as number (defauts to 20)
-* brush_color as CSS color (string or HEX, defaults to black)
-* background_color as CSS color (string or HEX, defaults to #eee)
-* width of canvas. To change it you must force-reload app or change key. Defaults to 400
-* height of canvas. To change it you must force-reload app or change key. Defaults to 400
-* key, so Streamlit does not rebuild the canvas everytime you change arguments
+* [React hooks - fabric](https://github.com/fabricjs/fabric.js/issues/5951#issuecomment-563427231)

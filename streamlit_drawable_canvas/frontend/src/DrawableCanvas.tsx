@@ -4,11 +4,21 @@ import {fabric} from 'fabric'
 
 import styles from "./DrawableCanvas.module.css"
 
+/**
+ * Arguments Streamlit receives from the Python side
+ */
+interface PythonArgs {
+    brushWidth: number
+    brushColor: string
+    backgroundColor: string
+    canvasWidth: number
+    canvasHeight: number
+    isDrawingMode: boolean
+}
 
 const DrawableCanvas = (props: ComponentProps) => {
 
-    const canvasWidth = props.args.width
-    const canvasHeight = props.args.height
+    const {canvasWidth, canvasHeight}: PythonArgs = props.args
     const [canvas, setCanvas] = useState(new fabric.Canvas(""))
 
     /**
@@ -19,6 +29,7 @@ const DrawableCanvas = (props: ComponentProps) => {
             isDrawingMode: true
         })
         setCanvas(canvas)
+        Streamlit.setFrameHeight()
     }, []);
 
     /**
@@ -26,9 +37,11 @@ const DrawableCanvas = (props: ComponentProps) => {
      * No need to control deps.
      */
     useEffect(() => {
-        canvas.backgroundColor = props.args.background_color
-        canvas.freeDrawingBrush.width = props.args.brush_width
-        canvas.freeDrawingBrush.color = props.args.brush_color
+        const {backgroundColor, brushWidth, brushColor, isDrawingMode}: PythonArgs = props.args
+        canvas.backgroundColor = backgroundColor
+        canvas.freeDrawingBrush.width = brushWidth
+        canvas.freeDrawingBrush.color = brushColor
+        canvas.isDrawingMode = isDrawingMode
     })
 
     /**
@@ -50,10 +63,6 @@ const DrawableCanvas = (props: ComponentProps) => {
         return () => {
             canvas.off("mouse:up");
         }
-    })
-
-    useEffect(() => {
-        Streamlit.setFrameHeight()
     })
 
     return (
