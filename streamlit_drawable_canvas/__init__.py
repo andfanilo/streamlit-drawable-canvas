@@ -43,7 +43,7 @@ def st_canvas(
         default=None,
     )
     if component_value is None:
-        return np.array([])
+        return None
 
     w = component_value["width"]
     h = component_value["height"]
