@@ -26,4 +26,8 @@ setuptools.setup(
     include_package_data=True,
     classifiers=[],
     python_requires=">=3.6",
+    install_requires=[
+        "streamlit >= 0.63",
+        "numpy",
+    ]
 )
