@@ -22,15 +22,17 @@ def st_canvas(
     drawing_mode: bool = True,
     key=None,
 ) -> np.array:
-    """ Validate inputs + Post-process image from canvas
-        :param brush_width: Width of drawing brush in pixels
-        :param brush_color: Color of drawing brush in hex
-        :param background_color: Color of canvas background in hex
-        :param height: Height of canvas
-        :param width: Width of canvas
-        :param drawing_mode: Enter free drawing
-        :param key: Assign a key so the component is not remount
-        :return: Reshaped image as numpy array
+    """Create a drawing canvas in Streamlit app. Retrieve the RGBA image data into a 4D numpy array (r, g, b, alpha)
+    on mouse up event.
+        :param brush_width: Width of drawing brush in pixels.
+        :param brush_color: Color of drawing brush in hex.
+        :param background_color: Color of canvas background in hex.
+        :param height: Height of canvas in pixels.
+        :param width: Width of canvas in pixels.
+        :param drawing_mode: Enable free drawing when True, path manipulation when False.
+        :param key: An optional string to use as the unique key for the widget.
+        Assign a key so the component is not remount every time the script is rerun.
+        :return: Reshaped RGBA image 4D numpy array (r, g, b, alpha)
         """
     component_value = _component_func(
         brushWidth=brush_width,

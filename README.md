@@ -54,6 +54,8 @@ pip install -e .
 
 ### Run
 
+Both webpack dev server and Streamlit should run at the same time.
+
 * JS side
 
 ```shell script
