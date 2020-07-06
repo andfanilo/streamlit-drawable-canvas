@@ -7,7 +7,7 @@ A Streamlit custom component for a free drawing canvas with [Fabric.js](http://f
 ## Installation
 
 ```shell script
-pip install -i https://test.pypi.org/simple/ streamlit-drawable-canvas
+pip install streamlit-drawable-canvas
 ```
 
 ## Example Usage
