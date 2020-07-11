@@ -72,3 +72,5 @@ streamlit run app.py
 ## References 
 
 * [React hooks - fabric](https://github.com/fabricjs/fabric.js/issues/5951#issuecomment-563427231)
+* [Simulate Retina display](https://stackoverflow.com/questions/12243549/how-to-test-a-webpage-meant-for-retina-display)
+* [High DPI Canvas](https://www.html5rocks.com/en/tutorials/canvas/hidpi/)
