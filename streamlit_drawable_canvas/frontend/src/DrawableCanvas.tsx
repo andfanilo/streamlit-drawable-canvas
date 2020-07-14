@@ -24,11 +24,12 @@ const DrawableCanvas = (props: ComponentProps) => {
      */
     useEffect(() => {
         const canvas = new fabric.Canvas('c', {
-            isDrawingMode: true
+            isDrawingMode: true,
+            enableRetinaScaling: false,
         })
         setCanvas(canvas)
         Streamlit.setFrameHeight()
-    }, []);
+    }, [canvasHeight, canvasWidth]);
 
     /**
      * Update canvas with new background color and brush at each rerender.
@@ -58,7 +59,9 @@ const DrawableCanvas = (props: ComponentProps) => {
         }
         handleMouseUp()
         canvas.on("mouse:up", handleMouseUp)
-        canvas.on("mouse:dblclick", () => {canvas.remove(canvas.getActiveObject())})
+        canvas.on("mouse:dblclick", () => {
+            canvas.remove(canvas.getActiveObject())
+        })
         return () => {
             canvas.off("mouse:up");
             canvas.off("mouse:dblclick");
