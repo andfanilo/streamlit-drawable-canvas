@@ -2,17 +2,19 @@ import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 
 st.title("Drawable Canvas")
-st.markdown("""
+st.markdown(
+    """
 Draw on the canvas, get the image data back into Python !
 * Doubleclick to remove the selected object when not in drawing mode
-""")
+"""
+)
 st.sidebar.header("Configuration")
 
 # Specify brush parameters and drawing mode
 b_width = st.sidebar.slider("Brush width: ", 1, 100, 10)
 b_color = st.sidebar.beta_color_picker("Enter brush color hex: ")
 bg_color = st.sidebar.beta_color_picker("Enter background color hex: ", "#eee")
-drawing_mode = st.sidebar.checkbox("Drawing mode ?", True)
+drawing_mode = st.sidebar.selectbox("Drawing mode", ("free", "line", "transform"))
 
 # Create a canvas component
 image_data = st_canvas(

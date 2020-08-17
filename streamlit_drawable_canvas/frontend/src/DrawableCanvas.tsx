@@ -11,7 +11,7 @@ interface PythonArgs {
   backgroundColor: string
   canvasWidth: number
   canvasHeight: number
-  isDrawingMode: boolean
+  drawingMode: "free" | "line" | "transform"
 }
 
 const DrawableCanvas = (props: ComponentProps) => {
@@ -23,7 +23,6 @@ const DrawableCanvas = (props: ComponentProps) => {
    */
   useEffect(() => {
     const canvas = new fabric.Canvas("c", {
-      isDrawingMode: true,
       enableRetinaScaling: false,
     })
     setCanvas(canvas)
@@ -31,20 +30,37 @@ const DrawableCanvas = (props: ComponentProps) => {
   }, [canvasHeight, canvasWidth])
 
   /**
-   * Update canvas with new background color and brush at each rerender.
-   * No need to control deps.
+   * Update canvas with background, brush or path configuration.
    */
   useEffect(() => {
     const {
       backgroundColor,
       brushWidth,
       brushColor,
-      isDrawingMode,
+      drawingMode,
     }: PythonArgs = props.args
     canvas.backgroundColor = backgroundColor
     canvas.freeDrawingBrush.width = brushWidth
     canvas.freeDrawingBrush.color = brushColor
-    canvas.isDrawingMode = isDrawingMode
+    switch (drawingMode) {
+      case "free": {
+        canvas.isDrawingMode = true
+        break
+      }
+      case "transform": {
+        canvas.isDrawingMode = false
+        canvas.selection = true
+        canvas.getObjects().forEach((obj) => obj.set("selectable", true))
+        break
+      }
+      default: {
+        // any other nonfree drawing option like line or box
+        canvas.isDrawingMode = false
+        canvas.selection = false
+        canvas.getObjects().forEach((obj) => obj.set("selectable", false))
+        break
+      }
+    }
   })
 
   /**
