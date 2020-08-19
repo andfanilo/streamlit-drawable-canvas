@@ -72,12 +72,13 @@ const DrawableCanvas = (props: ComponentProps) => {
       })
     }
     handleMouseUp()
+
     canvas.on("mouse:up", handleMouseUp)
     canvas.on("mouse:dblclick", () => {
       canvas.remove(canvas.getActiveObject())
     })
     return () => {
-      canvas.off("mouse:up")
+      canvas.off("mouse:up", handleMouseUp)
       canvas.off("mouse:dblclick")
     }
   })

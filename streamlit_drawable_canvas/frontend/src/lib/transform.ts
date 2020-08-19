@@ -5,7 +5,7 @@ class TransformTool extends FabricTool {
   configureCanvas(args: PythonArgs): void {
     this._canvas.isDrawingMode = false
     this._canvas.selection = true
-    this._canvas.getObjects().forEach((obj) => obj.set("selectable", true))
+    this._canvas.forEachObject((o) => (o.selectable = o.evented = true))
   }
 }
 
