@@ -2,14 +2,14 @@ import React, { useEffect, useState } from "react"
 import { ComponentProps, Streamlit, withStreamlitConnection } from "./streamlit"
 import { fabric } from "fabric"
 
-import configureFreedraw from "./lib/freedraw"
-import configureLine from "./lib/line"
-import configureTransform from "./lib/transform"
+import FreedrawTool from "./lib/freedraw"
+import LineTool from "./lib/line"
+import TransformTool from "./lib/transform"
 
 /**
  * Arguments Streamlit receives from the Python side
  */
-interface PythonArgs {
+export interface PythonArgs {
   brushWidth: number
   brushColor: string
   backgroundColor: string
@@ -23,8 +23,6 @@ const DrawableCanvas = (props: ComponentProps) => {
     canvasWidth,
     canvasHeight,
     backgroundColor,
-    brushWidth,
-    brushColor,
     drawingMode,
   }: PythonArgs = props.args
   const [canvas, setCanvas] = useState(new fabric.Canvas(""))
@@ -45,24 +43,12 @@ const DrawableCanvas = (props: ComponentProps) => {
    */
   useEffect(() => {
     canvas.backgroundColor = backgroundColor
-    switch (drawingMode) {
-      case "freedraw": {
-        configureFreedraw(canvas, brushWidth, brushColor)
-        break
-      }
-      case "transform": {
-        configureTransform(canvas)
-        break
-      }
-      case "line": {
-        configureLine(canvas)
-        break
-      }
-      default: {
-        // any other nonfree drawing option
-        break
-      }
+    const tools = {
+      freedraw: new FreedrawTool(canvas),
+      line: new LineTool(canvas),
+      transform: new TransformTool(canvas),
     }
+    tools[drawingMode].configureCanvas(props.args)
   })
 
   /**
