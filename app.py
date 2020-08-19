@@ -14,7 +14,7 @@ st.sidebar.header("Configuration")
 b_width = st.sidebar.slider("Brush width: ", 1, 100, 10)
 b_color = st.sidebar.beta_color_picker("Enter brush color hex: ")
 bg_color = st.sidebar.beta_color_picker("Enter background color hex: ", "#eee")
-drawing_mode = st.sidebar.selectbox("Drawing mode", ("free", "line", "transform"))
+drawing_mode = st.sidebar.selectbox("Drawing mode", ("freedraw", "line", "transform"))
 
 # Create a canvas component
 image_data = st_canvas(

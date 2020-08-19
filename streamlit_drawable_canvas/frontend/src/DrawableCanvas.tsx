@@ -2,6 +2,10 @@ import React, { useEffect, useState } from "react"
 import { ComponentProps, Streamlit, withStreamlitConnection } from "./streamlit"
 import { fabric } from "fabric"
 
+import configureFreedraw from "./lib/freedraw"
+import configureLine from "./lib/line"
+import configureTransform from "./lib/transform"
+
 /**
  * Arguments Streamlit receives from the Python side
  */
@@ -11,11 +15,18 @@ interface PythonArgs {
   backgroundColor: string
   canvasWidth: number
   canvasHeight: number
-  drawingMode: "free" | "line" | "transform"
+  drawingMode: "freedraw" | "line" | "transform"
 }
 
 const DrawableCanvas = (props: ComponentProps) => {
-  const { canvasWidth, canvasHeight }: PythonArgs = props.args
+  const {
+    canvasWidth,
+    canvasHeight,
+    backgroundColor,
+    brushWidth,
+    brushColor,
+    drawingMode,
+  }: PythonArgs = props.args
   const [canvas, setCanvas] = useState(new fabric.Canvas(""))
 
   /**
@@ -33,31 +44,22 @@ const DrawableCanvas = (props: ComponentProps) => {
    * Update canvas with background, brush or path configuration.
    */
   useEffect(() => {
-    const {
-      backgroundColor,
-      brushWidth,
-      brushColor,
-      drawingMode,
-    }: PythonArgs = props.args
     canvas.backgroundColor = backgroundColor
-    canvas.freeDrawingBrush.width = brushWidth
-    canvas.freeDrawingBrush.color = brushColor
     switch (drawingMode) {
-      case "free": {
-        canvas.isDrawingMode = true
+      case "freedraw": {
+        configureFreedraw(canvas, brushWidth, brushColor)
         break
       }
       case "transform": {
-        canvas.isDrawingMode = false
-        canvas.selection = true
-        canvas.getObjects().forEach((obj) => obj.set("selectable", true))
+        configureTransform(canvas)
+        break
+      }
+      case "line": {
+        configureLine(canvas)
         break
       }
       default: {
-        // any other nonfree drawing option like line or box
-        canvas.isDrawingMode = false
-        canvas.selection = false
-        canvas.getObjects().forEach((obj) => obj.set("selectable", false))
+        // any other nonfree drawing option
         break
       }
     }

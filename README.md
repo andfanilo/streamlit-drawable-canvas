@@ -73,3 +73,4 @@ streamlit run app.py
 * [React hooks - fabric](https://github.com/fabricjs/fabric.js/issues/5951#issuecomment-563427231)
 * [Simulate Retina display](https://stackoverflow.com/questions/12243549/how-to-test-a-webpage-meant-for-retina-display)
 * [High DPI Canvas](https://www.html5rocks.com/en/tutorials/canvas/hidpi/)
+* [Drawing with FabricJS and TypeScript Part 2: Straight Lines](https://exceptionnotfound.net/drawing-with-fabricjs-and-typescript-part-2-straight-lines/)

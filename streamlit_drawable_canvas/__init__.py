@@ -31,7 +31,7 @@ def st_canvas(
         :param background_color: Color of canvas background in hex.
         :param height: Height of canvas in pixels.
         :param width: Width of canvas in pixels.
-        :param drawing_mode: Enable free drawing when "free", object manipulation when "transform", line drawing when "line".
+        :param drawing_mode: Enable free drawing when "freedraw", object manipulation when "transform", line drawing when "line".
         :param key: An optional string to use as the unique key for the widget.
         Assign a key so the component is not remount every time the script is rerun.
         :return: Reshaped RGBA image 4D numpy array (r, g, b, alpha)
