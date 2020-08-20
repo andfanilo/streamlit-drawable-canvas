@@ -16,8 +16,8 @@ else:
 
 
 def st_canvas(
-    brush_width: int = 20,
-    brush_color: str = "black",
+    stroke_width: int = 20,
+    stroke_color: str = "black",
     background_color: str = "#eee",
     height: int = 400,
     width: int = 600,
@@ -26,8 +26,8 @@ def st_canvas(
 ) -> np.array:
     """Create a drawing canvas in Streamlit app. Retrieve the RGBA image data into a 4D numpy array (r, g, b, alpha)
     on mouse up event.
-        :param brush_width: Width of drawing brush in pixels.
-        :param brush_color: Color of drawing brush in hex.
+        :param stroke_width: Width of drawing brush in pixels.
+        :param stroke_color: Color of drawing brush in hex.
         :param background_color: Color of canvas background in hex.
         :param height: Height of canvas in pixels.
         :param width: Width of canvas in pixels.
@@ -37,8 +37,8 @@ def st_canvas(
         :return: Reshaped RGBA image 4D numpy array (r, g, b, alpha)
         """
     component_value = _component_func(
-        brushWidth=brush_width,
-        brushColor=brush_color,
+        strokeWidth=stroke_width,
+        strokeColor=stroke_color,
         backgroundColor=background_color,
         canvasHeight=height,
         canvasWidth=width,

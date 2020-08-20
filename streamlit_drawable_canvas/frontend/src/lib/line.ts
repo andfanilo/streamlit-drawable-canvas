@@ -13,9 +13,9 @@ class LineTool extends FabricTool {
     this._canvas.selection = false
     this._canvas.forEachObject((o) => (o.selectable = o.evented = false))
 
-    const { brushWidth, brushColor } = args
-    this.strokeWidth = brushWidth
-    this.strokeColor = brushColor
+    const { strokeWidth, strokeColor } = args
+    this.strokeWidth = strokeWidth
+    this.strokeColor = strokeColor
 
     this._canvas.on("mouse:down", (e: any) => this.onMouseDown(e))
     this._canvas.on("mouse:move", (e: any) => this.onMouseMove(e))

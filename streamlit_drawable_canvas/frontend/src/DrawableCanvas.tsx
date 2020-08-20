@@ -11,8 +11,8 @@ import TransformTool from "./lib/transform"
  * Arguments Streamlit receives from the Python side
  */
 export interface PythonArgs {
-  brushWidth: number
-  brushColor: string
+  strokeWidth: number
+  strokeColor: string
   backgroundColor: string
   canvasWidth: number
   canvasHeight: number
