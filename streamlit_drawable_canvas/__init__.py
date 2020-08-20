@@ -21,7 +21,7 @@ def st_canvas(
     background_color: str = "#eee",
     height: int = 400,
     width: int = 600,
-    drawing_mode: str = "free",
+    drawing_mode: str = "freedraw",
     key=None,
 ) -> np.array:
     """Create a drawing canvas in Streamlit app. Retrieve the RGBA image data into a 4D numpy array (r, g, b, alpha)
