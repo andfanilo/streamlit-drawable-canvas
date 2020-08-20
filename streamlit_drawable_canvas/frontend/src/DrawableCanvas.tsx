@@ -52,7 +52,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   const [canvas, setCanvas] = useState(new fabric.Canvas(""))
 
   /**
-   * Initialize canvas and tools on component mount
+   * Initialize canvas on component mount
    */
   useEffect(() => {
     const c = new fabric.Canvas("c", {
@@ -77,15 +77,15 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       line: new LineTool(canvas),
       transform: new TransformTool(canvas),
     }
-
     const selectedTool = tools[drawingMode]
     const cleanup = selectedTool.configureCanvas(args)
 
     const onMouseUp = () => {
       sendDataToStreamlit(canvas)
     }
-    sendDataToStreamlit(canvas)
     canvas.on("mouse:up", onMouseUp)
+
+    sendDataToStreamlit(canvas)
 
     // Run tool cleanup + mouseeventup remove
     return () => {
