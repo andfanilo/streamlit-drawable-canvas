@@ -7,13 +7,18 @@ import { fabric } from "fabric"
 abstract class FabricTool {
   protected _canvas: fabric.Canvas
 
+  /**
+   * Pass Fabric canvas by reference so tools can configure it
+   */
   constructor(canvas: fabric.Canvas) {
-    // Pass Fabric canvas by reference
-    // so tools can configure it
     this._canvas = canvas
   }
 
-  abstract configureCanvas(args: PythonArgs): void
+  /**
+   * Configure canvas and register a callback to clean eventListeners
+   * @param args
+   */
+  abstract configureCanvas(args: PythonArgs): () => void
 }
 
 export default FabricTool
