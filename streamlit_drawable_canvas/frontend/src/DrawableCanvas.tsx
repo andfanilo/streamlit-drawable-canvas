@@ -2,79 +2,95 @@ import React, { useEffect, useState } from "react"
 import { ComponentProps, Streamlit, withStreamlitConnection } from "./streamlit"
 import { fabric } from "fabric"
 
+import FabricTool from "./lib/fabrictool"
+import FreedrawTool from "./lib/freedraw"
+import LineTool from "./lib/line"
+import TransformTool from "./lib/transform"
+
 /**
  * Arguments Streamlit receives from the Python side
  */
-interface PythonArgs {
-  brushWidth: number
-  brushColor: string
+export interface PythonArgs {
+  strokeWidth: number
+  strokeColor: string
   backgroundColor: string
   canvasWidth: number
   canvasHeight: number
-  isDrawingMode: boolean
+  drawingMode: string
 }
 
-const DrawableCanvas = (props: ComponentProps) => {
-  const { canvasWidth, canvasHeight }: PythonArgs = props.args
+interface Tools {
+  [key: string]: FabricTool
+}
+
+/**
+ * Download data from canvas to send back to Streamlit
+ */
+export function sendDataToStreamlit(canvas: fabric.Canvas): void {
+  canvas.renderAll()
+  const imageData = canvas
+    .getContext()
+    .getImageData(0, 0, canvas.getWidth(), canvas.getHeight())
+  const data = Array.from(imageData["data"])
+  Streamlit.setComponentValue({
+    data: data,
+    width: imageData["width"],
+    height: imageData["height"],
+  })
+}
+
+/**
+ * Define logic for the canvas area
+ */
+const DrawableCanvas = ({ args }: ComponentProps) => {
+  const {
+    canvasWidth,
+    canvasHeight,
+    backgroundColor,
+    drawingMode,
+  }: PythonArgs = args
   const [canvas, setCanvas] = useState(new fabric.Canvas(""))
 
   /**
-   * Initialize canvas on mount
+   * Initialize canvas on component mount
    */
   useEffect(() => {
-    const canvas = new fabric.Canvas("c", {
-      isDrawingMode: true,
+    const c = new fabric.Canvas("c", {
       enableRetinaScaling: false,
     })
-    setCanvas(canvas)
+    setCanvas(c)
     Streamlit.setFrameHeight()
   }, [canvasHeight, canvasWidth])
 
   /**
-   * Update canvas with new background color and brush at each rerender.
-   * No need to control deps.
-   */
-  useEffect(() => {
-    const {
-      backgroundColor,
-      brushWidth,
-      brushColor,
-      isDrawingMode,
-    }: PythonArgs = props.args
-    canvas.backgroundColor = backgroundColor
-    canvas.freeDrawingBrush.width = brushWidth
-    canvas.freeDrawingBrush.color = brushColor
-    canvas.isDrawingMode = isDrawingMode
-  })
-
-  /**
-   * Send image data to Streamlit on mouse up on canvas
-   * Delete selected object on mouse doubleclick
+   * Update canvas with background and selected tool
    */
   useEffect(() => {
     if (!canvas) {
       return
     }
-    const handleMouseUp = () => {
-      canvas.renderAll()
-      const imageData = canvas
-        .getContext()
-        .getImageData(0, 0, canvasWidth, canvasHeight)
-      const data = Array.from(imageData["data"])
-      Streamlit.setComponentValue({
-        data: data,
-        width: imageData["width"],
-        height: imageData["height"],
-      })
+
+    canvas.backgroundColor = backgroundColor
+
+    const tools: Tools = {
+      freedraw: new FreedrawTool(canvas),
+      line: new LineTool(canvas),
+      transform: new TransformTool(canvas),
     }
-    handleMouseUp()
-    canvas.on("mouse:up", handleMouseUp)
-    canvas.on("mouse:dblclick", () => {
-      canvas.remove(canvas.getActiveObject())
-    })
+    const selectedTool = tools[drawingMode]
+    const cleanup = selectedTool.configureCanvas(args)
+
+    const onMouseUp = () => {
+      sendDataToStreamlit(canvas)
+    }
+    canvas.on("mouse:up", onMouseUp)
+
+    sendDataToStreamlit(canvas)
+
+    // Run tool cleanup + mouseeventup remove
     return () => {
-      canvas.off("mouse:up")
-      canvas.off("mouse:dblclick")
+      cleanup()
+      canvas.off("mouse:up", onMouseUp)
     }
   })
 
