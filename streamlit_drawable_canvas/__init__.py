@@ -34,10 +34,10 @@ def st_canvas(
 ) -> CanvasResult:
     """Create a drawing canvas in Streamlit app. Retrieve the RGBA image data into a 4D numpy array (r, g, b, alpha)
     on mouse up event.
-        :param fill_color: Color of fill for Rect in hex.
-        :param stroke_width: Width of drawing brush in pixels.
+        :param fill_color: Color of fill for Rect in CSS color property.
+        :param stroke_width: Width of drawing brush in CSS color property.
         :param stroke_color: Color of drawing brush in hex.
-        :param background_color: Color of canvas background in CSS color (hex value or "transparent").
+        :param background_color: Color of canvas background in CSS color property or "transparent".
         :param height: Height of canvas in pixels.
         :param width: Width of canvas in pixels.
         :param drawing_mode: Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect".
