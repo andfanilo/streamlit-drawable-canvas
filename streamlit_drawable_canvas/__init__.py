@@ -25,7 +25,7 @@ class CanvasResult:
 def st_canvas(
     stroke_width: int = 20,
     stroke_color: str = "black",
-    background_color: str = "#eee",
+    background_color: str = "transparent",
     height: int = 400,
     width: int = 600,
     drawing_mode: str = "freedraw",
@@ -35,7 +35,7 @@ def st_canvas(
     on mouse up event.
         :param stroke_width: Width of drawing brush in pixels.
         :param stroke_color: Color of drawing brush in hex.
-        :param background_color: Color of canvas background in hex.
+        :param background_color: Color of canvas background in CSS color (hex value or "transparent").
         :param height: Height of canvas in pixels.
         :param width: Width of canvas in pixels.
         :param drawing_mode: Enable free drawing when "freedraw", object manipulation when "transform", line drawing when "line".

@@ -36,7 +36,7 @@ export function sendDataToStreamlit(canvas: fabric.Canvas): void {
     data: data,
     width: imageData["width"],
     height: imageData["height"],
-    raw: JSON.stringify(canvas)
+    raw: JSON.stringify(canvas),
   })
 }
 
@@ -97,7 +97,15 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
 
   return (
     <>
-      <canvas id="c" width={canvasWidth} height={canvasHeight} />
+      <canvas
+        id="c"
+        width={canvasWidth}
+        height={canvasHeight}
+        style={{
+          border:
+            args.backgroundColor === "transparent" ? "1px solid black" : "",
+        }}
+      />
     </>
   )
 }
