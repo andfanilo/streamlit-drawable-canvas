@@ -11,13 +11,17 @@ Draw on the canvas, get the image data back into Python !
 st.sidebar.header("Configuration")
 
 # Specify brush parameters and drawing mode
+fill_color = st.sidebar.beta_color_picker("Fill color hex: ", "#eee")
 stroke_width = st.sidebar.slider("Stroke width: ", 1, 100, 10)
 stroke_color = st.sidebar.beta_color_picker("Stroke color hex: ")
 bg_color = st.sidebar.beta_color_picker("Enter background color hex: ", "#eee")
-drawing_mode = st.sidebar.selectbox("Drawing mode", ("freedraw", "line", "transform"))
+drawing_mode = st.sidebar.selectbox(
+    "Drawing mode", ("freedraw", "line", "rect", "transform")
+)
 
 # Create a canvas component
 canvas_result = st_canvas(
+    fill_color,
     stroke_width,
     stroke_color,
     bg_color,

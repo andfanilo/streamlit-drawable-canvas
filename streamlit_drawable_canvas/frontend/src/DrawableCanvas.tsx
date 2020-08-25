@@ -5,12 +5,14 @@ import { fabric } from "fabric"
 import FabricTool from "./lib/fabrictool"
 import FreedrawTool from "./lib/freedraw"
 import LineTool from "./lib/line"
+import RectTool from "./lib/rect"
 import TransformTool from "./lib/transform"
 
 /**
  * Arguments Streamlit receives from the Python side
  */
 export interface PythonArgs {
+  fillColor: string
   strokeWidth: number
   strokeColor: string
   backgroundColor: string
@@ -76,6 +78,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     const tools: Tools = {
       freedraw: new FreedrawTool(canvas),
       line: new LineTool(canvas),
+      rect: new RectTool(canvas),
       transform: new TransformTool(canvas),
     }
     const selectedTool = tools[drawingMode]

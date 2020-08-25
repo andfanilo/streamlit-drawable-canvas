@@ -23,6 +23,7 @@ class CanvasResult:
 
 
 def st_canvas(
+    fill_color: str = "#eee",
     stroke_width: int = 20,
     stroke_color: str = "black",
     background_color: str = "transparent",
@@ -33,17 +34,19 @@ def st_canvas(
 ) -> CanvasResult:
     """Create a drawing canvas in Streamlit app. Retrieve the RGBA image data into a 4D numpy array (r, g, b, alpha)
     on mouse up event.
+        :param fill_color: Color of fill for Rect in hex.
         :param stroke_width: Width of drawing brush in pixels.
         :param stroke_color: Color of drawing brush in hex.
         :param background_color: Color of canvas background in CSS color (hex value or "transparent").
         :param height: Height of canvas in pixels.
         :param width: Width of canvas in pixels.
-        :param drawing_mode: Enable free drawing when "freedraw", object manipulation when "transform", line drawing when "line".
+        :param drawing_mode: Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect".
         :param key: An optional string to use as the unique key for the widget.
         Assign a key so the component is not remount every time the script is rerun.
         :return: Reshaped RGBA image 4D numpy array (r, g, b, alpha), and canvas raw JSON representation
         """
     component_value = _component_func(
+        fillColor=fill_color,
         strokeWidth=stroke_width,
         strokeColor=stroke_color,
         backgroundColor=background_color,
