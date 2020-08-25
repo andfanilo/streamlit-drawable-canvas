@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass
 
 import numpy as np
+from PIL import Image
 import streamlit.components.v1 as components
 
 _RELEASE = False  # on packaging, pass this to True
@@ -27,6 +28,7 @@ def st_canvas(
     stroke_width: int = 20,
     stroke_color: str = "black",
     background_color: str = "transparent",
+    background_image: Image = None,
     height: int = 400,
     width: int = 600,
     drawing_mode: str = "freedraw",
@@ -37,7 +39,8 @@ def st_canvas(
         :param fill_color: Color of fill for Rect in CSS color property.
         :param stroke_width: Width of drawing brush in CSS color property.
         :param stroke_color: Color of drawing brush in hex.
-        :param background_color: Color of canvas background in CSS color property or "transparent".
+        :param background_color: Color of canvas background in CSS color property or "transparent". Transparent if background_image is specified
+        :param background_image: Pillow Image for background. Size should be exactly size of canvas.
         :param height: Height of canvas in pixels.
         :param width: Width of canvas in pixels.
         :param drawing_mode: Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect".
@@ -49,7 +52,10 @@ def st_canvas(
         fillColor=fill_color,
         strokeWidth=stroke_width,
         strokeColor=stroke_color,
-        backgroundColor=background_color,
+        backgroundColor=background_color if not background_image else "transparent",
+        backgroundImage=np.array(background_image.convert("RGBA")).flatten().tolist()
+        if background_image
+        else None,
         canvasHeight=height,
         canvasWidth=width,
         drawingMode=drawing_mode,
