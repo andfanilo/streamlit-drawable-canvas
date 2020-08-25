@@ -17,7 +17,7 @@ bg_color = st.sidebar.beta_color_picker("Enter background color hex: ", "#eee")
 drawing_mode = st.sidebar.selectbox("Drawing mode", ("freedraw", "line", "transform"))
 
 # Create a canvas component
-image_data = st_canvas(
+canvas_result = st_canvas(
     stroke_width,
     stroke_color,
     bg_color,
@@ -27,5 +27,6 @@ image_data = st_canvas(
 )
 
 # Do something interesting with the image data
-if image_data is not None:
-    st.image(image_data)
+if canvas_result.image_data is not None:
+    st.image(canvas_result.image_data)
+    st.json(canvas_result.json_data)

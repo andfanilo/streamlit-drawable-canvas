@@ -36,6 +36,7 @@ export function sendDataToStreamlit(canvas: fabric.Canvas): void {
     data: data,
     width: imageData["width"],
     height: imageData["height"],
+    raw: JSON.stringify(canvas)
   })
 }
 

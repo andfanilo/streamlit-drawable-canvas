@@ -1,4 +1,5 @@
 import os
+from dataclasses import dataclass
 
 import numpy as np
 import streamlit.components.v1 as components
@@ -15,6 +16,12 @@ else:
     _component_func = components.declare_component("st_canvas", path=build_dir)
 
 
+@dataclass
+class CanvasResult:
+    image_data: np.array = None
+    json_data: dict = None
+
+
 def st_canvas(
     stroke_width: int = 20,
     stroke_color: str = "black",
@@ -23,7 +30,7 @@ def st_canvas(
     width: int = 600,
     drawing_mode: str = "freedraw",
     key=None,
-) -> np.array:
+) -> CanvasResult:
     """Create a drawing canvas in Streamlit app. Retrieve the RGBA image data into a 4D numpy array (r, g, b, alpha)
     on mouse up event.
         :param stroke_width: Width of drawing brush in pixels.
@@ -34,7 +41,7 @@ def st_canvas(
         :param drawing_mode: Enable free drawing when "freedraw", object manipulation when "transform", line drawing when "line".
         :param key: An optional string to use as the unique key for the widget.
         Assign a key so the component is not remount every time the script is rerun.
-        :return: Reshaped RGBA image 4D numpy array (r, g, b, alpha)
+        :return: Reshaped RGBA image 4D numpy array (r, g, b, alpha), and canvas raw JSON representation
         """
     component_value = _component_func(
         strokeWidth=stroke_width,
@@ -47,8 +54,10 @@ def st_canvas(
         default=None,
     )
     if component_value is None:
-        return None
+        return CanvasResult
 
     w = component_value["width"]
     h = component_value["height"]
-    return np.reshape(component_value["data"], (h, w, 4))
+    return CanvasResult(
+        np.reshape(component_value["data"], (h, w, 4)), component_value["raw"]
+    )
