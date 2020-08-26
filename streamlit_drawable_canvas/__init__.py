@@ -29,6 +29,7 @@ def st_canvas(
     stroke_color: str = "black",
     background_color: str = "transparent",
     background_image: Image = None,
+    export_background: bool = False,
     height: int = 400,
     width: int = 600,
     drawing_mode: str = "freedraw",
@@ -39,8 +40,9 @@ def st_canvas(
         :param fill_color: Color of fill for Rect in CSS color property.
         :param stroke_width: Width of drawing brush in CSS color property.
         :param stroke_color: Color of drawing brush in hex.
-        :param background_color: Color of canvas background in CSS color property or "transparent". Transparent if background_image is specified
-        :param background_image: Pillow Image for background. Size should be exactly size of canvas.
+        :param background_color: Color of canvas background in CSS color property or "transparent".
+        :param background_image: Pillow Image for background. Overrides background_color. Size should be exactly size of canvas.
+        :param export_background: Include background data in image data returned to Streamlit
         :param height: Height of canvas in pixels.
         :param width: Width of canvas in pixels.
         :param drawing_mode: Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect".
@@ -52,10 +54,11 @@ def st_canvas(
         fillColor=fill_color,
         strokeWidth=stroke_width,
         strokeColor=stroke_color,
-        backgroundColor=background_color if not background_image else "transparent",
+        backgroundColor="" if background_image else background_color,
         backgroundImage=np.array(background_image.convert("RGBA")).flatten().tolist()
         if background_image
         else None,
+        exportBackground=export_background,
         canvasHeight=height,
         canvasWidth=width,
         drawingMode=drawing_mode,

@@ -17,6 +17,7 @@ export interface PythonArgs {
   strokeColor: string
   backgroundColor: string
   backgroundImage: Uint8ClampedArray
+  exportBackground: boolean
   canvasWidth: number
   canvasHeight: number
   drawingMode: string
@@ -52,10 +53,13 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     canvasHeight,
     backgroundColor,
     backgroundImage,
+    exportBackground,
     drawingMode,
   }: PythonArgs = args
   const [canvas, setCanvas] = useState(new fabric.Canvas(""))
-  const [imageCanvas, setImageCanvas] = useState(new fabric.Canvas(""))
+  const [backgroundCanvas, setBackgroundCanvas] = useState(
+    new fabric.StaticCanvas("")
+  )
 
   /**
    * Initialize canvases on component mount
@@ -64,11 +68,11 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     const c = new fabric.Canvas("c", {
       enableRetinaScaling: false,
     })
-    const imgC = new fabric.Canvas("imgC", {
+    const imgC = new fabric.StaticCanvas("imgC", {
       enableRetinaScaling: false,
     })
     setCanvas(c)
-    setImageCanvas(imgC)
+    setBackgroundCanvas(imgC)
     Streamlit.setFrameHeight()
   }, [canvasHeight, canvasWidth])
 
@@ -81,13 +85,32 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     }
 
     // Update background info
-    canvas.backgroundColor = backgroundColor
-    if (backgroundImage) {
-      const imageData = imageCanvas
-        .getContext()
-        .createImageData(canvasWidth, canvasHeight)
-      imageData.data.set(backgroundImage)
-      imageCanvas.getContext().putImageData(imageData, 0, 0)
+    if (exportBackground) {
+      canvas.setBackgroundColor(backgroundColor, () => {
+        canvas.renderAll()
+      })
+      if (backgroundImage) {
+        // TODO: not working
+        const imageData = canvas
+          .getContext()
+          .createImageData(canvasWidth, canvasHeight)
+        imageData.data.set(backgroundImage)
+        canvas.getContext().putImageData(imageData, 0, 0)
+      }
+    } else {
+      canvas.setBackgroundColor("", () => {
+        canvas.renderAll()
+      })
+      backgroundCanvas.setBackgroundColor(backgroundColor, () => {
+        backgroundCanvas.renderAll()
+      })
+      if (backgroundImage) {
+        const imageData = backgroundCanvas
+          .getContext()
+          .createImageData(canvasWidth, canvasHeight)
+        imageData.data.set(backgroundImage)
+        backgroundCanvas.getContext().putImageData(imageData, 0, 0)
+      }
     }
     Streamlit.setFrameHeight()
 
@@ -136,15 +159,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           zIndex: 10,
         }}
       >
-        <canvas
-          id="c"
-          width={canvasWidth}
-          height={canvasHeight}
-          style={{
-            border:
-              args.backgroundColor === "transparent" ? "1px solid black" : "",
-          }}
-        />
+        <canvas id="c" width={canvasWidth} height={canvasHeight} />
       </div>
     </div>
   )
