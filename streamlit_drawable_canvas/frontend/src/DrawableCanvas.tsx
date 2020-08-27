@@ -17,7 +17,6 @@ export interface PythonArgs {
   strokeColor: string
   backgroundColor: string
   backgroundImage: Uint8ClampedArray
-  exportBackground: boolean
   canvasWidth: number
   canvasHeight: number
   drawingMode: string
@@ -53,7 +52,6 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     canvasHeight,
     backgroundColor,
     backgroundImage,
-    exportBackground,
     drawingMode,
   }: PythonArgs = args
   const [canvas, setCanvas] = useState(new fabric.Canvas(""))
@@ -85,25 +83,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     }
 
     // Update background info
-    if (exportBackground) {
-      canvas.setBackgroundColor(backgroundColor, () => {
-        canvas.renderAll()
-      })
-      if (backgroundImage) {
-        // TODO: not working
-        const imageData = canvas
-          .getContext()
-          .createImageData(canvasWidth, canvasHeight)
-        imageData.data.set(backgroundImage)
-        canvas.getContext().putImageData(imageData, 0, 0)
-      }
-    } else {
-      canvas.setBackgroundColor("", () => {
-        canvas.renderAll()
-      })
-      backgroundCanvas.setBackgroundColor(backgroundColor, () => {
-        backgroundCanvas.renderAll()
-      })
+    canvas.setBackgroundColor(backgroundColor, () => {
       if (backgroundImage) {
         const imageData = backgroundCanvas
           .getContext()
@@ -111,7 +91,8 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         imageData.data.set(backgroundImage)
         backgroundCanvas.getContext().putImageData(imageData, 0, 0)
       }
-    }
+      sendDataToStreamlit(canvas)
+    })
     Streamlit.setFrameHeight()
 
     // Update canvas events with selected tool

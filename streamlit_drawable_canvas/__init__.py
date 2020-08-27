@@ -29,7 +29,6 @@ def st_canvas(
     stroke_color: str = "black",
     background_color: str = "transparent",
     background_image: Image = None,
-    export_background: bool = False,
     height: int = 400,
     width: int = 600,
     drawing_mode: str = "freedraw",
@@ -37,28 +36,44 @@ def st_canvas(
 ) -> CanvasResult:
     """Create a drawing canvas in Streamlit app. Retrieve the RGBA image data into a 4D numpy array (r, g, b, alpha)
     on mouse up event.
-        :param fill_color: Color of fill for Rect in CSS color property.
-        :param stroke_width: Width of drawing brush in CSS color property.
-        :param stroke_color: Color of drawing brush in hex.
-        :param background_color: Color of canvas background in CSS color property or "transparent".
-        :param background_image: Pillow Image for background. Overrides background_color. Size should be exactly size of canvas.
-        :param export_background: Include background data in image data returned to Streamlit
-        :param height: Height of canvas in pixels.
-        :param width: Width of canvas in pixels.
-        :param drawing_mode: Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect".
-        :param key: An optional string to use as the unique key for the widget.
+
+    Parameters
+    ----------
+    fill_color: str
+        Color of fill for Rect in CSS color property. Defaults to #eee.
+    stroke_width: str
+        Width of drawing brush in CSS color property. Defaults to 20.
+    stroke_color: str
+        Color of drawing brush in hex. Defaults to black.
+    background_color: str
+        Color of canvas background in CSS color property or "transparent". Defaults to transparent.
+    background_image: Image
+        Pillow Image for background. Size should be exactly size of canvas.
+        The background image is not sent back to Streamlit on mouse event.
+    height: int
+        Height of canvas in pixels. Defaults to 400.
+    width: int
+        Width of canvas in pixels. Defaults to 600
+    drawing_mode: {'freedraw', 'transform', 'line', 'rect}
+        Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect".
+        Defaults to freedraw.
+    key: str
+        An optional string to use as the unique key for the widget. 
         Assign a key so the component is not remount every time the script is rerun.
-        :return: Reshaped RGBA image 4D numpy array (r, g, b, alpha), and canvas raw JSON representation
-        """
+    
+    Returns
+    -------
+    result: CanvasResult 
+        Reshaped RGBA image 4D numpy array (r, g, b, alpha), and canvas raw JSON representation
+    """
     component_value = _component_func(
         fillColor=fill_color,
         strokeWidth=stroke_width,
         strokeColor=stroke_color,
-        backgroundColor="" if background_image else background_color,
+        backgroundColor=background_color,
         backgroundImage=np.array(background_image.convert("RGBA")).flatten().tolist()
         if background_image
         else None,
-        exportBackground=export_background,
         canvasHeight=height,
         canvasWidth=width,
         drawingMode=drawing_mode,
