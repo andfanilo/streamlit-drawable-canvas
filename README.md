@@ -40,7 +40,7 @@ canvas_result = st_canvas(
 # Do something interesting with the image data
 if canvas_result.image_data is not None:
     st.image(canvas_result.image_data)
-    st.json(canvas_result.json_data)
+    st.dataframe(pd.json_normalize(canvas_result.json_data["objects"]))
 ```
 
 ## Development

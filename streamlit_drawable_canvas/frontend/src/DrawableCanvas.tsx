@@ -39,7 +39,7 @@ export function sendDataToStreamlit(canvas: fabric.Canvas): void {
     data: data,
     width: imageData["width"],
     height: imageData["height"],
-    raw: JSON.stringify(canvas),
+    raw: canvas.toObject(),
   })
 }
 
@@ -110,8 +110,6 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       sendDataToStreamlit(canvas)
     }
     canvas.on("mouse:up", onMouseUp)
-
-    sendDataToStreamlit(canvas)
 
     // Run tool cleanup + mouseeventup remove
     return () => {
