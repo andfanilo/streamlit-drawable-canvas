@@ -8,7 +8,7 @@ st.set_option("deprecation.showfileUploaderEncoding", False)
 st.title("Drawable Canvas")
 st.markdown(
     """
-Draw on the canvas, get the image data back into Python !
+Draw on the canvas, get the drawings back to Streamlit!
 * Doubleclick to remove the selected object when not in drawing mode
 """
 )
