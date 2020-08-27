@@ -19,8 +19,31 @@ else:
 
 @dataclass
 class CanvasResult:
+    """Dataclass to store output of React Component
+
+    Attributes
+    ----------
+    image_data: np.array
+        RGBA Matrix of Image Data.
+    json_data: dict
+        JSON string of canvas and objects.
+    """
+
     image_data: np.array = None
     json_data: dict = None
+
+
+def _resize_img(img: Image, new_height: int = 700, new_width: int = 700) -> Image:
+    """Resize the image to the provided resolution."""
+    h_ratio = new_height / img.height
+    w_ratio = new_width / img.width
+    img = img.resize((int(img.width * w_ratio), int(img.height * h_ratio)))
+    return img
+
+
+def _img_to_array(img: Image) -> np.array:
+    """Return RGBA array of PIL image."""
+    return np.array(img.convert("RGBA")).flatten().tolist()
 
 
 def st_canvas(
@@ -40,23 +63,24 @@ def st_canvas(
     Parameters
     ----------
     fill_color: str
-        Color of fill for Rect in CSS color property. Defaults to #eee.
+        Color of fill for Rect in CSS color property. Defaults to "#eee".
     stroke_width: str
         Width of drawing brush in CSS color property. Defaults to 20.
     stroke_color: str
-        Color of drawing brush in hex. Defaults to black.
+        Color of drawing brush in hex. Defaults to "black".
     background_color: str
-        Color of canvas background in CSS color property or "transparent". Defaults to transparent.
+        Color of canvas background in CSS color property or "transparent". Defaults to "transparent".
     background_image: Image
-        Pillow Image for background. Size should be exactly size of canvas.
-        The background image is not sent back to Streamlit on mouse event.
+        Pillow Image to display behind canvas. 
+        Automatically resized to canvas dimensions.
+        Being behind the canvas, it is not sent back to Streamlit on mouse event.
     height: int
         Height of canvas in pixels. Defaults to 400.
     width: int
-        Width of canvas in pixels. Defaults to 600
+        Width of canvas in pixels. Defaults to 600.
     drawing_mode: {'freedraw', 'transform', 'line', 'rect}
         Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect".
-        Defaults to freedraw.
+        Defaults to "freedraw".
     key: str
         An optional string to use as the unique key for the widget. 
         Assign a key so the component is not remount every time the script is rerun.
@@ -64,16 +88,18 @@ def st_canvas(
     Returns
     -------
     result: CanvasResult 
-        Reshaped RGBA image 4D numpy array (r, g, b, alpha), and canvas raw JSON representation
+        Reshaped RGBA image 4D numpy array (r, g, b, alpha), and canvas/objects JSON representation.
     """
+    # Resize background_image to canvas dimensions by default
+    if background_image:
+        background_image = _resize_img(background_image, height, width)
+
     component_value = _component_func(
         fillColor=fill_color,
         strokeWidth=stroke_width,
         strokeColor=stroke_color,
         backgroundColor=background_color,
-        backgroundImage=np.array(background_image.convert("RGBA")).flatten().tolist()
-        if background_image
-        else None,
+        backgroundImage=_img_to_array(background_image) if background_image else None,
         canvasHeight=height,
         canvasWidth=width,
         drawingMode=drawing_mode,
