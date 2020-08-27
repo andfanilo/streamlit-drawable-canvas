@@ -27,7 +27,8 @@ setuptools.setup(
     classifiers=[],
     python_requires=">=3.6",
     install_requires=[
-        "streamlit >= 0.63",
+        "Pillow",
         "numpy",
+        "streamlit >= 0.63",
     ]
 )

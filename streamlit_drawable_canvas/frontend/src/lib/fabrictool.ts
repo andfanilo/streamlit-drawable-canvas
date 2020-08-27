@@ -15,7 +15,7 @@ abstract class FabricTool {
   }
 
   /**
-   * Configure canvas and register a callback to clean eventListeners
+   * Configure canvas and return a callback to clean eventListeners
    * @param args
    */
   abstract configureCanvas(args: PythonArgs): () => void
