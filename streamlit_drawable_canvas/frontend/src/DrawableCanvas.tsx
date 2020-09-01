@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react"
-import { ComponentProps, Streamlit, withStreamlitConnection } from "./streamlit"
+import {
+  ComponentProps,
+  Streamlit,
+  withStreamlitConnection,
+} from "streamlit-component-lib"
 import { fabric } from "fabric"
 
 import FabricTool from "./lib/fabrictool"
