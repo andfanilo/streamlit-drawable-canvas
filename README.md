@@ -79,6 +79,13 @@ npm run start
 streamlit run app.py
 ```
 
+### Cypress integration tests
+
+- Install Cypress: `cd e2e; npm i` or `npx install cypress` (with `--force` if cache problem)
+- Start Streamlit frontend server: `cd streamlit_drawable_canvas/frontend; npm run start`
+- Start Streamlit test script: `streamlit run e2e/app_to_test.py`
+- Start Cypress app: `cd e2e; npm run cypress:open`
+
 ## References
 
 - [react-sketch](https://github.com/tbolis/react-sketch)
@@ -87,3 +94,4 @@ streamlit run app.py
 - [High DPI Canvas](https://www.html5rocks.com/en/tutorials/canvas/hidpi/)
 - [Drawing with FabricJS and TypeScript Part 2: Straight Lines](https://exceptionnotfound.net/drawing-with-fabricjs-and-typescript-part-2-straight-lines/)
 - [Types for classes as values in TypeScript](https://2ality.com/2020/04/classes-as-values-typescript.html)
+- [Working with iframes in Cypress](https://www.cypress.io/blog/2020/02/12/working-with-iframes-in-cypress/)
