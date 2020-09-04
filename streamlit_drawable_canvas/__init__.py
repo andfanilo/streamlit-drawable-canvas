@@ -52,6 +52,7 @@ def st_canvas(
     stroke_color: str = "black",
     background_color: str = "transparent",
     background_image: Image = None,
+    update_streamlit: bool = True,
     height: int = 400,
     width: int = 600,
     drawing_mode: str = "freedraw",
@@ -74,6 +75,8 @@ def st_canvas(
         Pillow Image to display behind canvas. 
         Automatically resized to canvas dimensions.
         Being behind the canvas, it is not sent back to Streamlit on mouse event.
+    update_streamlit: bool
+        Whenever True, send canvas data to Streamlit when object/selection is updated.
     height: int
         Height of canvas in pixels. Defaults to 400.
     width: int
@@ -100,6 +103,7 @@ def st_canvas(
         strokeColor=stroke_color,
         backgroundColor=background_color,
         backgroundImage=_img_to_array(background_image) if background_image else None,
+        updateStreamlit=update_streamlit,
         canvasHeight=height,
         canvasWidth=width,
         drawingMode=drawing_mode,

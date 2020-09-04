@@ -16,7 +16,7 @@ pip install streamlit-drawable-canvas
 import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 
-# Specify brush parameters and drawing mode
+# Specify canvas parameters in application
 stroke_width = st.sidebar.slider("Stroke width: ", 1, 100, 10)
 stroke_color = st.sidebar.beta_color_picker("Stroke color hex: ")
 bg_color = st.sidebar.beta_color_picker("Background color hex: ", "#eee")
@@ -24,6 +24,11 @@ bg_image = st.sidebar.file_uploader("Background image:", type=["png", "jpg"])
 drawing_mode = st.sidebar.selectbox(
     "Drawing tool:", ("freedraw", "line", "rect", "transform")
 )
+realtime_update = st.sidebar.checkbox("Update in realtime?", True)
+update_button = False
+if not realtime_update:
+    update_button = st.sidebar.button('Send data to Streamlit')
+
 
 # Create a canvas component
 canvas_result = st_canvas(
@@ -32,6 +37,7 @@ canvas_result = st_canvas(
     stroke_color=stroke_color,
     background_color="" if bg_image else bg_color,
     background_image=Image.open(bg_image) if bg_image else None,
+    update_streamlit=realtime_update or update_button,
     height=150,
     drawing_mode=drawing_mode,
     key="canvas",

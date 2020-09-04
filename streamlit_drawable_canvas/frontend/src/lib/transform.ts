@@ -1,4 +1,4 @@
-import { PythonArgs, sendDataToStreamlit } from "../DrawableCanvas"
+import { PythonArgs } from "../DrawableCanvas"
 import FabricTool from "./fabrictool"
 
 class TransformTool extends FabricTool {
@@ -8,12 +8,15 @@ class TransformTool extends FabricTool {
     canvas.selection = true
     canvas.forEachObject((o) => (o.selectable = o.evented = true))
 
-    canvas.on("mouse:dblclick", () => {
+    // instead of looking for target of double click,
+    // assume double click on object clears the selected object
+    const handleDoubleClick = () => {
       canvas.remove(canvas.getActiveObject())
-      sendDataToStreamlit(canvas)
-    })
+    }
+
+    canvas.on("mouse:dblclick", handleDoubleClick)
     return () => {
-      canvas.off("mouse:dblclick")
+      canvas.off("mouse:dblclick", handleDoubleClick)
     }
   }
 }
