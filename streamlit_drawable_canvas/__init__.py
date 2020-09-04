@@ -81,8 +81,8 @@ def st_canvas(
         Height of canvas in pixels. Defaults to 400.
     width: int
         Width of canvas in pixels. Defaults to 600.
-    drawing_mode: {'freedraw', 'transform', 'line', 'rect}
-        Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect".
+    drawing_mode: {'freedraw', 'transform', 'line', 'rect', 'circle'}
+        Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect", "circle".
         Defaults to "freedraw".
     key: str
         An optional string to use as the unique key for the widget. 

@@ -6,6 +6,7 @@ import {
 } from "streamlit-component-lib"
 import { fabric } from "fabric"
 
+import CircleTool from "./lib/circle"
 import FabricTool from "./lib/fabrictool"
 import FreedrawTool from "./lib/freedraw"
 import LineTool from "./lib/line"
@@ -103,6 +104,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
 
     // Update canvas events with selected tool
     const tools: Tools = {
+      circle: new CircleTool(canvas),
       freedraw: new FreedrawTool(canvas),
       line: new LineTool(canvas),
       rect: new RectTool(canvas),
@@ -117,9 +119,9 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     }
     const eventsSendToStreamlit = updateStreamlit
       ? [
+          "mouse:up",
           "selection:cleared",
           "selection:updated",
-          "object:added",
           "object:removed",
           "object:modified",
         ]
