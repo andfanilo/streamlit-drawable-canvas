@@ -76,7 +76,7 @@ def st_canvas(
         Automatically resized to canvas dimensions.
         Being behind the canvas, it is not sent back to Streamlit on mouse event.
     update_streamlit: bool
-        Whenever True, send canvas data to Streamlit when object/selection is updated.
+        Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up.
     height: int
         Height of canvas in pixels. Defaults to 400.
     width: int

@@ -6,7 +6,7 @@ Streamlit component which provides a sketching canvas using [Fabric.js](http://f
 
 ## Features
 
-- Freedraw, lines and boxes on the canvas, with options on stroke & fill
+- Draw freely, lines, circles and boxes on the canvas, with options on stroke & fill
 - Rotate, skew, scale, move any object of the canvas on demand
 - Select a background color or image to draw on
 - Get image data and every drawn object properties back to Streamlit !
@@ -25,12 +25,12 @@ import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 
 # Specify canvas parameters in application
-stroke_width = st.sidebar.slider("Stroke width: ", 1, 100, 10)
+stroke_width = st.sidebar.slider("Stroke width: ", 1, 25, 3)
 stroke_color = st.sidebar.beta_color_picker("Stroke color hex: ")
 bg_color = st.sidebar.beta_color_picker("Background color hex: ", "#eee")
 bg_image = st.sidebar.file_uploader("Background image:", type=["png", "jpg"])
 drawing_mode = st.sidebar.selectbox(
-    "Drawing tool:", ("freedraw", "line", "rect", "transform")
+    "Drawing tool:", ("freedraw", "line", "rect", "circle", "transform")
 )
 realtime_update = st.sidebar.checkbox("Update in realtime?", True)
 update_button = False
