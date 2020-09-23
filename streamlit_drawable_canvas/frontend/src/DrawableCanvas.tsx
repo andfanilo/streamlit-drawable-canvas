@@ -13,6 +13,9 @@ import LineTool from "./lib/line"
 import RectTool from "./lib/rect"
 import TransformTool from "./lib/transform"
 
+import bin from "./img/bin.png"
+import undo from "./img/undo.png"
+
 /**
  * Arguments Streamlit receives from the Python side
  */
@@ -139,6 +142,9 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     }
   })
 
+  const GAP = 1
+  const ICON_SIZE = 16
+
   return (
     <div style={{ position: "relative" }}>
       <div
@@ -159,7 +165,48 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           zIndex: 10,
         }}
       >
-        <canvas id="c" width={canvasWidth} height={canvasHeight} />
+        <canvas
+          id="c"
+          width={canvasWidth}
+          height={canvasHeight}
+          style={{ border: "lightgrey 1px solid" }}
+        />
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          display: "flex",
+          gap: GAP,
+          top: canvasHeight - ICON_SIZE,
+          left: canvasWidth - 3 * ICON_SIZE,
+          zIndex: 20,
+        }}
+      >
+        <img
+          src={undo}
+          alt="Undo"
+          height={`${ICON_SIZE}px`}
+          width={`${ICON_SIZE}px`}
+        />
+        <img
+          src={undo}
+          style={{ transform: "scaleX(-1)" }}
+          alt="Redo"
+          height={`${ICON_SIZE}px`}
+          width={`${ICON_SIZE}px`}
+        />
+        <img
+          src={bin}
+          alt="Delete"
+          height={`${ICON_SIZE}px`}
+          width={`${ICON_SIZE}px`}
+          onClick={() => {
+            canvas.clear()
+            canvas.setBackgroundColor(backgroundColor, () => {
+              sendDataToStreamlit(canvas)
+            })
+          }}
+        />
       </div>
     </div>
   )

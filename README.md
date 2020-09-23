@@ -107,5 +107,7 @@ streamlit run app.py
 - [Simulate Retina display](https://stackoverflow.com/questions/12243549/how-to-test-a-webpage-meant-for-retina-display)
 - [High DPI Canvas](https://www.html5rocks.com/en/tutorials/canvas/hidpi/)
 - [Drawing with FabricJS and TypeScript Part 2: Straight Lines](https://exceptionnotfound.net/drawing-with-fabricjs-and-typescript-part-2-straight-lines/)
+- [Drawing with FabricJS and TypeScript Part 7: Undo/Redo](https://exceptionnotfound.net/drawing-with-fabricjs-and-typescript-part-7-undo-redo/)
 - [Types for classes as values in TypeScript](https://2ality.com/2020/04/classes-as-values-typescript.html)
 - [Working with iframes in Cypress](https://www.cypress.io/blog/2020/02/12/working-with-iframes-in-cypress/)
+- Icons by [Freepik](https://www.flaticon.com/authors/freepik) and [Google](https://www.flaticon.com/authors/google).
