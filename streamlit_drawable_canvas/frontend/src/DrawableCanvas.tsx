@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useReducer } from "react"
 import {
   ComponentProps,
   Streamlit,
@@ -56,6 +56,10 @@ export function sendDataToStreamlit(canvas: fabric.Canvas): void {
  * Define logic for the canvas area
  */
 const DrawableCanvas = ({ args }: ComponentProps) => {
+  const GAP_BETWEEN_ICONS = 2
+  const ICON_SIZE = 16
+  const HISTORY_MAX_COUNT = 100
+
   const {
     canvasWidth,
     canvasHeight,
@@ -64,10 +68,62 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     updateStreamlit,
     drawingMode,
   }: PythonArgs = args
+
   const [canvas, setCanvas] = useState(new fabric.Canvas(""))
   const [backgroundCanvas, setBackgroundCanvas] = useState(
     new fabric.StaticCanvas("")
   )
+
+  /**
+   * Initialize History
+   */
+  const historyReducer = (history: any, action: any) => {
+    switch (action.type) {
+      case "save":
+        history.redoStack = []
+        if (history.currentState) {
+          history.undoStack.push(history.currentState)
+        }
+        if (history.undoStack.length >= HISTORY_MAX_COUNT) {
+          history.undoStack.shift()
+        }
+        history.currentState = action.state
+        return history
+      case "undo":
+        if (history.currentState) {
+          history.redoStack.push(history.currentState)
+          if (history.undoStack.length === 0) history.currentState = null
+        }
+        if (history.undoStack.length > 0) {
+          const previousState = history.undoStack.pop()
+          history.currentState = previousState
+          canvas.loadFromJSON(previousState, () => {
+            sendDataToStreamlit(canvas)
+            return history
+          })
+        }
+        return history
+      case "redo":
+        if (history.redoStack.length > 0) {
+          if (history.currentState) history.undoStack.push(history.currentState)
+          const previousState = history.redoStack.pop()
+          history.currentState = previousState
+          canvas.loadFromJSON(previousState, () => {
+            sendDataToStreamlit(canvas)
+          })
+        }
+        return history
+      case "reset":
+        return { undoStack: [], redoStack: [], currentState: action.state }
+      default:
+        throw new Error()
+    }
+  }
+  const [history, dispatchHistory] = useReducer(historyReducer, {
+    undoStack: [],
+    redoStack: [],
+    currentState: null,
+  })
 
   /**
    * Initialize canvases on component mount
@@ -93,6 +149,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       return
     }
 
+    // Set backgrounds on canvases
     canvas.setBackgroundColor(backgroundColor, () => {
       if (backgroundImage) {
         const imageData = backgroundCanvas
@@ -118,6 +175,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
 
     // Define events to send data back to Streamlit
     const handleSendToStreamlit = () => {
+      dispatchHistory({ type: "save", state: canvas.toJSON() })
       sendDataToStreamlit(canvas)
     }
     const eventsSendToStreamlit = updateStreamlit
@@ -141,9 +199,6 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       )
     }
   })
-
-  const GAP = 1
-  const ICON_SIZE = 16
 
   return (
     <div style={{ position: "relative" }}>
@@ -176,33 +231,41 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         style={{
           position: "absolute",
           display: "flex",
-          gap: GAP,
-          top: canvasHeight - ICON_SIZE,
+          gap: GAP_BETWEEN_ICONS,
+          top: canvasHeight + 3,
           left: canvasWidth - 3 * ICON_SIZE,
           zIndex: 20,
         }}
       >
         <img
           src={undo}
+          style={{ cursor: "pointer" }}
           alt="Undo"
           height={`${ICON_SIZE}px`}
           width={`${ICON_SIZE}px`}
+          onClick={() => dispatchHistory({ type: "undo" })}
         />
         <img
           src={undo}
-          style={{ transform: "scaleX(-1)" }}
+          style={{
+            transform: "scaleX(-1)",
+            cursor: "pointer",
+          }}
           alt="Redo"
           height={`${ICON_SIZE}px`}
           width={`${ICON_SIZE}px`}
+          onClick={() => dispatchHistory({ type: "redo" })}
         />
         <img
           src={bin}
+          style={{ cursor: "pointer" }}
           alt="Delete"
           height={`${ICON_SIZE}px`}
           width={`${ICON_SIZE}px`}
           onClick={() => {
             canvas.clear()
             canvas.setBackgroundColor(backgroundColor, () => {
+              dispatchHistory({ type: "reset" })
               sendDataToStreamlit(canvas)
             })
           }}
