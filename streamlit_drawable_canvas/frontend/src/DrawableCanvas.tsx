@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useReducer } from "react"
+import React, { useEffect, useState } from "react"
 import {
   ComponentProps,
   Streamlit,
@@ -12,6 +12,7 @@ import FreedrawTool from "./lib/freedraw"
 import LineTool from "./lib/line"
 import RectTool from "./lib/rect"
 import TransformTool from "./lib/transform"
+import useHistory from "./lib/history"
 
 import bin from "./img/bin.png"
 import undo from "./img/undo.png"
@@ -58,7 +59,6 @@ export function sendDataToStreamlit(canvas: fabric.Canvas): void {
 const DrawableCanvas = ({ args }: ComponentProps) => {
   const GAP_BETWEEN_ICONS = 2
   const ICON_SIZE = 16
-  const HISTORY_MAX_COUNT = 100
 
   const {
     canvasWidth,
@@ -73,57 +73,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   const [backgroundCanvas, setBackgroundCanvas] = useState(
     new fabric.StaticCanvas("")
   )
-
-  /**
-   * Initialize History
-   */
-  const historyReducer = (history: any, action: any) => {
-    switch (action.type) {
-      case "save":
-        history.redoStack = []
-        if (history.currentState) {
-          history.undoStack.push(history.currentState)
-        }
-        if (history.undoStack.length >= HISTORY_MAX_COUNT) {
-          history.undoStack.shift()
-        }
-        history.currentState = action.state
-        return history
-      case "undo":
-        if (history.currentState) {
-          history.redoStack.push(history.currentState)
-          if (history.undoStack.length === 0) history.currentState = null
-        }
-        if (history.undoStack.length > 0) {
-          const previousState = history.undoStack.pop()
-          history.currentState = previousState
-          canvas.loadFromJSON(previousState, () => {
-            sendDataToStreamlit(canvas)
-            return history
-          })
-        }
-        return history
-      case "redo":
-        if (history.redoStack.length > 0) {
-          if (history.currentState) history.undoStack.push(history.currentState)
-          const previousState = history.redoStack.pop()
-          history.currentState = previousState
-          canvas.loadFromJSON(previousState, () => {
-            sendDataToStreamlit(canvas)
-          })
-        }
-        return history
-      case "reset":
-        return { undoStack: [], redoStack: [], currentState: action.state }
-      default:
-        throw new Error()
-    }
-  }
-  const [history, dispatchHistory] = useReducer(historyReducer, {
-    undoStack: [],
-    redoStack: [],
-    currentState: null,
-  })
+  const { history, dispatchHistory } = useHistory()
 
   /**
    * Initialize canvases on component mount
@@ -243,7 +193,12 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           alt="Undo"
           height={`${ICON_SIZE}px`}
           width={`${ICON_SIZE}px`}
-          onClick={() => dispatchHistory({ type: "undo" })}
+          onClick={() => {
+            dispatchHistory({ type: "undo" })
+            canvas.loadFromJSON(history.currentState, () => {
+              sendDataToStreamlit(canvas)
+            })
+          }}
         />
         <img
           src={undo}
@@ -254,7 +209,12 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           alt="Redo"
           height={`${ICON_SIZE}px`}
           width={`${ICON_SIZE}px`}
-          onClick={() => dispatchHistory({ type: "redo" })}
+          onClick={() => {
+            dispatchHistory({ type: "redo" })
+            canvas.loadFromJSON(history.currentState, () => {
+              sendDataToStreamlit(canvas)
+            })
+          }}
         />
         <img
           src={bin}
