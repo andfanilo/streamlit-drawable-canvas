@@ -6,6 +6,8 @@ import {
 } from "streamlit-component-lib"
 import { fabric } from "fabric"
 
+import CanvasToolbar from "./components/CanvasToolbar"
+
 import CircleTool from "./lib/circle"
 import FabricTool from "./lib/fabrictool"
 import FreedrawTool from "./lib/freedraw"
@@ -13,9 +15,6 @@ import LineTool from "./lib/line"
 import RectTool from "./lib/rect"
 import TransformTool from "./lib/transform"
 import useHistory from "./lib/history"
-
-import bin from "./img/bin.png"
-import undo from "./img/undo.png"
 
 /**
  * Arguments Streamlit receives from the Python side
@@ -57,9 +56,6 @@ export function sendDataToStreamlit(canvas: fabric.Canvas): void {
  * Define logic for the canvas area
  */
 const DrawableCanvas = ({ args }: ComponentProps) => {
-  const GAP_BETWEEN_ICONS = 2
-  const ICON_SIZE = 16
-
   const {
     canvasWidth,
     canvasHeight,
@@ -177,60 +173,29 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           style={{ border: "lightgrey 1px solid" }}
         />
       </div>
-      <div
-        style={{
-          position: "absolute",
-          display: "flex",
-          gap: GAP_BETWEEN_ICONS,
-          top: canvasHeight + 3,
-          left: canvasWidth - 3 * ICON_SIZE,
-          zIndex: 20,
+      <CanvasToolbar
+        topPosition={canvasHeight}
+        leftPosition={canvasWidth}
+        undoCallback={() => {
+          dispatchHistory({ type: "undo" })
+          canvas.loadFromJSON(history.currentState, () => {
+            sendDataToStreamlit(canvas)
+          })
         }}
-      >
-        <img
-          src={undo}
-          style={{ cursor: "pointer" }}
-          alt="Undo"
-          height={`${ICON_SIZE}px`}
-          width={`${ICON_SIZE}px`}
-          onClick={() => {
-            dispatchHistory({ type: "undo" })
-            canvas.loadFromJSON(history.currentState, () => {
-              sendDataToStreamlit(canvas)
-            })
-          }}
-        />
-        <img
-          src={undo}
-          style={{
-            transform: "scaleX(-1)",
-            cursor: "pointer",
-          }}
-          alt="Redo"
-          height={`${ICON_SIZE}px`}
-          width={`${ICON_SIZE}px`}
-          onClick={() => {
-            dispatchHistory({ type: "redo" })
-            canvas.loadFromJSON(history.currentState, () => {
-              sendDataToStreamlit(canvas)
-            })
-          }}
-        />
-        <img
-          src={bin}
-          style={{ cursor: "pointer" }}
-          alt="Delete"
-          height={`${ICON_SIZE}px`}
-          width={`${ICON_SIZE}px`}
-          onClick={() => {
-            canvas.clear()
-            canvas.setBackgroundColor(backgroundColor, () => {
-              dispatchHistory({ type: "reset" })
-              sendDataToStreamlit(canvas)
-            })
-          }}
-        />
-      </div>
+        redoCallback={() => {
+          dispatchHistory({ type: "redo" })
+          canvas.loadFromJSON(history.currentState, () => {
+            sendDataToStreamlit(canvas)
+          })
+        }}
+        resetCallback={() => {
+          canvas.clear()
+          canvas.setBackgroundColor(backgroundColor, () => {
+            dispatchHistory({ type: "reset" })
+            sendDataToStreamlit(canvas)
+          })
+        }}
+      />
     </div>
   )
 }

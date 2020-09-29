@@ -5,11 +5,16 @@ const HISTORY_MAX_COUNT = 100
 interface History {
   undoStack: Array<Object>
   redoStack: Array<Object>
-  currentState: Object
+  currentState?: Object
+}
+
+interface Action {
+  type: "save" | "undo" | "redo" | "reset"
+  state?: Object
 }
 
 const useHistory = () => {
-  const historyReducer = (history: any, action: any) => {
+  const historyReducer = (history: History, action: Action) => {
     switch (action.type) {
       case "save":
         history.redoStack = []
@@ -24,7 +29,7 @@ const useHistory = () => {
       case "undo":
         if (history.currentState) {
           history.redoStack.push(history.currentState)
-          if (history.undoStack.length === 0) history.currentState = null
+          if (history.undoStack.length === 0) history.currentState = undefined
         }
         if (history.undoStack.length > 0) {
           const previousState = history.undoStack.pop()
@@ -50,7 +55,7 @@ const useHistory = () => {
   const [history, dispatchHistory] = useReducer(historyReducer, {
     undoStack: [],
     redoStack: [],
-    currentState: null,
+    currentState: undefined,
   })
 
   return { history, dispatchHistory }
