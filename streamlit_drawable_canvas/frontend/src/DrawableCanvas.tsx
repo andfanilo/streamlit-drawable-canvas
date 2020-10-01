@@ -8,6 +8,7 @@ import { fabric } from "fabric"
 
 import CanvasToolbar from "./components/CanvasToolbar"
 
+import sendDataToStreamlit from "./lib/streamlit"
 import CircleTool from "./lib/circle"
 import FabricTool from "./lib/fabrictool"
 import FreedrawTool from "./lib/freedraw"
@@ -15,9 +16,6 @@ import LineTool from "./lib/line"
 import RectTool from "./lib/rect"
 import TransformTool from "./lib/transform"
 import useHistory from "./lib/history"
-
-import bin from "./img/bin.png"
-import undo from "./img/undo.png"
 
 /**
  * Arguments Streamlit receives from the Python side
@@ -36,23 +34,6 @@ export interface PythonArgs {
 
 interface Tools {
   [key: string]: FabricTool
-}
-
-/**
- * Download image and JSON data from canvas to send back to Streamlit
- */
-export function sendDataToStreamlit(canvas: fabric.Canvas): void {
-  canvas.renderAll()
-  const imageData = canvas
-    .getContext()
-    .getImageData(0, 0, canvas.getWidth(), canvas.getHeight())
-  const data = Array.from(imageData["data"])
-  Streamlit.setComponentValue({
-    data: data,
-    width: imageData["width"],
-    height: imageData["height"],
-    raw: canvas.toObject(),
-  })
 }
 
 /**
@@ -125,17 +106,15 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     // Define events to send data back to Streamlit
     const handleSendToStreamlit = () => {
       dispatchHistory({ type: "save", state: canvas.toJSON() })
-      sendDataToStreamlit(canvas)
+      if (updateStreamlit) sendDataToStreamlit(canvas)
     }
-    const eventsSendToStreamlit = updateStreamlit
-      ? [
-          "mouse:up",
-          "selection:cleared",
-          "selection:updated",
-          "object:removed",
-          "object:modified",
-        ]
-      : []
+    const eventsSendToStreamlit = [
+      "mouse:up",
+      "selection:cleared",
+      "selection:updated",
+      "object:removed",
+      "object:modified",
+    ]
     eventsSendToStreamlit.forEach((event) =>
       canvas.on(event, handleSendToStreamlit)
     )
@@ -148,9 +127,6 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       )
     }
   })
-
-  const GAP = 1
-  const ICON_SIZE = 16
 
   return (
     <div style={{ position: "relative" }}>
@@ -185,20 +161,20 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         undoCallback={() => {
           dispatchHistory({ type: "undo" })
           canvas.loadFromJSON(history.currentState, () => {
-            sendDataToStreamlit(canvas)
+            if (updateStreamlit) sendDataToStreamlit(canvas)
           })
         }}
         redoCallback={() => {
           dispatchHistory({ type: "redo" })
           canvas.loadFromJSON(history.currentState, () => {
-            sendDataToStreamlit(canvas)
+            if (updateStreamlit) sendDataToStreamlit(canvas)
           })
         }}
         resetCallback={() => {
           canvas.clear()
           canvas.setBackgroundColor(backgroundColor, () => {
             dispatchHistory({ type: "reset" })
-            sendDataToStreamlit(canvas)
+            if (updateStreamlit) sendDataToStreamlit(canvas)
           })
         }}
       />
