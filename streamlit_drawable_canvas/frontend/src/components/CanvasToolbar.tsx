@@ -25,6 +25,7 @@ const SquareIcon = ({
       cursor: "pointer",
     }}
     alt={altText}
+    title={altText}
     height={`${size}px`}
     width={`${size}px`}
     onClick={clickCallback}
@@ -67,7 +68,7 @@ const CanvasToolbar = ({
     },
     {
       imgUrl: bin,
-      altText: "Reset",
+      altText: "Reset canvas & history",
       invertX: false,
       clickCallback: resetCallback,
     },
