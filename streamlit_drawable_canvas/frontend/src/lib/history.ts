@@ -1,4 +1,5 @@
 import { useReducer } from "react"
+import { isEqual } from "lodash"
 
 const HISTORY_MAX_COUNT = 100
 
@@ -17,6 +18,7 @@ const useHistory = () => {
   const historyReducer = (history: History, action: Action) => {
     switch (action.type) {
       case "save":
+        if (isEqual(history.currentState, action.state)) return history
         history.redoStack = []
         if (history.currentState) {
           history.undoStack.push(history.currentState)
