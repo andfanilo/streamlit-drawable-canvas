@@ -79,7 +79,6 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       return
     }
 
-    // Set backgrounds on canvases
     canvas.setBackgroundColor(backgroundColor, () => {
       if (backgroundImage) {
         const imageData = backgroundCanvas
@@ -88,9 +87,27 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         imageData.data.set(backgroundImage)
         backgroundCanvas.getContext().putImageData(imageData, 0, 0)
       }
-      sendDataToStreamlit(canvas) // send back in case update prop reran the effect
+      canvas.renderAll()
+      if (updateStreamlit) sendDataToStreamlit(canvas) // send back in case update prop reran the effect
     })
     Streamlit.setFrameHeight()
+  }, [
+    canvas,
+    backgroundCanvas,
+    canvasHeight,
+    canvasWidth,
+    backgroundColor,
+    backgroundImage,
+    updateStreamlit,
+  ])
+
+  /**
+   * Update canvas with selected tool
+   */
+  useEffect(() => {
+    if (!canvas) {
+      return
+    }
 
     // Update canvas events with selected tool
     const tools: Tools = {
