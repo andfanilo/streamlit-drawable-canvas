@@ -11,6 +11,7 @@ Streamlit component which provides a sketching canvas using [Fabric.js](http://f
 - Select a background color or image to draw on
 - Get image data and every drawn object properties back to Streamlit !
 - Choose to fetch back data in realtime or on demand
+- Undo, Redo or Drop canvas
 
 ## Installation
 
@@ -110,4 +111,6 @@ streamlit run app.py
 - [Drawing with FabricJS and TypeScript Part 7: Undo/Redo](https://exceptionnotfound.net/drawing-with-fabricjs-and-typescript-part-7-undo-redo/)
 - [Types for classes as values in TypeScript](https://2ality.com/2020/04/classes-as-values-typescript.html)
 - [Working with iframes in Cypress](https://www.cypress.io/blog/2020/02/12/working-with-iframes-in-cypress/)
+- [How to use useReducer in React Hooks for performance optimization](https://medium.com/crowdbotics/how-to-use-usereducer-in-react-hooks-for-performance-optimization-ecafca9e7bf5)
+- [Understanding React Default Props](https://blog.bitsrc.io/understanding-react-default-props-5c50401ed37d)
 - Icons by [Freepik](https://www.flaticon.com/authors/freepik) and [Google](https://www.flaticon.com/authors/google).
