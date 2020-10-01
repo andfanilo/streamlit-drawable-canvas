@@ -23,7 +23,6 @@ drawing_mode = st.sidebar.selectbox(
     "Drawing tool:", ("freedraw", "line", "rect", "circle", "transform")
 )
 realtime_update = st.sidebar.checkbox("Update in realtime?", True)
-update_button = False
 
 
 # Create a canvas component
