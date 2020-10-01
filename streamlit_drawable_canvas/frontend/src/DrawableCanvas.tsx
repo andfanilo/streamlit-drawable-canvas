@@ -6,12 +6,15 @@ import {
 } from "streamlit-component-lib"
 import { fabric } from "fabric"
 
+import CanvasToolbar from "./components/CanvasToolbar"
+
 import CircleTool from "./lib/circle"
 import FabricTool from "./lib/fabrictool"
 import FreedrawTool from "./lib/freedraw"
 import LineTool from "./lib/line"
 import RectTool from "./lib/rect"
 import TransformTool from "./lib/transform"
+import useHistory from "./lib/history"
 
 /**
  * Arguments Streamlit receives from the Python side
@@ -61,10 +64,12 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     updateStreamlit,
     drawingMode,
   }: PythonArgs = args
+
   const [canvas, setCanvas] = useState(new fabric.Canvas(""))
   const [backgroundCanvas, setBackgroundCanvas] = useState(
     new fabric.StaticCanvas("")
   )
+  const { history, dispatchHistory } = useHistory()
 
   /**
    * Initialize canvases on component mount
@@ -90,6 +95,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       return
     }
 
+    // Set backgrounds on canvases
     canvas.setBackgroundColor(backgroundColor, () => {
       if (backgroundImage) {
         const imageData = backgroundCanvas
@@ -115,6 +121,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
 
     // Define events to send data back to Streamlit
     const handleSendToStreamlit = () => {
+      dispatchHistory({ type: "save", state: canvas.toJSON() })
       sendDataToStreamlit(canvas)
     }
     const eventsSendToStreamlit = updateStreamlit
@@ -159,8 +166,36 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           zIndex: 10,
         }}
       >
-        <canvas id="c" width={canvasWidth} height={canvasHeight} />
+        <canvas
+          id="c"
+          width={canvasWidth}
+          height={canvasHeight}
+          style={{ border: "lightgrey 1px solid" }}
+        />
       </div>
+      <CanvasToolbar
+        topPosition={canvasHeight}
+        leftPosition={canvasWidth}
+        undoCallback={() => {
+          dispatchHistory({ type: "undo" })
+          canvas.loadFromJSON(history.currentState, () => {
+            sendDataToStreamlit(canvas)
+          })
+        }}
+        redoCallback={() => {
+          dispatchHistory({ type: "redo" })
+          canvas.loadFromJSON(history.currentState, () => {
+            sendDataToStreamlit(canvas)
+          })
+        }}
+        resetCallback={() => {
+          canvas.clear()
+          canvas.setBackgroundColor(backgroundColor, () => {
+            dispatchHistory({ type: "reset" })
+            sendDataToStreamlit(canvas)
+          })
+        }}
+      />
     </div>
   )
 }
