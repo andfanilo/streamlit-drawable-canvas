@@ -72,7 +72,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   }, [canvasHeight, canvasWidth])
 
   /**
-   * Update canvas with background and selected tool
+   * Update canvas with background.
    * Then send back data to Streamlit
    */
   useEffect(() => {
@@ -89,7 +89,8 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         backgroundCanvas.getContext().putImageData(imageData, 0, 0)
       }
       canvas.renderAll()
-      if (updateStreamlit) sendDataToStreamlit(canvas) // send back in case update prop reran the effect
+      dispatchHistory({ type: "save", state: canvas.toJSON() })
+      if (updateStreamlit) sendDataToStreamlit(canvas)
     })
     Streamlit.setFrameHeight()
   }, [

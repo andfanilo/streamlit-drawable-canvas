@@ -24,8 +24,6 @@ drawing_mode = st.sidebar.selectbox(
 )
 realtime_update = st.sidebar.checkbox("Update in realtime?", True)
 update_button = False
-if not realtime_update:
-    update_button = st.sidebar.button('Send data to Streamlit')
 
 
 # Create a canvas component
