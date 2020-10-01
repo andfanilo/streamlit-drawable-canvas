@@ -32,6 +32,7 @@ export interface PythonArgs {
   drawingMode: string
 }
 
+// Make TS happy on the Map of selectedTool --> FabricTool
 interface Tools {
   [key: string]: FabricTool
 }
