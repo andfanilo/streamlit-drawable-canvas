@@ -42,7 +42,7 @@ const useHistory = () => {
   const historyReducer = (history: History, action: Action) => {
     switch (action.type) {
       case "save":
-        if (!action.state) throw "No action state to save"
+        if (!action.state) throw new Error("No action state to save")
         if (history.initialState == null)
           history.initialState = history.currentState
         if (isEqual(action.state, history.currentState)) return history
@@ -79,7 +79,7 @@ const useHistory = () => {
         }
         return history
       case "reset":
-        if (!action.state) throw "No action state to store in reset"
+        if (!action.state) throw new Error("No action state to store in reset")
         return {
           undoStack: [],
           redoStack: [],
