@@ -92,6 +92,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       dispatchHistory({ type: "save", state: canvas.toJSON() })
       if (updateStreamlit) sendDataToStreamlit(canvas)
     })
+
     Streamlit.setFrameHeight()
   }, [
     canvas,
@@ -148,6 +149,9 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     }
   })
 
+  /**
+   * Render canvas w/ toolbar
+   */
   return (
     <div style={{ position: "relative" }}>
       <div
@@ -193,7 +197,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         resetCallback={() => {
           canvas.clear()
           canvas.setBackgroundColor(backgroundColor, () => {
-            dispatchHistory({ type: "reset" })
+            dispatchHistory({ type: "reset", state: canvas.toJSON() })
             if (updateStreamlit) sendDataToStreamlit(canvas)
           })
         }}
