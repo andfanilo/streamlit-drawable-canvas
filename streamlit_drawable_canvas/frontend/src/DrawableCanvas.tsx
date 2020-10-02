@@ -101,6 +101,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     backgroundColor,
     backgroundImage,
     updateStreamlit,
+    dispatchHistory,
   ])
 
   /**

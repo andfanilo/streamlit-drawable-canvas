@@ -1,5 +1,7 @@
 import React from "react"
 
+import styles from "./CanvasToolbar.module.css"
+
 import bin from "../img/bin.png"
 import undo from "../img/undo.png"
 
@@ -20,10 +22,7 @@ const SquareIcon = ({
 }: SquareIconProps) => (
   <img
     src={imgUrl}
-    style={{
-      transform: invertX ? "scaleX(1)" : "scaleX(-1)",
-      cursor: "pointer",
-    }}
+    className={`${styles.icon} ${invertX ? "" : styles.invertx}`}
     alt={altText}
     title={altText}
     height={`${size}px`}
@@ -77,12 +76,12 @@ const CanvasToolbar = ({
   return (
     <div
       style={{
-        top: topPosition + 3,
-        left: leftPosition - 3 * ICON_SIZE,
-        zIndex: 20,
         position: "absolute",
+        top: topPosition + 3,
+        left: leftPosition - 3 * ICON_SIZE - 2 * GAP_BETWEEN_ICONS,
         display: "flex",
         gap: GAP_BETWEEN_ICONS,
+        zIndex: 20,
       }}
     >
       {iconElements.map((e) => (
