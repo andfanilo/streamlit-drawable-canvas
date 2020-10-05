@@ -8,7 +8,6 @@ import { fabric } from "fabric"
 
 import CanvasToolbar from "./components/CanvasToolbar"
 
-import sendDataToStreamlit from "./lib/streamlit"
 import CircleTool from "./lib/circle"
 import FabricTool from "./lib/fabrictool"
 import FreedrawTool from "./lib/freedraw"
@@ -54,7 +53,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   const [backgroundCanvas, setBackgroundCanvas] = useState(
     new fabric.StaticCanvas("")
   )
-  const { history, dispatchHistory } = useHistory()
+  const { history, dispatchHistory } = useHistory(canvas)
 
   /**
    * Initialize canvases on component mount
@@ -89,8 +88,11 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         backgroundCanvas.getContext().putImageData(imageData, 0, 0)
       }
       canvas.renderAll()
-      dispatchHistory({ type: "save", state: canvas.toJSON() })
-      if (updateStreamlit) sendDataToStreamlit(canvas)
+      dispatchHistory({
+        type: "save",
+        state: canvas.toJSON(),
+        updateStreamlit: updateStreamlit,
+      })
     })
 
     Streamlit.setFrameHeight()
@@ -126,8 +128,11 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
 
     // Define events to send data back to Streamlit
     const handleSendToStreamlit = () => {
-      dispatchHistory({ type: "save", state: canvas.toJSON() })
-      if (updateStreamlit) sendDataToStreamlit(canvas)
+      dispatchHistory({
+        type: "save",
+        state: canvas.toJSON(),
+        updateStreamlit: updateStreamlit,
+      })
     }
     const eventsSendToStreamlit = [
       "mouse:up",
@@ -183,22 +188,19 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         topPosition={canvasHeight}
         leftPosition={canvasWidth}
         undoCallback={() => {
-          dispatchHistory({ type: "undo" })
-          canvas.loadFromJSON(history.currentState, () => {
-            if (updateStreamlit) sendDataToStreamlit(canvas)
-          })
+          dispatchHistory({ type: "undo", updateStreamlit: updateStreamlit })
         }}
         redoCallback={() => {
-          dispatchHistory({ type: "redo" })
-          canvas.loadFromJSON(history.currentState, () => {
-            if (updateStreamlit) sendDataToStreamlit(canvas)
-          })
+          dispatchHistory({ type: "redo", updateStreamlit: updateStreamlit })
         }}
         resetCallback={() => {
           canvas.clear()
           canvas.setBackgroundColor(backgroundColor, () => {
-            dispatchHistory({ type: "reset", state: canvas.toJSON() })
-            if (updateStreamlit) sendDataToStreamlit(canvas)
+            dispatchHistory({
+              type: "reset",
+              state: canvas.toJSON(),
+              updateStreamlit: updateStreamlit,
+            })
           })
         }}
       />

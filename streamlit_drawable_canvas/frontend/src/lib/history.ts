@@ -1,21 +1,24 @@
 import { useReducer } from "react"
-import { isEqual } from "lodash"
+import { isEmpty, isEqual } from "lodash"
+
+import sendDataToStreamlit from "./streamlit"
 
 const HISTORY_MAX_COUNT = 100
 
 interface History {
-  undoStack: Array<Object>
-  redoStack: Array<Object>
-  initialState?: Object
-  currentState?: Object
+  undoStack: Object[]
+  redoStack: Object[]
+  initialState: Object
+  currentState: Object
 }
 
 interface Action {
   type: "save" | "undo" | "redo" | "reset"
   state?: Object
+  updateStreamlit: boolean
 }
 
-const useHistory = () => {
+const useHistory = (canvas: fabric.Canvas) => {
   /**
    * Reducer takes 4 actions: save, undo, redo, reset
    *
@@ -39,47 +42,80 @@ const useHistory = () => {
    * - Pop state from redoStack into current state
    *
    */
-  const historyReducer = (history: History, action: Action) => {
+  const historyReducer = (history: History, action: Action): History => {
     switch (action.type) {
       case "save":
         if (!action.state) throw new Error("No action state to save")
-        if (history.initialState == null)
-          history.initialState = history.currentState
-        if (isEqual(action.state, history.currentState)) return history
-        history.redoStack = []
-        if (history.currentState) {
-          history.undoStack.push(history.currentState)
+        else if (isEmpty(history.currentState)) {
+          sendDataToStreamlit(canvas)
+          return {
+            undoStack: [],
+            redoStack: [],
+            initialState: action.state,
+            currentState: action.state,
+          }
+        } else if (isEqual(action.state, history.currentState))
+          return { ...history }
+        else {
+          const undoOverHistoryMaxCount =
+            history.undoStack.length >= HISTORY_MAX_COUNT
+          const res = {
+            undoStack: [
+              ...history.undoStack.slice(undoOverHistoryMaxCount ? 1 : 0),
+              history.currentState,
+            ],
+            redoStack: [],
+            initialState:
+              history.initialState == null
+                ? history.currentState
+                : history.initialState,
+            currentState: action.state,
+          }
+          console.log("Before Save ", history)
+          console.log("After Save ", res)
+          if (action.updateStreamlit) sendDataToStreamlit(canvas)
+          return res
         }
-        if (history.undoStack.length >= HISTORY_MAX_COUNT) {
-          history.undoStack.shift()
-        }
-        history.currentState = action.state
-        return history
       case "undo":
         if (
-          history.currentState &&
-          !isEqual(history.initialState, history.currentState)
+          isEmpty(history.currentState) ||
+          isEqual(history.initialState, history.currentState)
         ) {
-          history.redoStack.push(history.currentState)
-          if (history.undoStack.length === 0)
-            history.currentState = history.initialState
+          return { ...history }
+        } else {
+          const isUndoEmpty = history.undoStack.length === 0
+          const res = {
+            undoStack: history.undoStack.slice(0, -1),
+            redoStack: [...history.redoStack, history.currentState],
+            initialState: history.initialState,
+            currentState: isUndoEmpty
+              ? history.currentState
+              : history.undoStack.slice(-1),
+          }
+          console.log("Before Undo ", history)
+          console.log("After Undo ", res)
+          updateCanvas(res.currentState, action.updateStreamlit)
+          return res
         }
-        if (history.undoStack.length > 0) {
-          const previousState = history.undoStack.pop()
-          history.currentState = previousState
-          return history
-        }
-        return history
       case "redo":
         if (history.redoStack.length > 0) {
-          if (history.currentState) history.undoStack.push(history.currentState)
-          const previousState = history.redoStack.pop()
-          history.currentState = previousState
-          return history
+          // TODO: test currentState empty too ?
+          const res = {
+            undoStack: [...history.undoStack, history.currentState],
+            redoStack: history.redoStack.slice(0, -1),
+            initialState: history.initialState,
+            currentState: history.redoStack.slice(-1),
+          }
+          console.log("Before Redo ", history)
+          console.log("After Redo ", res)
+          updateCanvas(res.currentState, action.updateStreamlit)
+          return res
+        } else {
+          return { ...history }
         }
-        return history
       case "reset":
         if (!action.state) throw new Error("No action state to store in reset")
+        if (action.updateStreamlit) sendDataToStreamlit(canvas)
         return {
           undoStack: [],
           redoStack: [],
@@ -91,11 +127,17 @@ const useHistory = () => {
     }
   }
 
+  const updateCanvas = (newState: Object, updateStreamlit: boolean) => {
+    canvas.loadFromJSON(newState, () => {
+      if (updateStreamlit) sendDataToStreamlit(canvas)
+    })
+  }
+
   const [history, dispatchHistory] = useReducer(historyReducer, {
     undoStack: [],
     redoStack: [],
-    initialState: undefined,
-    currentState: undefined,
+    initialState: {},
+    currentState: {},
   })
 
   return { history, dispatchHistory }
