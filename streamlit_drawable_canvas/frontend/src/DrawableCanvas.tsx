@@ -60,7 +60,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   )
   const [stCanvas, setStCanvas] = useState(new fabric.Canvas(""))
   const {
-    canvasState: { currentState },
+    canvasState: { reloadState, currentState },
     dispatch,
   } = useCanvasState()
 
@@ -87,11 +87,15 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
    * If state changed, send data to Streamlit and update canvas
    */
   useEffect(() => {
-    stCanvas.loadFromJSON(currentState, () => {
-      if (updateStreamlit) sendDataToStreamlit(stCanvas)
-    })
-    canvas.loadFromJSON(currentState, () => {})
-  }, [canvas, stCanvas, updateStreamlit, currentState])
+    if (updateStreamlit) {
+      stCanvas.loadFromJSON(currentState, () => {
+        sendDataToStreamlit(stCanvas)
+      })
+    }
+    if (reloadState) {
+      canvas.loadFromJSON(currentState, () => {})
+    }
+  }, [canvas, stCanvas, reloadState, updateStreamlit, currentState])
 
   /**
    * Update background color

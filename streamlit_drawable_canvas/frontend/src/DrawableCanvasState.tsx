@@ -6,6 +6,7 @@ const HISTORY_MAX_COUNT = 100
 export interface CanvasState {
   undoStack: Object[]
   redoStack: Object[]
+  reloadState: boolean
   initialState: Object
   currentState: Object
 }
@@ -37,6 +38,7 @@ interface Action {
  * On redo:
  * - Pop state from redoStack into current state
  *
+ * For undo/redo/reset, set reloadState to inject currentState into user facing canvas
  */
 const canvasStateReducer = (
   state: CanvasState,
@@ -49,10 +51,12 @@ const canvasStateReducer = (
         return {
           undoStack: [],
           redoStack: [],
+          reloadState: false,
           initialState: action.state,
           currentState: action.state,
         }
-      } else if (isEqual(action.state, state.currentState)) return { ...state }
+      } else if (isEqual(action.state, state.currentState))
+        return { ...state, reloadState: false }
       else {
         const undoOverHistoryMaxCount =
           state.undoStack.length >= HISTORY_MAX_COUNT
@@ -62,6 +66,7 @@ const canvasStateReducer = (
             state.currentState,
           ],
           redoStack: [],
+          reloadState: false,
           initialState:
             state.initialState == null
               ? state.currentState
@@ -75,12 +80,13 @@ const canvasStateReducer = (
         isEmpty(state.currentState) ||
         isEqual(state.initialState, state.currentState)
       ) {
-        return { ...state }
+        return { ...state, reloadState: false }
       } else {
         const isUndoEmpty = state.undoStack.length === 0
         const res = {
           undoStack: state.undoStack.slice(0, -1),
           redoStack: [...state.redoStack, state.currentState],
+          reloadState: true,
           initialState: state.initialState,
           currentState: isUndoEmpty
             ? state.currentState
@@ -94,18 +100,20 @@ const canvasStateReducer = (
         const res = {
           undoStack: [...state.undoStack, state.currentState],
           redoStack: state.redoStack.slice(0, -1),
+          reloadState: true,
           initialState: state.initialState,
           currentState: state.redoStack[state.redoStack.length - 1],
         }
         return res
       } else {
-        return { ...state }
+        return { ...state, reloadState: false }
       }
     case "reset":
       if (!action.state) throw new Error("No action state to store in reset")
       return {
         undoStack: [],
         redoStack: [],
+        reloadState: true,
         initialState: action.state,
         currentState: action.state,
       }
@@ -117,6 +125,7 @@ const canvasStateReducer = (
 const initialState: CanvasState = {
   undoStack: [],
   redoStack: [],
+  reloadState: false,
   initialState: {},
   currentState: {},
 }
