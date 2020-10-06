@@ -110,4 +110,6 @@ streamlit run app.py
 - [Working with iframes in Cypress](https://www.cypress.io/blog/2020/02/12/working-with-iframes-in-cypress/)
 - [How to use useReducer in React Hooks for performance optimization](https://medium.com/crowdbotics/how-to-use-usereducer-in-react-hooks-for-performance-optimization-ecafca9e7bf5)
 - [Understanding React Default Props](https://blog.bitsrc.io/understanding-react-default-props-5c50401ed37d)
+- [How to avoid passing callbacks down?](https://reactjs.org/docs/hooks-faq.html#how-to-avoid-passing-callbacks-down)
+- [Examples of the useReducer Hook](https://daveceddia.com/usereducer-hook-examples/) The `useRef` hook allows you to create a persistent ref to a DOM node, or really to any value. React will persist this value between re-renders (between calls to your component function).
 - Icons by [Freepik](https://www.flaticon.com/authors/freepik) and [Google](https://www.flaticon.com/authors/google).
