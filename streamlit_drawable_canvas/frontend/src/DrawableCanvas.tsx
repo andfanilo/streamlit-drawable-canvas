@@ -6,16 +6,16 @@ import {
 } from "streamlit-component-lib"
 import { fabric } from "fabric"
 
+import { useCanvasState } from "./DrawableCanvasState"
 import CanvasToolbar from "./components/CanvasToolbar"
 
-import sendDataToStreamlit from "./lib/streamlit"
 import CircleTool from "./lib/circle"
 import FabricTool from "./lib/fabrictool"
 import FreedrawTool from "./lib/freedraw"
 import LineTool from "./lib/line"
 import RectTool from "./lib/rect"
 import TransformTool from "./lib/transform"
-import useHistory from "./lib/history"
+import sendDataToStreamlit from "./lib/streamlit"
 
 /**
  * Arguments Streamlit receives from the Python side
@@ -54,22 +54,40 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   const [backgroundCanvas, setBackgroundCanvas] = useState(
     new fabric.StaticCanvas("")
   )
-  const { history, dispatchHistory } = useHistory()
+  const [stCanvas, setStCanvas] = useState(new fabric.Canvas(""))
+  const {
+    canvasState: { currentState },
+    dispatch,
+  } = useCanvasState()
 
   /**
    * Initialize canvases on component mount
    */
   useEffect(() => {
-    const c = new fabric.Canvas("c", {
+    const c = new fabric.Canvas("canvas", {
       enableRetinaScaling: false,
     })
-    const imgC = new fabric.StaticCanvas("imgC", {
+    const imgC = new fabric.StaticCanvas("backgroundimage-canvas", {
+      enableRetinaScaling: false,
+    })
+    const stC = new fabric.Canvas("canvas-to-streamlit", {
       enableRetinaScaling: false,
     })
     setCanvas(c)
     setBackgroundCanvas(imgC)
+    setStCanvas(stC)
     Streamlit.setFrameHeight()
   }, [canvasHeight, canvasWidth])
+
+  /**
+   * Send data to Streamlit and update canvas
+   */
+  useEffect(() => {
+    stCanvas.loadFromJSON(currentState, () => {
+      if (updateStreamlit) sendDataToStreamlit(stCanvas)
+    })
+    canvas.loadFromJSON(currentState, () => {})
+  }, [currentState])
 
   /**
    * Update canvas with background.
@@ -89,9 +107,12 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         backgroundCanvas.getContext().putImageData(imageData, 0, 0)
       }
       canvas.renderAll()
-      dispatchHistory({ type: "save", state: canvas.toJSON() })
-      if (updateStreamlit) sendDataToStreamlit(canvas)
+      dispatch({
+        type: "save",
+        state: canvas.toJSON(),
+      })
     })
+
     Streamlit.setFrameHeight()
   }, [
     canvas,
@@ -101,6 +122,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     backgroundColor,
     backgroundImage,
     updateStreamlit,
+    dispatch,
   ])
 
   /**
@@ -124,8 +146,10 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
 
     // Define events to send data back to Streamlit
     const handleSendToStreamlit = () => {
-      dispatchHistory({ type: "save", state: canvas.toJSON() })
-      if (updateStreamlit) sendDataToStreamlit(canvas)
+      dispatch({
+        type: "save",
+        state: canvas.toJSON(),
+      })
     }
     const eventsSendToStreamlit = [
       "mouse:up",
@@ -147,8 +171,26 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     }
   })
 
+  /**
+   * Render canvas w/ toolbar
+   */
   return (
     <div style={{ position: "relative" }}>
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          zIndex: -10,
+          visibility: "hidden",
+        }}
+      >
+        <canvas
+          id="canvas-to-streamlit"
+          width={canvasWidth}
+          height={canvasHeight}
+        />
+      </div>
       <div
         style={{
           position: "absolute",
@@ -157,7 +199,11 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           zIndex: 0,
         }}
       >
-        <canvas id="imgC" width={canvasWidth} height={canvasHeight} />
+        <canvas
+          id="backgroundimage-canvas"
+          width={canvasWidth}
+          height={canvasHeight}
+        />
       </div>
       <div
         style={{
@@ -168,7 +214,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         }}
       >
         <canvas
-          id="c"
+          id="canvas"
           width={canvasWidth}
           height={canvasHeight}
           style={{ border: "lightgrey 1px solid" }}
@@ -178,22 +224,18 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         topPosition={canvasHeight}
         leftPosition={canvasWidth}
         undoCallback={() => {
-          dispatchHistory({ type: "undo" })
-          canvas.loadFromJSON(history.currentState, () => {
-            if (updateStreamlit) sendDataToStreamlit(canvas)
-          })
+          dispatch({ type: "undo" })
         }}
         redoCallback={() => {
-          dispatchHistory({ type: "redo" })
-          canvas.loadFromJSON(history.currentState, () => {
-            if (updateStreamlit) sendDataToStreamlit(canvas)
-          })
+          dispatch({ type: "redo" })
         }}
         resetCallback={() => {
           canvas.clear()
           canvas.setBackgroundColor(backgroundColor, () => {
-            dispatchHistory({ type: "reset" })
-            if (updateStreamlit) sendDataToStreamlit(canvas)
+            dispatch({
+              type: "reset",
+              state: canvas.toJSON(),
+            })
           })
         }}
       />

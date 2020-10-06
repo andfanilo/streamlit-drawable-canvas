@@ -1,0 +1,12 @@
+.icon {
+  cursor: pointer;
+  background: none;
+}
+
+.icon:hover {
+  background: #cec;
+}
+
+.invertx {
+  transform: scaleX(-1);
+}
