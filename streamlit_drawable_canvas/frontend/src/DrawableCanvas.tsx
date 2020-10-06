@@ -6,6 +6,7 @@ import {
 } from "streamlit-component-lib"
 import { fabric } from "fabric"
 
+import { useCanvasState } from "./DrawableCanvasState"
 import CanvasToolbar from "./components/CanvasToolbar"
 
 import CircleTool from "./lib/circle"
@@ -14,7 +15,7 @@ import FreedrawTool from "./lib/freedraw"
 import LineTool from "./lib/line"
 import RectTool from "./lib/rect"
 import TransformTool from "./lib/transform"
-import useHistory from "./lib/history"
+import sendDataToStreamlit from "./lib/streamlit"
 
 /**
  * Arguments Streamlit receives from the Python side
@@ -53,7 +54,14 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   const [backgroundCanvas, setBackgroundCanvas] = useState(
     new fabric.StaticCanvas("")
   )
-  const { history, dispatchHistory } = useHistory(canvas)
+  const {
+    canvasState: { currentState },
+    dispatch,
+  } = useCanvasState()
+
+  useEffect(() => {
+      console.log(currentState)
+  }, [currentState])
 
   /**
    * Initialize canvases on component mount
@@ -88,10 +96,9 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         backgroundCanvas.getContext().putImageData(imageData, 0, 0)
       }
       canvas.renderAll()
-      dispatchHistory({
+      dispatch({
         type: "save",
         state: canvas.toJSON(),
-        updateStreamlit: updateStreamlit,
       })
     })
 
@@ -104,7 +111,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     backgroundColor,
     backgroundImage,
     updateStreamlit,
-    dispatchHistory,
+    dispatch,
   ])
 
   /**
@@ -128,10 +135,9 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
 
     // Define events to send data back to Streamlit
     const handleSendToStreamlit = () => {
-      dispatchHistory({
+      dispatch({
         type: "save",
         state: canvas.toJSON(),
-        updateStreamlit: updateStreamlit,
       })
     }
     const eventsSendToStreamlit = [
@@ -188,18 +194,17 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         topPosition={canvasHeight}
         leftPosition={canvasWidth}
         undoCallback={() => {
-          dispatchHistory({ type: "undo", updateStreamlit: updateStreamlit })
+          dispatch({ type: "undo" })
         }}
         redoCallback={() => {
-          dispatchHistory({ type: "redo", updateStreamlit: updateStreamlit })
+          dispatch({ type: "redo" })
         }}
         resetCallback={() => {
           canvas.clear()
           canvas.setBackgroundColor(backgroundColor, () => {
-            dispatchHistory({
+            dispatch({
               type: "reset",
               state: canvas.toJSON(),
-              updateStreamlit: updateStreamlit,
             })
           })
         }}
