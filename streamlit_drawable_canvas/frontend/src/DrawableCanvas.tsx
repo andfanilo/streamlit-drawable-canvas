@@ -54,29 +54,40 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   const [backgroundCanvas, setBackgroundCanvas] = useState(
     new fabric.StaticCanvas("")
   )
+  const [stCanvas, setStCanvas] = useState(new fabric.Canvas(""))
   const {
     canvasState: { currentState },
     dispatch,
   } = useCanvasState()
 
-  useEffect(() => {
-      console.log(currentState)
-  }, [currentState])
-
   /**
    * Initialize canvases on component mount
    */
   useEffect(() => {
-    const c = new fabric.Canvas("c", {
+    const c = new fabric.Canvas("canvas", {
       enableRetinaScaling: false,
     })
-    const imgC = new fabric.StaticCanvas("imgC", {
+    const imgC = new fabric.StaticCanvas("backgroundimage-canvas", {
+      enableRetinaScaling: false,
+    })
+    const stC = new fabric.Canvas("canvas-to-streamlit", {
       enableRetinaScaling: false,
     })
     setCanvas(c)
     setBackgroundCanvas(imgC)
+    setStCanvas(stC)
     Streamlit.setFrameHeight()
   }, [canvasHeight, canvasWidth])
+
+  /**
+   * Send data to Streamlit and update canvas
+   */
+  useEffect(() => {
+    stCanvas.loadFromJSON(currentState, () => {
+      if (updateStreamlit) sendDataToStreamlit(stCanvas)
+    })
+    canvas.loadFromJSON(currentState, () => {})
+  }, [currentState])
 
   /**
    * Update canvas with background.
@@ -170,10 +181,29 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           position: "absolute",
           top: 0,
           left: 0,
+          zIndex: -10,
+          visibility: "hidden",
+        }}
+      >
+        <canvas
+          id="canvas-to-streamlit"
+          width={canvasWidth}
+          height={canvasHeight}
+        />
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
           zIndex: 0,
         }}
       >
-        <canvas id="imgC" width={canvasWidth} height={canvasHeight} />
+        <canvas
+          id="backgroundimage-canvas"
+          width={canvasWidth}
+          height={canvasHeight}
+        />
       </div>
       <div
         style={{
@@ -184,7 +214,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         }}
       >
         <canvas
-          id="c"
+          id="canvas"
           width={canvasWidth}
           height={canvasHeight}
           style={{ border: "lightgrey 1px solid" }}
