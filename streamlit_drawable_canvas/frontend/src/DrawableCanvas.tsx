@@ -7,6 +7,7 @@ import {
 import { fabric } from "fabric"
 
 import { useCanvasState } from "./DrawableCanvasState"
+
 import CanvasToolbar from "./components/CanvasToolbar"
 
 import CircleTool from "./lib/circle"
@@ -50,6 +51,9 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     drawingMode,
   }: PythonArgs = args
 
+  /**
+   * State initialization
+   */
   const [canvas, setCanvas] = useState(new fabric.Canvas(""))
   const [backgroundCanvas, setBackgroundCanvas] = useState(
     new fabric.StaticCanvas("")
@@ -80,59 +84,45 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   }, [canvasHeight, canvasWidth])
 
   /**
-   * Send data to Streamlit and update canvas
+   * If state changed, send data to Streamlit and update canvas
    */
   useEffect(() => {
     stCanvas.loadFromJSON(currentState, () => {
       if (updateStreamlit) sendDataToStreamlit(stCanvas)
     })
     canvas.loadFromJSON(currentState, () => {})
-  }, [currentState])
+  }, [canvas, stCanvas, updateStreamlit, currentState])
 
   /**
-   * Update canvas with background.
-   * Then send back data to Streamlit
+   * Update background color
    */
   useEffect(() => {
-    if (!canvas) {
-      return
-    }
-
     canvas.setBackgroundColor(backgroundColor, () => {
-      if (backgroundImage) {
-        const imageData = backgroundCanvas
-          .getContext()
-          .createImageData(canvasWidth, canvasHeight)
-        imageData.data.set(backgroundImage)
-        backgroundCanvas.getContext().putImageData(imageData, 0, 0)
-      }
       canvas.renderAll()
       dispatch({
         type: "save",
         state: canvas.toJSON(),
       })
     })
+  }, [canvas, backgroundColor, dispatch])
 
-    Streamlit.setFrameHeight()
-  }, [
-    canvas,
-    backgroundCanvas,
-    canvasHeight,
-    canvasWidth,
-    backgroundColor,
-    backgroundImage,
-    updateStreamlit,
-    dispatch,
-  ])
+  /**
+   * Update background image
+   */
+  useEffect(() => {
+    if (backgroundImage) {
+      const imageData = backgroundCanvas
+        .getContext()
+        .createImageData(canvasWidth, canvasHeight)
+      imageData.data.set(backgroundImage)
+      backgroundCanvas.getContext().putImageData(imageData, 0, 0)
+    }
+  }, [backgroundCanvas, canvasHeight, canvasWidth, backgroundImage, dispatch])
 
   /**
    * Update canvas with selected tool
    */
   useEffect(() => {
-    if (!canvas) {
-      return
-    }
-
     // Update canvas events with selected tool
     const tools: Tools = {
       circle: new CircleTool(canvas),
