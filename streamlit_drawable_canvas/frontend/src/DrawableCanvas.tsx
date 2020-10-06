@@ -9,6 +9,7 @@ import { fabric } from "fabric"
 import { useCanvasState } from "./DrawableCanvasState"
 
 import CanvasToolbar from "./components/CanvasToolbar"
+import UpdateStreamlit from "./components/UpdateStreamlit"
 
 import CircleTool from "./lib/circle"
 import FabricTool from "./lib/fabrictool"
@@ -16,7 +17,6 @@ import FreedrawTool from "./lib/freedraw"
 import LineTool from "./lib/line"
 import RectTool from "./lib/rect"
 import TransformTool from "./lib/transform"
-import sendDataToStreamlit from "./lib/streamlit"
 
 /**
  * Arguments Streamlit receives from the Python side
@@ -58,7 +58,6 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   const [backgroundCanvas, setBackgroundCanvas] = useState(
     new fabric.StaticCanvas("")
   )
-  const [stCanvas, setStCanvas] = useState(new fabric.Canvas(""))
   const {
     canvasState: { reloadState, currentState },
     dispatch,
@@ -74,28 +73,19 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     const imgC = new fabric.StaticCanvas("backgroundimage-canvas", {
       enableRetinaScaling: false,
     })
-    const stC = new fabric.Canvas("canvas-to-streamlit", {
-      enableRetinaScaling: false,
-    })
     setCanvas(c)
     setBackgroundCanvas(imgC)
-    setStCanvas(stC)
     Streamlit.setFrameHeight()
   }, [canvasHeight, canvasWidth])
 
   /**
-   * If state changed, send data to Streamlit and update canvas
+   * If state changed, update user-facing canvas
    */
   useEffect(() => {
-    if (updateStreamlit) {
-      stCanvas.loadFromJSON(currentState, () => {
-        sendDataToStreamlit(stCanvas)
-      })
-    }
     if (reloadState) {
       canvas.loadFromJSON(currentState, () => {})
     }
-  }, [canvas, stCanvas, reloadState, updateStreamlit, currentState])
+  }, [canvas, reloadState, updateStreamlit, currentState])
 
   /**
    * Update background color
@@ -179,10 +169,11 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           visibility: "hidden",
         }}
       >
-        <canvas
-          id="canvas-to-streamlit"
-          width={canvasWidth}
-          height={canvasHeight}
+        <UpdateStreamlit
+          canvasHeight={canvasHeight}
+          canvasWidth={canvasWidth}
+          shouldSendState={updateStreamlit}
+          stateToSend={currentState}
         />
       </div>
       <div
