@@ -4,7 +4,8 @@
 }
 
 .icon:hover {
-  background: #cec;
+  filter: invert(41%) sepia(62%) saturate(7158%) hue-rotate(344deg)
+    brightness(101%) contrast(108%);
 }
 
 .invertx {

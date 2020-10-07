@@ -49,8 +49,8 @@ const CanvasToolbar = ({
   redoCallback,
   resetCallback,
 }: CanvasToolbarProps) => {
-  const GAP_BETWEEN_ICONS = 2
-  const ICON_SIZE = 16
+  const GAP_BETWEEN_ICONS = 4
+  const ICON_SIZE = 24
 
   const iconElements = [
     {
@@ -77,7 +77,7 @@ const CanvasToolbar = ({
     <div
       style={{
         position: "absolute",
-        top: topPosition + 3,
+        top: topPosition + 4,
         left: leftPosition - 3 * ICON_SIZE - 2 * GAP_BETWEEN_ICONS,
         display: "flex",
         gap: GAP_BETWEEN_ICONS,
