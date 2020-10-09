@@ -66,8 +66,11 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     new fabric.StaticCanvas("")
   )
   const {
-    canvasState: { reloadState, currentState },
-    dispatch,
+    canvasState: { shouldReloadCanvas, currentState },
+    saveState,
+    undo,
+    redo,
+    resetState,
   } = useCanvasState()
 
   /**
@@ -86,13 +89,13 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   }, [canvasHeight, canvasWidth])
 
   /**
-   * If state changed, update user-facing canvas
+   * If state changed from undo/redo, update user-facing canvas
    */
   useEffect(() => {
-    if (reloadState) {
+    if (shouldReloadCanvas) {
       canvas.loadFromJSON(currentState, () => {})
     }
-  }, [canvas, reloadState, currentState])
+  }, [canvas, shouldReloadCanvas, currentState])
 
   /**
    * Update background color
@@ -100,12 +103,9 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   useEffect(() => {
     canvas.setBackgroundColor(backgroundColor, () => {
       canvas.renderAll()
-      dispatch({
-        type: "save",
-        state: canvas.toJSON(),
-      })
+      saveState(canvas.toJSON())
     })
-  }, [canvas, backgroundColor, dispatch])
+  }, [canvas, backgroundColor])
 
   /**
    * Update background image
@@ -118,7 +118,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       imageData.data.set(backgroundImage)
       backgroundCanvas.getContext().putImageData(imageData, 0, 0)
     }
-  }, [backgroundCanvas, canvasHeight, canvasWidth, backgroundImage, dispatch])
+  }, [backgroundCanvas, canvasHeight, canvasWidth, backgroundImage])
 
   /**
    * Update canvas with selected tool
@@ -133,10 +133,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     })
 
     canvas.on("mouse:up", () => {
-      dispatch({
-        type: "save",
-        state: canvas.toJSON(),
-      })
+      saveState(canvas.toJSON())
     })
 
     // Cleanup tool + send data to Streamlit events
@@ -144,7 +141,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       cleanupToolEvents()
       canvas.off("mouse:up")
     }
-  }, [canvas, strokeWidth, strokeColor, fillColor, drawingMode, dispatch])
+  }, [canvas, strokeWidth, strokeColor, fillColor, drawingMode])
 
   /**
    * Render canvas w/ toolbar
@@ -199,19 +196,12 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       <CanvasToolbar
         topPosition={canvasHeight}
         leftPosition={canvasWidth}
-        undoCallback={() => {
-          dispatch({ type: "undo" })
-        }}
-        redoCallback={() => {
-          dispatch({ type: "redo" })
-        }}
+        undoCallback={undo}
+        redoCallback={redo}
         resetCallback={() => {
           canvas.clear()
           canvas.setBackgroundColor(backgroundColor, () => {
-            dispatch({
-              type: "reset",
-              state: canvas.toJSON(),
-            })
+            resetState(canvas.toJSON())
           })
         }}
       />

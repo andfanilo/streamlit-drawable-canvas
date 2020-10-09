@@ -1,4 +1,9 @@
-import React, { createContext, useReducer, useContext } from "react"
+import React, {
+  createContext,
+  useReducer,
+  useContext,
+  useCallback,
+} from "react"
 import { isEmpty, isEqual } from "lodash"
 
 const HISTORY_MAX_COUNT = 100
@@ -6,7 +11,7 @@ const HISTORY_MAX_COUNT = 100
 export interface CanvasState {
   undoStack: Object[]
   redoStack: Object[]
-  reloadState: boolean
+  shouldReloadCanvas: boolean
   initialState: Object
   currentState: Object
 }
@@ -38,7 +43,7 @@ interface Action {
  * On redo:
  * - Pop state from redoStack into current state
  *
- * For undo/redo/reset, set reloadState to inject currentState into user facing canvas
+ * For undo/redo/reset, set shouldReloadCanvas to inject currentState into user facing canvas
  */
 const canvasStateReducer = (
   state: CanvasState,
@@ -51,12 +56,12 @@ const canvasStateReducer = (
         return {
           undoStack: [],
           redoStack: [],
-          reloadState: false,
+          shouldReloadCanvas: false,
           initialState: action.state,
           currentState: action.state,
         }
       } else if (isEqual(action.state, state.currentState))
-        return { ...state, reloadState: false }
+        return { ...state, shouldReloadCanvas: false }
       else {
         const undoOverHistoryMaxCount =
           state.undoStack.length >= HISTORY_MAX_COUNT
@@ -66,7 +71,7 @@ const canvasStateReducer = (
             state.currentState,
           ],
           redoStack: [],
-          reloadState: false,
+          shouldReloadCanvas: false,
           initialState:
             state.initialState == null
               ? state.currentState
@@ -80,13 +85,13 @@ const canvasStateReducer = (
         isEmpty(state.currentState) ||
         isEqual(state.initialState, state.currentState)
       ) {
-        return { ...state, reloadState: false }
+        return { ...state, shouldReloadCanvas: false }
       } else {
         const isUndoEmpty = state.undoStack.length === 0
         const res = {
           undoStack: state.undoStack.slice(0, -1),
           redoStack: [...state.redoStack, state.currentState],
-          reloadState: true,
+          shouldReloadCanvas: true,
           initialState: state.initialState,
           currentState: isUndoEmpty
             ? state.currentState
@@ -100,20 +105,20 @@ const canvasStateReducer = (
         const res = {
           undoStack: [...state.undoStack, state.currentState],
           redoStack: state.redoStack.slice(0, -1),
-          reloadState: true,
+          shouldReloadCanvas: true,
           initialState: state.initialState,
           currentState: state.redoStack[state.redoStack.length - 1],
         }
         return res
       } else {
-        return { ...state, reloadState: false }
+        return { ...state, shouldReloadCanvas: false }
       }
     case "reset":
       if (!action.state) throw new Error("No action state to store in reset")
       return {
         undoStack: [],
         redoStack: [],
-        reloadState: true,
+        shouldReloadCanvas: true,
         initialState: action.state,
         currentState: action.state,
       }
@@ -125,14 +130,17 @@ const canvasStateReducer = (
 const initialState: CanvasState = {
   undoStack: [],
   redoStack: [],
-  reloadState: false,
+  shouldReloadCanvas: false,
   initialState: {},
   currentState: {},
 }
 
 interface CanvasStateContextProps {
   canvasState: CanvasState
-  dispatch: React.Dispatch<Action>
+  saveState: (state: Object) => void
+  undo: () => void
+  redo: () => void
+  resetState: (state: Object) => void
 }
 
 const CanvasStateContext = createContext<CanvasStateContextProps>(
@@ -144,8 +152,23 @@ export const CanvasStateProvider = ({
 }: React.PropsWithChildren<{}>) => {
   const [canvasState, dispatch] = useReducer(canvasStateReducer, initialState)
 
+  // Setup our callback functions
+  // We memoize with useCallback to prevent unnecessary re-renders
+  const saveState = useCallback(
+    (state) => dispatch({ type: "save", state: state }),
+    [dispatch]
+  )
+  const undo = useCallback(() => dispatch({ type: "undo" }), [dispatch])
+  const redo = useCallback(() => dispatch({ type: "redo" }), [dispatch])
+  const resetState = useCallback(
+    (state) => dispatch({ type: "reset", state: state }),
+    [dispatch]
+  )
+
   return (
-    <CanvasStateContext.Provider value={{ canvasState, dispatch }}>
+    <CanvasStateContext.Provider
+      value={{ canvasState, saveState, undo, redo, resetState }}
+    >
       {children}
     </CanvasStateContext.Provider>
   )
