@@ -9,13 +9,12 @@ interface UpdateStreamlitProps {
   canvasHeight: number
 }
 
-const DELAY_DEBOUNCE = 500
+const DELAY_DEBOUNCE = 200
 
 /**
  * Download image and JSON data from canvas to send back to Streamlit
  */
 const sendDataToStreamlit = (canvas: fabric.Canvas): void => {
-  canvas.renderAll()
   const imageData = canvas
     .getContext()
     .getImageData(0, 0, canvas.getWidth(), canvas.getHeight())
@@ -67,6 +66,7 @@ const UpdateStreamlit = (props: UpdateStreamlitProps) => {
   const [stCanvas, setStCanvas] = useState(new fabric.Canvas(""))
 
   // Debounce fast changing canvas states
+  // Especially when drawing lines and circles which continuously render while drawing
   const debouncedStateToSend = useDebounce(props.stateToSend, DELAY_DEBOUNCE)
 
   // Initialize canvas

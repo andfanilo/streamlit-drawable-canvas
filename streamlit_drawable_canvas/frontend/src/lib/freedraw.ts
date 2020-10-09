@@ -1,9 +1,10 @@
-import { PythonArgs } from "../DrawableCanvas"
-import FabricTool from "./fabrictool"
+import FabricTool, { ConfigureCanvasProps } from "./fabrictool"
 
 class FreedrawTool extends FabricTool {
-  configureCanvas(args: PythonArgs): () => void {
-    const { strokeWidth, strokeColor } = args
+  configureCanvas({
+    strokeWidth,
+    strokeColor,
+  }: ConfigureCanvasProps): () => void {
     this._canvas.isDrawingMode = true
     this._canvas.freeDrawingBrush.width = strokeWidth
     this._canvas.freeDrawingBrush.color = strokeColor

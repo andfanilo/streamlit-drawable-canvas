@@ -25,8 +25,7 @@ drawing_mode = st.sidebar.selectbox(
 realtime_update = st.sidebar.checkbox("Update in realtime?", True)
 update_button = False
 if not realtime_update:
-    update_button = st.sidebar.button('Send data to Streamlit')
-
+    update_button = st.sidebar.button("Send data to Streamlit")
 
 # Create a canvas component
 canvas_result = st_canvas(
@@ -41,7 +40,8 @@ canvas_result = st_canvas(
     key="canvas",
 )
 
-# Do something interesting with the image data
+# Do something interesting with the image data and paths
 if canvas_result.image_data is not None:
     st.image(canvas_result.image_data)
+if canvas_result.json_data is not None:
     st.dataframe(pd.json_normalize(canvas_result.json_data["objects"]))

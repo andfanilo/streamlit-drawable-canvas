@@ -116,5 +116,5 @@ def st_canvas(
     w = component_value["width"]
     h = component_value["height"]
     return CanvasResult(
-        np.reshape(component_value["data"], (h, w, 4)), component_value["raw"]
+        np.reshape(component_value["data"], (h, w, 4)), component_value["raw"],
     )

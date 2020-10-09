@@ -33,9 +33,13 @@ export interface PythonArgs {
   drawingMode: string
 }
 
-// Make TS happy on the Map of selectedTool --> FabricTool
-interface Tools {
-  [key: string]: FabricTool
+// TODO: Should make TS happy on the Map of selectedTool --> FabricTool
+const tools: any = {
+  circle: CircleTool,
+  freedraw: FreedrawTool,
+  line: LineTool,
+  rect: RectTool,
+  transform: TransformTool,
 }
 
 /**
@@ -49,6 +53,9 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     backgroundImage,
     updateStreamlit,
     drawingMode,
+    fillColor,
+    strokeWidth,
+    strokeColor,
   }: PythonArgs = args
 
   /**
@@ -85,7 +92,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     if (reloadState) {
       canvas.loadFromJSON(currentState, () => {})
     }
-  }, [canvas, reloadState, updateStreamlit, currentState])
+  }, [canvas, reloadState, currentState])
 
   /**
    * Update background color
@@ -118,42 +125,26 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
    */
   useEffect(() => {
     // Update canvas events with selected tool
-    const tools: Tools = {
-      circle: new CircleTool(canvas),
-      freedraw: new FreedrawTool(canvas),
-      line: new LineTool(canvas),
-      rect: new RectTool(canvas),
-      transform: new TransformTool(canvas),
-    }
-    const selectedTool = tools[drawingMode]
-    const cleanupToolEvents = selectedTool.configureCanvas(args)
+    const selectedTool = new tools[drawingMode](canvas) as FabricTool
+    const cleanupToolEvents = selectedTool.configureCanvas({
+      fillColor: fillColor,
+      strokeWidth: strokeWidth,
+      strokeColor: strokeColor,
+    })
 
-    // Define events to send data back to Streamlit
-    const handleSendToStreamlit = () => {
+    canvas.on("mouse:up", () => {
       dispatch({
         type: "save",
         state: canvas.toJSON(),
       })
-    }
-    const eventsSendToStreamlit = [
-      "mouse:up",
-      "selection:cleared",
-      "selection:updated",
-      "object:removed",
-      "object:modified",
-    ]
-    eventsSendToStreamlit.forEach((event) =>
-      canvas.on(event, handleSendToStreamlit)
-    )
+    })
 
     // Cleanup tool + send data to Streamlit events
     return () => {
       cleanupToolEvents()
-      eventsSendToStreamlit.forEach((event) =>
-        canvas.off(event, handleSendToStreamlit)
-      )
+      canvas.off("mouse:up")
     }
-  })
+  }, [canvas, strokeWidth, strokeColor, fillColor, drawingMode, dispatch])
 
   /**
    * Render canvas w/ toolbar
