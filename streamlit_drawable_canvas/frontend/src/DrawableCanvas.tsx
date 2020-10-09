@@ -27,7 +27,7 @@ export interface PythonArgs {
   strokeColor: string
   backgroundColor: string
   backgroundImage: Uint8ClampedArray
-  updateStreamlit: boolean
+  realtimeUpdateStreamlit: boolean
   canvasWidth: number
   canvasHeight: number
   drawingMode: string
@@ -51,7 +51,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     canvasHeight,
     backgroundColor,
     backgroundImage,
-    updateStreamlit,
+    realtimeUpdateStreamlit,
     drawingMode,
     fillColor,
     strokeWidth,
@@ -66,12 +66,17 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     new fabric.StaticCanvas("")
   )
   const {
-    canvasState: { shouldReloadCanvas, currentState },
+    canvasState: {
+      shouldReloadCanvas,
+      forceSendToStreamlit = false,
+      currentState,
+    },
     saveState,
     undo,
     redo,
     canUndo,
     canRedo,
+    forceStreamlitUpdate,
     resetState,
   } = useCanvasState()
 
@@ -108,7 +113,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       canvas.renderAll()
       saveState(canvas.toJSON())
     })
-  }, [canvas, backgroundColor])
+  }, [canvas, backgroundColor, saveState])
 
   /**
    * Update background image
@@ -144,7 +149,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       cleanupToolEvents()
       canvas.off("mouse:up")
     }
-  }, [canvas, strokeWidth, strokeColor, fillColor, drawingMode])
+  }, [canvas, strokeWidth, strokeColor, fillColor, drawingMode, saveState])
 
   /**
    * Render canvas w/ toolbar
@@ -163,8 +168,10 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         <UpdateStreamlit
           canvasHeight={canvasHeight}
           canvasWidth={canvasWidth}
-          shouldSendState={updateStreamlit}
-          stateToSend={currentState}
+          shouldSendToStreamlit={
+            realtimeUpdateStreamlit || forceSendToStreamlit
+          }
+          stateToSendToStreamlit={currentState}
         />
       </div>
       <div
@@ -199,10 +206,11 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       <CanvasToolbar
         topPosition={canvasHeight}
         leftPosition={canvasWidth}
-        undoCallback={undo}
-        redoCallback={redo}
         canUndo={canUndo}
         canRedo={canRedo}
+        downloadCallback={forceStreamlitUpdate}
+        undoCallback={undo}
+        redoCallback={redo}
         resetCallback={() => {
           canvas.clear()
           canvas.setBackgroundColor(backgroundColor, () => {

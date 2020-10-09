@@ -8,16 +8,17 @@ import { isEmpty, isEqual } from "lodash"
 
 const HISTORY_MAX_COUNT = 100
 
-export interface CanvasState {
+interface CanvasState {
   undoStack: Object[]
   redoStack: Object[]
   shouldReloadCanvas: boolean
+  forceSendToStreamlit?: boolean
   initialState: Object
   currentState: Object
 }
 
 interface Action {
-  type: "save" | "undo" | "redo" | "reset"
+  type: "save" | "undo" | "redo" | "reset" | "forceSendToStreamlit"
   state?: Object
 }
 
@@ -122,6 +123,11 @@ const canvasStateReducer = (
         initialState: action.state,
         currentState: action.state,
       }
+    case "forceSendToStreamlit":
+      return {
+        ...state,
+        forceSendToStreamlit: true,
+      }
     default:
       throw new Error()
   }
@@ -140,6 +146,7 @@ interface CanvasStateContextProps {
   saveState: (state: Object) => void
   undo: () => void
   redo: () => void
+  forceStreamlitUpdate: () => void
   canUndo: boolean
   canRedo: boolean
   resetState: (state: Object) => void
@@ -162,6 +169,10 @@ export const CanvasStateProvider = ({
   )
   const undo = useCallback(() => dispatch({ type: "undo" }), [dispatch])
   const redo = useCallback(() => dispatch({ type: "redo" }), [dispatch])
+  const forceStreamlitUpdate = useCallback(
+    () => dispatch({ type: "forceSendToStreamlit" }),
+    [dispatch]
+  )
   const resetState = useCallback(
     (state) => dispatch({ type: "reset", state: state }),
     [dispatch]
@@ -179,6 +190,7 @@ export const CanvasStateProvider = ({
         redo,
         canUndo,
         canRedo,
+        forceStreamlitUpdate,
         resetState,
       }}
     >

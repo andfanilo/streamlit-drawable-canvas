@@ -4,6 +4,7 @@ import styles from "./CanvasToolbar.module.css"
 
 import bin from "../img/bin.png"
 import undo from "../img/undo.png"
+import download from "../img/download.png"
 
 interface SquareIconProps {
   imgUrl: string
@@ -45,6 +46,7 @@ interface CanvasToolbarProps {
   leftPosition: number
   canUndo: boolean
   canRedo: boolean
+  downloadCallback: () => void
   undoCallback: () => void
   redoCallback: () => void
   resetCallback: () => void
@@ -55,6 +57,7 @@ const CanvasToolbar = ({
   leftPosition,
   canUndo,
   canRedo,
+  downloadCallback,
   undoCallback,
   redoCallback,
   resetCallback,
@@ -63,6 +66,13 @@ const CanvasToolbar = ({
   const ICON_SIZE = 24
 
   const iconElements = [
+    {
+      imgUrl: download,
+      altText: "Send to Streamlit",
+      invertX: false,
+      enabled: true,
+      clickCallback: downloadCallback,
+    },
     {
       imgUrl: undo,
       altText: "Undo",
@@ -91,7 +101,10 @@ const CanvasToolbar = ({
       style={{
         position: "absolute",
         top: topPosition + 4,
-        left: leftPosition - 3 * ICON_SIZE - 2 * GAP_BETWEEN_ICONS,
+        left:
+          leftPosition -
+          iconElements.length * ICON_SIZE -
+          2 * GAP_BETWEEN_ICONS,
         display: "flex",
         gap: GAP_BETWEEN_ICONS,
         zIndex: 20,

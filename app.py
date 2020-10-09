@@ -22,10 +22,7 @@ bg_image = st.sidebar.file_uploader("Background image:", type=["png", "jpg"])
 drawing_mode = st.sidebar.selectbox(
     "Drawing tool:", ("freedraw", "line", "rect", "circle", "transform")
 )
-realtime_update = st.sidebar.checkbox("Update in realtime?", True)
-update_button = False
-if not realtime_update:
-    update_button = st.sidebar.button("Send data to Streamlit")
+realtime_update = st.sidebar.checkbox("Update in realtime", True)
 
 # Create a canvas component
 canvas_result = st_canvas(
@@ -34,7 +31,7 @@ canvas_result = st_canvas(
     stroke_color=stroke_color,
     background_color="" if bg_image else bg_color,
     background_image=Image.open(bg_image) if bg_image else None,
-    update_streamlit=realtime_update or update_button,
+    update_streamlit=realtime_update,
     height=150,
     drawing_mode=drawing_mode,
     key="canvas",

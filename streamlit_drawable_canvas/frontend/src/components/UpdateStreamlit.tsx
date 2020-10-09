@@ -2,13 +2,6 @@ import React, { useEffect, useState } from "react"
 import { Streamlit } from "streamlit-component-lib"
 import { fabric } from "fabric"
 
-interface UpdateStreamlitProps {
-  shouldSendState: boolean
-  stateToSend: Object
-  canvasWidth: number
-  canvasHeight: number
-}
-
 const DELAY_DEBOUNCE = 200
 
 /**
@@ -57,8 +50,15 @@ const useDebounce = (value: any, delay: number) => {
   return debouncedValue
 }
 
+interface UpdateStreamlitProps {
+  shouldSendToStreamlit: boolean
+  stateToSendToStreamlit: Object
+  canvasWidth: number
+  canvasHeight: number
+}
+
 /**
- * Ccanvas whose sole purpose is to draw current state
+ * Canvas whose sole purpose is to draw current state
  * to send image data to Streamlit.
  * Put it in the background or make it invisible!
  */
@@ -67,7 +67,10 @@ const UpdateStreamlit = (props: UpdateStreamlitProps) => {
 
   // Debounce fast changing canvas states
   // Especially when drawing lines and circles which continuously render while drawing
-  const debouncedStateToSend = useDebounce(props.stateToSend, DELAY_DEBOUNCE)
+  const debouncedStateToSend = useDebounce(
+    props.stateToSendToStreamlit,
+    DELAY_DEBOUNCE
+  )
 
   // Initialize canvas
   useEffect(() => {
@@ -79,12 +82,12 @@ const UpdateStreamlit = (props: UpdateStreamlitProps) => {
 
   // Load state to canvas, then send content to Streamlit
   useEffect(() => {
-    if (debouncedStateToSend && props.shouldSendState) {
+    if (debouncedStateToSend && props.shouldSendToStreamlit) {
       stCanvas.loadFromJSON(debouncedStateToSend, () => {
         sendDataToStreamlit(stCanvas)
       })
     }
-  }, [stCanvas, props.shouldSendState, debouncedStateToSend])
+  }, [stCanvas, props.shouldSendToStreamlit, debouncedStateToSend])
 
   return (
     <canvas

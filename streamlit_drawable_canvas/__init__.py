@@ -103,7 +103,7 @@ def st_canvas(
         strokeColor=stroke_color,
         backgroundColor=background_color,
         backgroundImage=_img_to_array(background_image) if background_image else None,
-        updateStreamlit=update_streamlit,
+        realtimeUpdateStreamlit=update_streamlit,
         canvasHeight=height,
         canvasWidth=width,
         drawingMode=drawing_mode,

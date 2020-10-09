@@ -33,10 +33,7 @@ bg_image = st.sidebar.file_uploader("Background image:", type=["png", "jpg"])
 drawing_mode = st.sidebar.selectbox(
     "Drawing tool:", ("freedraw", "line", "rect", "circle", "transform")
 )
-realtime_update = st.sidebar.checkbox("Update in realtime?", True)
-update_button = False
-if not realtime_update:
-    update_button = st.sidebar.button('Send data to Streamlit')
+realtime_update = st.sidebar.checkbox("Update in realtime", True)
 
 # Create a canvas component
 canvas_result = st_canvas(
@@ -45,7 +42,7 @@ canvas_result = st_canvas(
     stroke_color=stroke_color,
     background_color="" if bg_image else bg_color,
     background_image=Image.open(bg_image) if bg_image else None,
-    update_streamlit=realtime_update or update_button,
+    update_streamlit=realtime_update,
     height=150,
     drawing_mode=drawing_mode,
     key="canvas",
@@ -117,4 +114,4 @@ streamlit run app.py
 - [Examples of the useReducer Hook](https://daveceddia.com/usereducer-hook-examples/) The `useRef` hook allows you to create a persistent ref to a DOM node, or really to any value. React will persist this value between re-renders (between calls to your component function).
 - [CSS filter generator to convert from black to target hex color](https://codepen.io/sosuke/pen/Pjoqqp)
 - [When does React re-render components?](https://felixgerschau.com/react-rerender-components/#when-does-react-re-render)
-- Icons by [Freepik](https://www.flaticon.com/authors/freepik) and [Google](https://www.flaticon.com/authors/google).
+- Icons by [Freepik](https://www.flaticon.com/authors/freepik), [Google](https://www.flaticon.com/authors/google), [Mavadee](https://www.flaticon.com/authors/mavadee).
