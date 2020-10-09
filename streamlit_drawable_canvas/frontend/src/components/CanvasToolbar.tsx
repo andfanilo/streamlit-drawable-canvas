@@ -10,6 +10,7 @@ interface SquareIconProps {
   altText: string
   invertX?: boolean
   size: number
+  enabled: boolean
   clickCallback: () => void
 }
 
@@ -18,11 +19,16 @@ const SquareIcon = ({
   altText,
   invertX,
   size,
+  enabled,
   clickCallback,
 }: SquareIconProps) => (
   <img
     src={imgUrl}
-    className={`${styles.icon} ${invertX ? "" : styles.invertx}`}
+    className={`
+    ${enabled ? styles.enabled : styles.disabled} ${
+      invertX ? "" : styles.invertx
+    }
+    `}
     alt={altText}
     title={altText}
     height={`${size}px`}
@@ -37,6 +43,8 @@ SquareIcon.defaultProps = {
 interface CanvasToolbarProps {
   topPosition: number
   leftPosition: number
+  canUndo: boolean
+  canRedo: boolean
   undoCallback: () => void
   redoCallback: () => void
   resetCallback: () => void
@@ -45,6 +53,8 @@ interface CanvasToolbarProps {
 const CanvasToolbar = ({
   topPosition,
   leftPosition,
+  canUndo,
+  canRedo,
   undoCallback,
   redoCallback,
   resetCallback,
@@ -57,18 +67,21 @@ const CanvasToolbar = ({
       imgUrl: undo,
       altText: "Undo",
       invertX: true,
-      clickCallback: undoCallback,
+      enabled: canUndo,
+      clickCallback: canUndo ? undoCallback : () => {},
     },
     {
       imgUrl: undo,
       altText: "Redo",
       invertX: false,
-      clickCallback: redoCallback,
+      enabled: canRedo,
+      clickCallback: canRedo ? redoCallback : () => {},
     },
     {
       imgUrl: bin,
       altText: "Reset canvas & history",
       invertX: false,
+      enabled: true,
       clickCallback: resetCallback,
     },
   ]
@@ -91,6 +104,7 @@ const CanvasToolbar = ({
           altText={e.altText}
           invertX={e.invertX}
           size={ICON_SIZE}
+          enabled={e.enabled}
           clickCallback={e.clickCallback}
         />
       ))}

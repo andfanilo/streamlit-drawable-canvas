@@ -116,4 +116,5 @@ streamlit run app.py
 - [How to avoid passing callbacks down?](https://reactjs.org/docs/hooks-faq.html#how-to-avoid-passing-callbacks-down)
 - [Examples of the useReducer Hook](https://daveceddia.com/usereducer-hook-examples/) The `useRef` hook allows you to create a persistent ref to a DOM node, or really to any value. React will persist this value between re-renders (between calls to your component function).
 - [CSS filter generator to convert from black to target hex color](https://codepen.io/sosuke/pen/Pjoqqp)
+- [When does React re-render components?](https://felixgerschau.com/react-rerender-components/#when-does-react-re-render)
 - Icons by [Freepik](https://www.flaticon.com/authors/freepik) and [Google](https://www.flaticon.com/authors/google).

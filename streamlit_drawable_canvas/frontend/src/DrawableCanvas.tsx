@@ -70,11 +70,14 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     saveState,
     undo,
     redo,
+    canUndo,
+    canRedo,
     resetState,
   } = useCanvasState()
 
   /**
    * Initialize canvases on component mount
+   * NB: Remount component by changing its key instead of defining deps
    */
   useEffect(() => {
     const c = new fabric.Canvas("canvas", {
@@ -86,7 +89,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     setCanvas(c)
     setBackgroundCanvas(imgC)
     Streamlit.setFrameHeight()
-  }, [canvasHeight, canvasWidth])
+  }, [])
 
   /**
    * If state changed from undo/redo, update user-facing canvas
@@ -198,6 +201,8 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         leftPosition={canvasWidth}
         undoCallback={undo}
         redoCallback={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
         resetCallback={() => {
           canvas.clear()
           canvas.setBackgroundColor(backgroundColor, () => {

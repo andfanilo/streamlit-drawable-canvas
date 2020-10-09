@@ -140,6 +140,8 @@ interface CanvasStateContextProps {
   saveState: (state: Object) => void
   undo: () => void
   redo: () => void
+  canUndo: boolean
+  canRedo: boolean
   resetState: (state: Object) => void
 }
 
@@ -165,9 +167,20 @@ export const CanvasStateProvider = ({
     [dispatch]
   )
 
+  const canUndo = canvasState.undoStack.length !== 0
+  const canRedo = canvasState.redoStack.length !== 0
+
   return (
     <CanvasStateContext.Provider
-      value={{ canvasState, saveState, undo, redo, resetState }}
+      value={{
+        canvasState,
+        saveState,
+        undo,
+        redo,
+        canUndo,
+        canRedo,
+        resetState,
+      }}
     >
       {children}
     </CanvasStateContext.Provider>
