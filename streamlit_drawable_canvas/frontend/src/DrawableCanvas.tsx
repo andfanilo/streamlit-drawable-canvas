@@ -67,8 +67,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   )
   const {
     canvasState: {
-      shouldReloadCanvas,
-      forceSendToStreamlit = false,
+      action: { shouldReloadCanvas, forceSendToStreamlit },
       currentState,
     },
     saveState,

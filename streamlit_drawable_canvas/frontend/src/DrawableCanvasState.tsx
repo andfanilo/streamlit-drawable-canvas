@@ -8,13 +8,36 @@ import { isEmpty, isEqual } from "lodash"
 
 const HISTORY_MAX_COUNT = 100
 
+interface CanvasHistory {
+  undoStack: Object[] // store previous canvas states
+  redoStack: Object[] // store undone canvas states
+}
+
+interface CanvasAction {
+  shouldReloadCanvas: boolean // reload currentState into app canvas, on undo/redo
+  forceSendToStreamlit: boolean // send currentState back to Streamlit
+}
+
+const NO_ACTION: CanvasAction = {
+  shouldReloadCanvas: false,
+  forceSendToStreamlit: false,
+}
+
+const RELOAD_CANVAS: CanvasAction = {
+  shouldReloadCanvas: true,
+  forceSendToStreamlit: false,
+}
+
+const SEND_TO_STREAMLIT: CanvasAction = {
+  shouldReloadCanvas: false,
+  forceSendToStreamlit: true,
+}
+
 interface CanvasState {
-  undoStack: Object[]
-  redoStack: Object[]
-  shouldReloadCanvas: boolean
-  forceSendToStreamlit?: boolean
-  initialState: Object
-  currentState: Object
+  history: CanvasHistory
+  action: CanvasAction
+  initialState: Object // first currentState for app
+  currentState: Object // current canvas state as canvas.toJSON()
 }
 
 interface Action {
@@ -55,78 +78,103 @@ const canvasStateReducer = (
       if (!action.state) throw new Error("No action state to save")
       else if (isEmpty(state.currentState)) {
         return {
-          undoStack: [],
-          redoStack: [],
-          shouldReloadCanvas: false,
+          history: {
+            undoStack: [],
+            redoStack: [],
+          },
+          action: { ...NO_ACTION },
           initialState: action.state,
           currentState: action.state,
         }
       } else if (isEqual(action.state, state.currentState))
-        return { ...state, shouldReloadCanvas: false }
+        return {
+          history: { ...state.history },
+          action: { ...NO_ACTION },
+          initialState: state.initialState,
+          currentState: state.currentState,
+        }
       else {
         const undoOverHistoryMaxCount =
-          state.undoStack.length >= HISTORY_MAX_COUNT
-        const res = {
-          undoStack: [
-            ...state.undoStack.slice(undoOverHistoryMaxCount ? 1 : 0),
-            state.currentState,
-          ],
-          redoStack: [],
-          shouldReloadCanvas: false,
+          state.history.undoStack.length >= HISTORY_MAX_COUNT
+        return {
+          history: {
+            undoStack: [
+              ...state.history.undoStack.slice(undoOverHistoryMaxCount ? 1 : 0),
+              state.currentState,
+            ],
+            redoStack: [],
+          },
+          action: { ...NO_ACTION },
           initialState:
             state.initialState == null
               ? state.currentState
               : state.initialState,
           currentState: action.state,
         }
-        return res
       }
     case "undo":
       if (
         isEmpty(state.currentState) ||
         isEqual(state.initialState, state.currentState)
       ) {
-        return { ...state, shouldReloadCanvas: false }
+        return {
+          history: { ...state.history },
+          action: { ...NO_ACTION },
+          initialState: state.initialState,
+          currentState: state.currentState,
+        }
       } else {
-        const isUndoEmpty = state.undoStack.length === 0
-        const res = {
-          undoStack: state.undoStack.slice(0, -1),
-          redoStack: [...state.redoStack, state.currentState],
-          shouldReloadCanvas: true,
+        const isUndoEmpty = state.history.undoStack.length === 0
+        return {
+          history: {
+            undoStack: state.history.undoStack.slice(0, -1),
+            redoStack: [...state.history.redoStack, state.currentState],
+          },
+          action: { ...RELOAD_CANVAS },
           initialState: state.initialState,
           currentState: isUndoEmpty
             ? state.currentState
-            : state.undoStack[state.undoStack.length - 1],
+            : state.history.undoStack[state.history.undoStack.length - 1],
         }
-        return res
       }
     case "redo":
-      if (state.redoStack.length > 0) {
+      if (state.history.redoStack.length > 0) {
         // TODO: test currentState empty too ?
-        const res = {
-          undoStack: [...state.undoStack, state.currentState],
-          redoStack: state.redoStack.slice(0, -1),
-          shouldReloadCanvas: true,
+        return {
+          history: {
+            undoStack: [...state.history.undoStack, state.currentState],
+            redoStack: state.history.redoStack.slice(0, -1),
+          },
+          action: { ...RELOAD_CANVAS },
           initialState: state.initialState,
-          currentState: state.redoStack[state.redoStack.length - 1],
+          currentState:
+            state.history.redoStack[state.history.redoStack.length - 1],
         }
-        return res
       } else {
-        return { ...state, shouldReloadCanvas: false }
+        return {
+          history: { ...state.history },
+          action: { ...NO_ACTION },
+          initialState: state.initialState,
+          currentState: state.currentState,
+        }
       }
     case "reset":
       if (!action.state) throw new Error("No action state to store in reset")
       return {
-        undoStack: [],
-        redoStack: [],
-        shouldReloadCanvas: true,
+        history: {
+          undoStack: [],
+          redoStack: [],
+        },
+        action: { ...RELOAD_CANVAS },
         initialState: action.state,
         currentState: action.state,
       }
     case "forceSendToStreamlit":
       return {
-        ...state,
-        forceSendToStreamlit: true,
+        history: { ...state.history },
+        action: { ...SEND_TO_STREAMLIT },
+        initialState: state.initialState,
+        currentState: state.currentState,
       }
     default:
       throw new Error()
@@ -134,9 +182,14 @@ const canvasStateReducer = (
 }
 
 const initialState: CanvasState = {
-  undoStack: [],
-  redoStack: [],
-  shouldReloadCanvas: false,
+  history: {
+    undoStack: [],
+    redoStack: [],
+  },
+  action: {
+    forceSendToStreamlit: false,
+    shouldReloadCanvas: false,
+  },
   initialState: {},
   currentState: {},
 }
@@ -178,8 +231,8 @@ export const CanvasStateProvider = ({
     [dispatch]
   )
 
-  const canUndo = canvasState.undoStack.length !== 0
-  const canRedo = canvasState.redoStack.length !== 0
+  const canUndo = canvasState.history.undoStack.length !== 0
+  const canRedo = canvasState.history.redoStack.length !== 0
 
   return (
     <CanvasStateContext.Provider
