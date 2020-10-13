@@ -6,6 +6,11 @@ import {
 } from "streamlit-component-lib"
 import { fabric } from "fabric"
 
+import { useCanvasState } from "./DrawableCanvasState"
+
+import CanvasToolbar from "./components/CanvasToolbar"
+import UpdateStreamlit from "./components/UpdateStreamlit"
+
 import CircleTool from "./lib/circle"
 import FabricTool from "./lib/fabrictool"
 import FreedrawTool from "./lib/freedraw"
@@ -22,31 +27,19 @@ export interface PythonArgs {
   strokeColor: string
   backgroundColor: string
   backgroundImage: Uint8ClampedArray
-  updateStreamlit: boolean
+  realtimeUpdateStreamlit: boolean
   canvasWidth: number
   canvasHeight: number
   drawingMode: string
 }
 
-interface Tools {
-  [key: string]: FabricTool
-}
-
-/**
- * Download image and JSON data from canvas to send back to Streamlit
- */
-export function sendDataToStreamlit(canvas: fabric.Canvas): void {
-  canvas.renderAll()
-  const imageData = canvas
-    .getContext()
-    .getImageData(0, 0, canvas.getWidth(), canvas.getHeight())
-  const data = Array.from(imageData["data"])
-  Streamlit.setComponentValue({
-    data: data,
-    width: imageData["width"],
-    height: imageData["height"],
-    raw: canvas.toObject(),
-  })
+// TODO: Should make TS happy on the Map of selectedTool --> FabricTool
+const tools: any = {
+  circle: CircleTool,
+  freedraw: FreedrawTool,
+  line: LineTool,
+  rect: RectTool,
+  transform: TransformTool,
 }
 
 /**
@@ -58,89 +51,128 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     canvasHeight,
     backgroundColor,
     backgroundImage,
-    updateStreamlit,
+    realtimeUpdateStreamlit,
     drawingMode,
+    fillColor,
+    strokeWidth,
+    strokeColor,
   }: PythonArgs = args
+
+  /**
+   * State initialization
+   */
   const [canvas, setCanvas] = useState(new fabric.Canvas(""))
   const [backgroundCanvas, setBackgroundCanvas] = useState(
     new fabric.StaticCanvas("")
   )
+  const {
+    canvasState: {
+      action: { shouldReloadCanvas, forceSendToStreamlit },
+      currentState,
+    },
+    saveState,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    forceStreamlitUpdate,
+    resetState,
+  } = useCanvasState()
 
   /**
    * Initialize canvases on component mount
+   * NB: Remount component by changing its key instead of defining deps
    */
   useEffect(() => {
-    const c = new fabric.Canvas("c", {
+    const c = new fabric.Canvas("canvas", {
       enableRetinaScaling: false,
     })
-    const imgC = new fabric.StaticCanvas("imgC", {
+    const imgC = new fabric.StaticCanvas("backgroundimage-canvas", {
       enableRetinaScaling: false,
     })
     setCanvas(c)
     setBackgroundCanvas(imgC)
     Streamlit.setFrameHeight()
-  }, [canvasHeight, canvasWidth])
+  }, [])
 
   /**
-   * Update canvas with background and selected tool
-   * Then send back data to Streamlit
+   * If state changed from undo/redo, update user-facing canvas
    */
   useEffect(() => {
-    if (!canvas) {
-      return
+    if (shouldReloadCanvas) {
+      canvas.loadFromJSON(currentState, () => {})
     }
+  }, [canvas, shouldReloadCanvas, currentState])
 
+  /**
+   * Update background color
+   */
+  useEffect(() => {
     canvas.setBackgroundColor(backgroundColor, () => {
-      if (backgroundImage) {
-        const imageData = backgroundCanvas
-          .getContext()
-          .createImageData(canvasWidth, canvasHeight)
-        imageData.data.set(backgroundImage)
-        backgroundCanvas.getContext().putImageData(imageData, 0, 0)
-      }
-      sendDataToStreamlit(canvas) // send back in case update prop reran the effect
+      canvas.renderAll()
+      saveState(canvas.toJSON())
     })
-    Streamlit.setFrameHeight()
+  }, [canvas, backgroundColor, saveState])
 
+  /**
+   * Update background image
+   */
+  useEffect(() => {
+    if (backgroundImage) {
+      const imageData = backgroundCanvas
+        .getContext()
+        .createImageData(canvasWidth, canvasHeight)
+      imageData.data.set(backgroundImage)
+      backgroundCanvas.getContext().putImageData(imageData, 0, 0)
+    }
+  }, [backgroundCanvas, canvasHeight, canvasWidth, backgroundImage])
+
+  /**
+   * Update canvas with selected tool
+   */
+  useEffect(() => {
     // Update canvas events with selected tool
-    const tools: Tools = {
-      circle: new CircleTool(canvas),
-      freedraw: new FreedrawTool(canvas),
-      line: new LineTool(canvas),
-      rect: new RectTool(canvas),
-      transform: new TransformTool(canvas),
-    }
-    const selectedTool = tools[drawingMode]
-    const cleanupToolEvents = selectedTool.configureCanvas(args)
+    const selectedTool = new tools[drawingMode](canvas) as FabricTool
+    const cleanupToolEvents = selectedTool.configureCanvas({
+      fillColor: fillColor,
+      strokeWidth: strokeWidth,
+      strokeColor: strokeColor,
+    })
 
-    // Define events to send data back to Streamlit
-    const handleSendToStreamlit = () => {
-      sendDataToStreamlit(canvas)
-    }
-    const eventsSendToStreamlit = updateStreamlit
-      ? [
-          "mouse:up",
-          "selection:cleared",
-          "selection:updated",
-          "object:removed",
-          "object:modified",
-        ]
-      : []
-    eventsSendToStreamlit.forEach((event) =>
-      canvas.on(event, handleSendToStreamlit)
-    )
+    canvas.on("mouse:up", () => {
+      saveState(canvas.toJSON())
+    })
 
     // Cleanup tool + send data to Streamlit events
     return () => {
       cleanupToolEvents()
-      eventsSendToStreamlit.forEach((event) =>
-        canvas.off(event, handleSendToStreamlit)
-      )
+      canvas.off("mouse:up")
     }
-  })
+  }, [canvas, strokeWidth, strokeColor, fillColor, drawingMode, saveState])
 
+  /**
+   * Render canvas w/ toolbar
+   */
   return (
     <div style={{ position: "relative" }}>
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          zIndex: -10,
+          visibility: "hidden",
+        }}
+      >
+        <UpdateStreamlit
+          canvasHeight={canvasHeight}
+          canvasWidth={canvasWidth}
+          shouldSendToStreamlit={
+            realtimeUpdateStreamlit || forceSendToStreamlit
+          }
+          stateToSendToStreamlit={currentState}
+        />
+      </div>
       <div
         style={{
           position: "absolute",
@@ -149,7 +181,11 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           zIndex: 0,
         }}
       >
-        <canvas id="imgC" width={canvasWidth} height={canvasHeight} />
+        <canvas
+          id="backgroundimage-canvas"
+          width={canvasWidth}
+          height={canvasHeight}
+        />
       </div>
       <div
         style={{
@@ -159,8 +195,28 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           zIndex: 10,
         }}
       >
-        <canvas id="c" width={canvasWidth} height={canvasHeight} />
+        <canvas
+          id="canvas"
+          width={canvasWidth}
+          height={canvasHeight}
+          style={{ border: "lightgrey 1px solid" }}
+        />
       </div>
+      <CanvasToolbar
+        topPosition={canvasHeight}
+        leftPosition={canvasWidth}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        downloadCallback={forceStreamlitUpdate}
+        undoCallback={undo}
+        redoCallback={redo}
+        resetCallback={() => {
+          canvas.clear()
+          canvas.setBackgroundColor(backgroundColor, () => {
+            resetState(canvas.toJSON())
+          })
+        }}
+      />
     </div>
   )
 }

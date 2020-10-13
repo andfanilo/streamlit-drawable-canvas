@@ -1,0 +1,19 @@
+.enabled {
+  cursor: pointer;
+  background: none;
+}
+
+.disabled {
+  cursor: not-allowed;
+  filter: invert(95%) sepia(10%) saturate(657%) hue-rotate(184deg)
+    brightness(92%) contrast(95%);
+}
+
+.enabled:hover {
+  filter: invert(41%) sepia(62%) saturate(7158%) hue-rotate(344deg)
+    brightness(101%) contrast(108%);
+}
+
+.invertx {
+  transform: scaleX(-1);
+}

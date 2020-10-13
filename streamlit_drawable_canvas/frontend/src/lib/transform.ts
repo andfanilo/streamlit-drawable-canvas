@@ -1,8 +1,7 @@
-import { PythonArgs } from "../DrawableCanvas"
-import FabricTool from "./fabrictool"
+import FabricTool, { ConfigureCanvasProps } from "./fabrictool"
 
 class TransformTool extends FabricTool {
-  configureCanvas(args: PythonArgs): () => void {
+  configureCanvas(args: ConfigureCanvasProps): () => void {
     let canvas = this._canvas
     canvas.isDrawingMode = false
     canvas.selection = true

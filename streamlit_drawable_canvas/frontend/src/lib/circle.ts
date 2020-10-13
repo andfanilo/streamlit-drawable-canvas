@@ -1,6 +1,5 @@
 import { fabric } from "fabric"
-import { PythonArgs } from "../DrawableCanvas"
-import FabricTool from "./fabrictool"
+import FabricTool, { ConfigureCanvasProps } from "./fabrictool"
 
 class CircleTool extends FabricTool {
   isMouseDown: boolean = false
@@ -11,12 +10,15 @@ class CircleTool extends FabricTool {
   currentStartX: number = 0
   currentStartY: number = 0
 
-  configureCanvas(args: PythonArgs): () => void {
+  configureCanvas({
+    strokeWidth,
+    strokeColor,
+    fillColor,
+  }: ConfigureCanvasProps): () => void {
     this._canvas.isDrawingMode = false
     this._canvas.selection = false
     this._canvas.forEachObject((o) => (o.selectable = o.evented = false))
 
-    const { strokeWidth, strokeColor, fillColor } = args
     this.strokeWidth = strokeWidth
     this.strokeColor = strokeColor
     this.fillColor = fillColor

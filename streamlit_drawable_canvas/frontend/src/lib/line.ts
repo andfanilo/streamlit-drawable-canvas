@@ -1,6 +1,5 @@
 import { fabric } from "fabric"
-import { PythonArgs } from "../DrawableCanvas"
-import FabricTool from "./fabrictool"
+import FabricTool, { ConfigureCanvasProps } from "./fabrictool"
 
 class LineTool extends FabricTool {
   isMouseDown: boolean = false
@@ -8,12 +7,14 @@ class LineTool extends FabricTool {
   strokeColor: string = "#ffffff"
   currentLine: fabric.Line = new fabric.Line()
 
-  configureCanvas(args: PythonArgs): () => void {
+  configureCanvas({
+    strokeWidth,
+    strokeColor,
+  }: ConfigureCanvasProps): () => void {
     this._canvas.isDrawingMode = false
     this._canvas.selection = false
     this._canvas.forEachObject((o) => (o.selectable = o.evented = false))
 
-    const { strokeWidth, strokeColor } = args
     this.strokeWidth = strokeWidth
     this.strokeColor = strokeColor
 

@@ -1,5 +1,10 @@
-import { PythonArgs } from "../DrawableCanvas"
 import { fabric } from "fabric"
+
+export interface ConfigureCanvasProps {
+    fillColor: string
+    strokeWidth: number
+    strokeColor: string
+}
 
 /**
  * Base class for any fabric tool that configures and draws on canvas
@@ -18,7 +23,7 @@ abstract class FabricTool {
    * Configure canvas and return a callback to clean eventListeners
    * @param args
    */
-  abstract configureCanvas(args: PythonArgs): () => void
+  abstract configureCanvas(args: ConfigureCanvasProps): () => void
 }
 
 export default FabricTool
