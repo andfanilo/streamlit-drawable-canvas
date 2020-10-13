@@ -10,7 +10,7 @@ Streamlit component which provides a sketching canvas using [Fabric.js](http://f
 - Rotate, skew, scale, move any object of the canvas on demand
 - Select a background color or image to draw on
 - Get image data and every drawn object properties back to Streamlit !
-- Choose to fetch back data in realtime or on demand
+- Choose to fetch back data in realtime or on demand with a button
 - Undo, Redo or Drop canvas
 
 ## Installation
