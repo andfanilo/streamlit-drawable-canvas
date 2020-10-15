@@ -2,6 +2,8 @@
 
 Streamlit component which provides a sketching canvas using [Fabric.js](http://fabricjs.com/).
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/andfanilo/streamlit-drawable-canvas/master/examples/app.py)
+
 ![](./img/demo.gif)
 
 ## Features
