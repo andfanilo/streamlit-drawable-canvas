@@ -1,3 +1,0 @@
-# this is a shim to work with S4A for now, until requirements are read from folder containing the Streamlit Python script
-streamlit>=0.65
-streamlit-drawable-canvas

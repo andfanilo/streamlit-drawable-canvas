@@ -2,7 +2,7 @@
 
 Streamlit component which provides a sketching canvas using [Fabric.js](http://fabricjs.com/).
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/andfanilo/streamlit-drawable-canvas/master/examples/app.py)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/andfanilo/streamlit-drawable-canvas-demo/master/app.py)
 
 ![](./img/demo.gif)
 
@@ -22,6 +22,8 @@ pip install streamlit-drawable-canvas
 ```
 
 ## Example Usage
+
+Copy this code snippet:
 
 ```python
 import streamlit as st
@@ -55,6 +57,12 @@ if canvas_result.image_data is not None:
     st.image(canvas_result.image_data)
 if canvas_result.json_data is not None:
     st.dataframe(pd.json_normalize(canvas_result.json_data["objects"]))
+```
+
+Or run the `app.py` example:
+
+```sh
+streamlit run app.py
 ```
 
 ## Development
