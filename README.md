@@ -26,6 +26,8 @@ pip install streamlit-drawable-canvas
 Copy this code snippet:
 
 ```python
+import pandas as pd
+from PIL import Image
 import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 
