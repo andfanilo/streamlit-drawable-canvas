@@ -151,6 +151,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     return () => {
       cleanupToolEvents()
       canvas.off("mouse:up")
+      canvas.off("mouse:dblclick")
     }
   }, [canvas, strokeWidth, strokeColor, fillColor, drawingMode, saveState])
 
