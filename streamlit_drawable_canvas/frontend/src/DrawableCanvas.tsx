@@ -6,17 +6,11 @@ import {
 } from "streamlit-component-lib"
 import { fabric } from "fabric"
 
-import { useCanvasState } from "./DrawableCanvasState"
-
 import CanvasToolbar from "./components/CanvasToolbar"
 import UpdateStreamlit from "./components/UpdateStreamlit"
 
-import CircleTool from "./lib/circle"
-import FabricTool from "./lib/fabrictool"
-import FreedrawTool from "./lib/freedraw"
-import LineTool from "./lib/line"
-import RectTool from "./lib/rect"
-import TransformTool from "./lib/transform"
+import { useCanvasState } from "./DrawableCanvasState"
+import { tools, FabricTool } from "./lib"
 
 /**
  * Arguments Streamlit receives from the Python side
@@ -31,15 +25,6 @@ export interface PythonArgs {
   canvasWidth: number
   canvasHeight: number
   drawingMode: string
-}
-
-// TODO: Should make TS happy on the Map of selectedTool --> FabricTool
-const tools: any = {
-  circle: CircleTool,
-  freedraw: FreedrawTool,
-  line: LineTool,
-  rect: RectTool,
-  transform: TransformTool,
 }
 
 /**
