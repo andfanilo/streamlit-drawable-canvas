@@ -31,6 +31,7 @@ export interface PythonArgs {
   canvasWidth: number
   canvasHeight: number
   drawingMode: string
+  drawState: any
 }
 
 // TODO: Should make TS happy on the Map of selectedTool --> FabricTool
@@ -94,6 +95,18 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     setBackgroundCanvas(imgC)
     Streamlit.setFrameHeight()
   }, [])
+
+  /**
+   * If drawState is provided or modified, redraw canvas with it and save as state
+   */
+  useEffect(() => {
+    if (args.drawState) {
+      canvas.loadFromJSON(args.drawState, () => {
+        canvas.renderAll()
+        saveState(args.drawState)
+      })
+    }
+  }, [canvas, args.drawState, saveState])
 
   /**
    * If state changed from undo/redo, update user-facing canvas

@@ -42,3 +42,28 @@ if canvas_result.image_data is not None:
     st.image(canvas_result.image_data)
 if canvas_result.json_data is not None:
     st.dataframe(pd.json_normalize(canvas_result.json_data["objects"]))
+
+st.markdown("---")
+
+with st.beta_expander("Here is a star I drawed previously, isn't it pretty :)?"):
+    import json
+    import random
+    with open("img/star_state.json", "r") as f:
+        new_state = json.load(f)
+    if st.checkbox("...or programmatically send a random background color"):
+        random_number = random.randint(0, 16777215)
+        hex_number = str(hex(random_number))
+        hex_number ='#'+ hex_number[2:]
+        new_state = {"version": "3.6.3", "objects": [], "background": hex_number}
+
+    st_canvas(
+        stroke_width=stroke_width,
+        stroke_color=stroke_color,
+        background_color="" if bg_image else bg_color,
+        background_image=Image.open(bg_image) if bg_image else None,
+        update_streamlit=False,
+        height=200,
+        drawing_mode=drawing_mode,
+        draw_state=new_state,
+        key="copy",
+    )
