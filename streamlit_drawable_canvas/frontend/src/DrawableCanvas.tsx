@@ -5,6 +5,7 @@ import {
   withStreamlitConnection,
 } from "streamlit-component-lib"
 import { fabric } from "fabric"
+import { isEqual } from "lodash"
 
 import CanvasToolbar from "./components/CanvasToolbar"
 import UpdateStreamlit from "./components/UpdateStreamlit"
@@ -25,6 +26,7 @@ export interface PythonArgs {
   canvasWidth: number
   canvasHeight: number
   drawingMode: string
+  initialDrawing: Object
 }
 
 /**
@@ -41,6 +43,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     fillColor,
     strokeWidth,
     strokeColor,
+    initialDrawing,
   }: PythonArgs = args
 
   /**
@@ -54,6 +57,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     canvasState: {
       action: { shouldReloadCanvas, forceSendToStreamlit },
       currentState,
+      initialState,
     },
     saveState,
     undo,
@@ -79,6 +83,18 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     setBackgroundCanvas(imgC)
     Streamlit.setFrameHeight()
   }, [])
+
+  /**
+   * Load user drawing into canvas
+   */
+  useEffect(() => {
+    if (!isEqual(initialState, initialDrawing)) {
+      canvas.loadFromJSON(initialDrawing, () => {
+        canvas.renderAll()
+        resetState(initialDrawing)
+      })
+    }
+  }, [canvas, initialDrawing, initialState, resetState])
 
   /**
    * If state changed from undo/redo, update user-facing canvas
@@ -114,6 +130,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
 
   /**
    * Update canvas with selected tool
+   * PS: add initialDrawing in dependency so user drawing update reinits tool
    */
   useEffect(() => {
     // Update canvas events with selected tool
@@ -138,7 +155,15 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       canvas.off("mouse:up")
       canvas.off("mouse:dblclick")
     }
-  }, [canvas, strokeWidth, strokeColor, fillColor, drawingMode, saveState])
+  }, [
+    canvas,
+    strokeWidth,
+    strokeColor,
+    fillColor,
+    drawingMode,
+    initialDrawing,
+    saveState,
+  ])
 
   /**
    * Render canvas w/ toolbar
