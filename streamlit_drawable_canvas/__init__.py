@@ -86,17 +86,20 @@ def st_canvas(
         Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect", "circle".
         Defaults to "freedraw".
     initial_drawing: dict
-        Draw canvas with given state. If None then empties canvas.
-        Should generally be the `json_data` output from other canvas, which you should be able to manipulate.
-        Beware: no rescaling is done in the canvas and should be provided by user.
+        Redraw canvas with given initial_drawing. If changed to None then empties canvas.
+        Should generally be the `json_data` output from other canvas, which you can manipulate.
+        Beware: if importing from a bigger/smaller canvas, no rescaling is done in the canvas,
+        it should be ran on user's side.
     key: str
-        An optional string to use as the unique key for the widget. 
+        An optional string to use as the unique key for the widget.
         Assign a key so the component is not remount every time the script is rerun.
     
     Returns
     -------
     result: CanvasResult 
-        Reshaped RGBA image 4D numpy array (r, g, b, alpha), and canvas/objects JSON representation.
+        `image_data` contains reshaped RGBA image 4D numpy array (r, g, b, alpha), 
+        `json_data` stores the canvas/objects JSON representation which you can manipulate, store
+        load and then reinject into another canvas through the `initial_drawing` argument.
     """
     # Resize background_image to canvas dimensions by default
     if background_image:

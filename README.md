@@ -67,6 +67,8 @@ Or run the `app.py` example:
 streamlit run app.py
 ```
 
+Consult the `st_canvas` API docs for more information on each argument.
+
 ## Development
 
 ### Install
