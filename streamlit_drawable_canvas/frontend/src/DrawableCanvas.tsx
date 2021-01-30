@@ -5,6 +5,7 @@ import {
   withStreamlitConnection,
 } from "streamlit-component-lib"
 import { fabric } from "fabric"
+import { isEqual } from "lodash"
 
 import { useCanvasState } from "./DrawableCanvasState"
 
@@ -31,7 +32,7 @@ export interface PythonArgs {
   canvasWidth: number
   canvasHeight: number
   drawingMode: string
-  drawState: any
+  initialDrawing: Object
 }
 
 // TODO: Should make TS happy on the Map of selectedTool --> FabricTool
@@ -57,6 +58,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     fillColor,
     strokeWidth,
     strokeColor,
+    initialDrawing,
   }: PythonArgs = args
 
   /**
@@ -70,6 +72,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     canvasState: {
       action: { shouldReloadCanvas, forceSendToStreamlit },
       currentState,
+      initialState,
     },
     saveState,
     undo,
@@ -97,16 +100,16 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   }, [])
 
   /**
-   * If drawState is provided or modified, redraw canvas with it and save as state
+   * Load user drawing into canvas
    */
   useEffect(() => {
-    if (args.drawState) {
-      canvas.loadFromJSON(args.drawState, () => {
+    if (!isEqual(initialState, initialDrawing)) {
+      canvas.loadFromJSON(initialDrawing, () => {
         canvas.renderAll()
-        saveState(args.drawState)
+        resetState(initialDrawing)
       })
     }
-  }, [canvas, args.drawState, saveState])
+  }, [canvas, initialDrawing, initialState, resetState])
 
   /**
    * If state changed from undo/redo, update user-facing canvas
@@ -142,6 +145,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
 
   /**
    * Update canvas with selected tool
+   * PS: add initialDrawing in dependency so user drawing update reinits tool
    */
   useEffect(() => {
     // Update canvas events with selected tool
@@ -166,7 +170,15 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       canvas.off("mouse:up")
       canvas.off("mouse:dblclick")
     }
-  }, [canvas, strokeWidth, strokeColor, fillColor, drawingMode, saveState])
+  }, [
+    canvas,
+    strokeWidth,
+    strokeColor,
+    fillColor,
+    drawingMode,
+    initialDrawing,
+    saveState,
+  ])
 
   /**
    * Render canvas w/ toolbar
