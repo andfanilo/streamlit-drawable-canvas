@@ -14,6 +14,7 @@ Streamlit component which provides a sketching canvas using [Fabric.js](http://f
 - Get image data and every drawn object properties back to Streamlit !
 - Choose to fetch back data in realtime or on demand with a button
 - Undo, Redo or Drop canvas
+- Save canvas data as JSON to reuse for another session
 
 ## Installation
 
@@ -59,12 +60,6 @@ if canvas_result.image_data is not None:
     st.image(canvas_result.image_data)
 if canvas_result.json_data is not None:
     st.dataframe(pd.json_normalize(canvas_result.json_data["objects"]))
-```
-
-Or run the `app.py` example:
-
-```sh
-streamlit run app.py
 ```
 
 Consult the `st_canvas` API docs for more information on each argument.
