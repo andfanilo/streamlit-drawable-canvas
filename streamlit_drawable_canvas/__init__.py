@@ -56,6 +56,7 @@ def st_canvas(
     height: int = 400,
     width: int = 600,
     drawing_mode: str = "freedraw",
+    initial_drawing: dict = None,
     key=None,
 ) -> CanvasResult:
     """Create a drawing canvas in Streamlit app. Retrieve the RGBA image data into a 4D numpy array (r, g, b, alpha)
@@ -84,6 +85,10 @@ def st_canvas(
     drawing_mode: {'freedraw', 'transform', 'line', 'rect', 'circle'}
         Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect", "circle".
         Defaults to "freedraw".
+    initial_drawing: dict
+        Draw canvas with given state. If None then empties canvas.
+        Should generally be the `json_data` output from other canvas, which you should be able to manipulate.
+        Beware: no rescaling is done in the canvas and should be provided by user.
     key: str
         An optional string to use as the unique key for the widget. 
         Assign a key so the component is not remount every time the script is rerun.
@@ -96,6 +101,8 @@ def st_canvas(
     # Resize background_image to canvas dimensions by default
     if background_image:
         background_image = _resize_img(background_image, height, width)
+    if initial_drawing is None:
+        initial_drawing = {"version": "3.6.3", "background": background_color}
 
     component_value = _component_func(
         fillColor=fill_color,
@@ -107,6 +114,7 @@ def st_canvas(
         canvasHeight=height,
         canvasWidth=width,
         drawingMode=drawing_mode,
+        initialDrawing=initial_drawing,
         key=key,
         default=None,
     )

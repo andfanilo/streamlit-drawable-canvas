@@ -1,3 +1,4 @@
+import json
 import pandas as pd
 from PIL import Image
 import streamlit as st
@@ -24,6 +25,10 @@ drawing_mode = st.sidebar.selectbox(
 )
 realtime_update = st.sidebar.checkbox("Update in realtime", True)
 
+with open("img/star_state.json", "r") as f:
+    star_state = json.load(f)
+    star_state["background"] = bg_color
+
 # Create a canvas component
 canvas_result = st_canvas(
     fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
@@ -34,6 +39,7 @@ canvas_result = st_canvas(
     update_streamlit=realtime_update,
     height=150,
     drawing_mode=drawing_mode,
+    initial_drawing=star_state if st.sidebar.checkbox("Initialize with star") else None,
     key="canvas",
 )
 
