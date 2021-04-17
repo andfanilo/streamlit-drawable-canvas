@@ -125,3 +125,7 @@ streamlit run app.py
 - [When does React re-render components?](https://felixgerschau.com/react-rerender-components/#when-does-react-re-render)
 - [Immutable Update Patterns](https://redux.js.org/recipes/structuring-reducers/immutable-update-patterns)
 - Icons by [Freepik](https://www.flaticon.com/authors/freepik), [Google](https://www.flaticon.com/authors/google), [Mavadee](https://www.flaticon.com/authors/mavadee).
+
+# Support me
+
+<a href="https://www.buymeacoffee.com/andfanilo" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
