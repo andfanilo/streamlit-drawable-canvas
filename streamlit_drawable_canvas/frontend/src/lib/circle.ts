@@ -9,6 +9,7 @@ class CircleTool extends FabricTool {
   currentCircle: fabric.Circle = new fabric.Circle()
   currentStartX: number = 0
   currentStartY: number = 0
+  _minRadius: number = 10
 
   configureCanvas({
     strokeWidth,
@@ -22,6 +23,7 @@ class CircleTool extends FabricTool {
     this.strokeWidth = strokeWidth
     this.strokeColor = strokeColor
     this.fillColor = fillColor
+    this._minRadius = strokeWidth
 
     this._canvas.on("mouse:down", (e: any) => this.onMouseDown(e))
     this._canvas.on("mouse:move", (e: any) => this.onMouseMove(e))
@@ -51,7 +53,7 @@ class CircleTool extends FabricTool {
       fill: this.fillColor,
       selectable: false,
       evented: false,
-      radius: 1,
+      radius: this._minRadius,
     })
     canvas.add(this.currentCircle)
   }
@@ -60,12 +62,12 @@ class CircleTool extends FabricTool {
     if (!this.isMouseDown) return
     let canvas = this._canvas
     let pointer = canvas.getPointer(o.e)
-    this.currentCircle.set({
-      radius:
-        this.linearDistance(
+    let _radius = this.linearDistance(
           { x: this.currentStartX, y: this.currentStartY },
           { x: pointer.x, y: pointer.y }
-        ) / 2,
+        ) / 2
+    this.currentCircle.set({
+    radius: Math.max(_radius, this._minRadius),
       angle:
         (Math.atan2(
           pointer.y - this.currentStartY,
