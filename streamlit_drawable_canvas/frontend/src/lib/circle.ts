@@ -67,7 +67,7 @@ class CircleTool extends FabricTool {
           { x: pointer.x, y: pointer.y }
         ) / 2
     this.currentCircle.set({
-    radius: Math.max(_radius, this._minRadius),
+      radius: Math.max(_radius, this._minRadius),
       angle:
         (Math.atan2(
           pointer.y - this.currentStartY,
