@@ -4,6 +4,11 @@ Streamlit component which provides a sketching canvas using [Fabric.js](http://f
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/andfanilo/streamlit-drawable-canvas-demo/master/app.py)
 
+[![PyPI](https://img.shields.io/pypi/v/streamlit-drawable-canvas)](https://pypi.org/project/streamlit-drawable-canvas/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/streamlit-drawable-canvas)](https://pypi.org/project/streamlit-drawable-canvas/)
+
+<a href="https://www.buymeacoffee.com/andfanilo" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50" width="180"></a>
+
 ![](./img/demo.gif)
 
 ## Features
@@ -125,7 +130,3 @@ streamlit run app.py
 - [When does React re-render components?](https://felixgerschau.com/react-rerender-components/#when-does-react-re-render)
 - [Immutable Update Patterns](https://redux.js.org/recipes/structuring-reducers/immutable-update-patterns)
 - Icons by [Freepik](https://www.flaticon.com/authors/freepik), [Google](https://www.flaticon.com/authors/google), [Mavadee](https://www.flaticon.com/authors/mavadee).
-
-# Support me
-
-<a href="https://www.buymeacoffee.com/andfanilo" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
