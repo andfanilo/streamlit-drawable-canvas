@@ -57,6 +57,7 @@ def st_canvas(
     width: int = 600,
     drawing_mode: str = "freedraw",
     initial_drawing: dict = None,
+    display_toolbar: bool = True,
     key=None,
 ) -> CanvasResult:
     """Create a drawing canvas in Streamlit app. Retrieve the RGBA image data into a 4D numpy array (r, g, b, alpha)
@@ -90,6 +91,8 @@ def st_canvas(
         Should generally be the `json_data` output from other canvas, which you can manipulate.
         Beware: if importing from a bigger/smaller canvas, no rescaling is done in the canvas,
         it should be ran on user's side.
+    display_toolbar: bool
+        Display the undo/redo/reset toolbar.
     key: str
         An optional string to use as the unique key for the widget.
         Assign a key so the component is not remount every time the script is rerun.
@@ -118,6 +121,7 @@ def st_canvas(
         canvasWidth=width,
         drawingMode=drawing_mode,
         initialDrawing=initial_drawing,
+        displayToolbar=display_toolbar,
         key=key,
         default=None,
     )
