@@ -27,6 +27,7 @@ export interface PythonArgs {
   canvasHeight: number
   drawingMode: string
   initialDrawing: Object
+  displayToolbar: boolean
 }
 
 /**
@@ -44,6 +45,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     strokeWidth,
     strokeColor,
     initialDrawing,
+    displayToolbar,
   }: PythonArgs = args
 
   /**
@@ -86,6 +88,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
 
   /**
    * Load user drawing into canvas
+   * Python-side is in charge of initializing drawing with background color if none provided
    */
   useEffect(() => {
     if (!isEqual(initialState, initialDrawing)) {
@@ -95,25 +98,6 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       })
     }
   }, [canvas, initialDrawing, initialState, resetState])
-
-  /**
-   * If state changed from undo/redo, update user-facing canvas
-   */
-  useEffect(() => {
-    if (shouldReloadCanvas) {
-      canvas.loadFromJSON(currentState, () => {})
-    }
-  }, [canvas, shouldReloadCanvas, currentState])
-
-  /**
-   * Update background color
-   */
-  useEffect(() => {
-    canvas.setBackgroundColor(backgroundColor, () => {
-      canvas.renderAll()
-      saveState(canvas.toJSON())
-    })
-  }, [canvas, backgroundColor, saveState])
 
   /**
    * Update background image
@@ -126,7 +110,24 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       imageData.data.set(backgroundImage)
       backgroundCanvas.getContext().putImageData(imageData, 0, 0)
     }
-  }, [backgroundCanvas, canvasHeight, canvasWidth, backgroundImage])
+  }, [
+    canvas,
+    backgroundCanvas,
+    canvasHeight,
+    canvasWidth,
+    backgroundColor,
+    backgroundImage,
+    saveState,
+  ])
+
+  /**
+   * If state changed from undo/redo/reset, update user-facing canvas
+   */
+  useEffect(() => {
+    if (shouldReloadCanvas) {
+      canvas.loadFromJSON(currentState, () => {})
+    }
+  }, [canvas, shouldReloadCanvas, currentState])
 
   /**
    * Update canvas with selected tool
@@ -217,21 +218,20 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           style={{ border: "lightgrey 1px solid" }}
         />
       </div>
-      <CanvasToolbar
-        topPosition={canvasHeight}
-        leftPosition={canvasWidth}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        downloadCallback={forceStreamlitUpdate}
-        undoCallback={undo}
-        redoCallback={redo}
-        resetCallback={() => {
-          canvas.clear()
-          canvas.setBackgroundColor(backgroundColor, () => {
-            resetState(canvas.toJSON())
-          })
-        }}
-      />
+      {displayToolbar && (
+        <CanvasToolbar
+          topPosition={canvasHeight}
+          leftPosition={canvasWidth}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          downloadCallback={forceStreamlitUpdate}
+          undoCallback={undo}
+          redoCallback={redo}
+          resetCallback={() => {
+            resetState(initialState)
+          }}
+        />
+      )}
     </div>
   )
 }

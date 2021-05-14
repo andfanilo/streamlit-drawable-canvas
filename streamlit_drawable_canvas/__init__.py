@@ -50,13 +50,14 @@ def st_canvas(
     fill_color: str = "#eee",
     stroke_width: int = 20,
     stroke_color: str = "black",
-    background_color: str = "transparent",
+    background_color: str = "",
     background_image: Image = None,
     update_streamlit: bool = True,
     height: int = 400,
     width: int = 600,
     drawing_mode: str = "freedraw",
     initial_drawing: dict = None,
+    display_toolbar: bool = True,
     key=None,
 ) -> CanvasResult:
     """Create a drawing canvas in Streamlit app. Retrieve the RGBA image data into a 4D numpy array (r, g, b, alpha)
@@ -71,7 +72,9 @@ def st_canvas(
     stroke_color: str
         Color of drawing brush in hex. Defaults to "black".
     background_color: str
-        Color of canvas background in CSS color property or "transparent". Defaults to "transparent".
+        Color of canvas background in CSS color property. Defaults to "" which is transparent.
+        Overriden by background_image.
+        Note: Changing background_color will reset the drawing.
     background_image: Image
         Pillow Image to display behind canvas. 
         Automatically resized to canvas dimensions.
@@ -90,6 +93,8 @@ def st_canvas(
         Should generally be the `json_data` output from other canvas, which you can manipulate.
         Beware: if importing from a bigger/smaller canvas, no rescaling is done in the canvas,
         it should be ran on user's side.
+    display_toolbar: bool
+        Display the undo/redo/reset toolbar.
     key: str
         An optional string to use as the unique key for the widget.
         Assign a key so the component is not remount every time the script is rerun.
@@ -102,22 +107,28 @@ def st_canvas(
         load and then reinject into another canvas through the `initial_drawing` argument.
     """
     # Resize background_image to canvas dimensions by default
+    # Then override background_color
     if background_image:
         background_image = _resize_img(background_image, height, width)
-    if initial_drawing is None:
-        initial_drawing = {"version": "3.6.3", "background": background_color}
+        background_image = _img_to_array(background_image)
+        background_color = ""
+
+    # Clean initial drawing, override its background color
+    initial_drawing = {"version": "4.4.0"} if initial_drawing is None else initial_drawing
+    initial_drawing["background"] = background_color
 
     component_value = _component_func(
         fillColor=fill_color,
         strokeWidth=stroke_width,
         strokeColor=stroke_color,
         backgroundColor=background_color,
-        backgroundImage=_img_to_array(background_image) if background_image else None,
+        backgroundImage=background_image,
         realtimeUpdateStreamlit=update_streamlit,
         canvasHeight=height,
         canvasWidth=width,
         drawingMode=drawing_mode,
         initialDrawing=initial_drawing,
+        displayToolbar=display_toolbar,
         key=key,
         default=None,
     )

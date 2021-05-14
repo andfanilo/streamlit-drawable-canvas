@@ -1,6 +1,6 @@
 {
   "name": "drawable_canvas",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
@@ -15,7 +15,7 @@
     "@types/react-dom": "^16.9.0",
     "apache-arrow": "^0.17.0",
     "event-target-shim": "^5.0.1",
-    "fabric": "^3.6.3",
+    "fabric": "4.4.0",
     "hoist-non-react-statics": "^3.3.2",
     "lodash": "^4.17.20",
     "react": "^16.13.1",

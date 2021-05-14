@@ -4,6 +4,11 @@ Streamlit component which provides a sketching canvas using [Fabric.js](http://f
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/andfanilo/streamlit-drawable-canvas-demo/master/app.py)
 
+[![PyPI](https://img.shields.io/pypi/v/streamlit-drawable-canvas)](https://pypi.org/project/streamlit-drawable-canvas/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/streamlit-drawable-canvas)](https://pypi.org/project/streamlit-drawable-canvas/)
+
+<a href="https://www.buymeacoffee.com/andfanilo" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50" width="180"></a>
+
 ![](./img/demo.gif)
 
 ## Features
@@ -47,7 +52,7 @@ canvas_result = st_canvas(
     fill_color="rgba(255, 165, 0, 0.3)",  # Fixed fill color with some opacity
     stroke_width=stroke_width,
     stroke_color=stroke_color,
-    background_color="" if bg_image else bg_color,
+    background_color=bg_color,
     background_image=Image.open(bg_image) if bg_image else None,
     update_streamlit=realtime_update,
     height=150,
@@ -62,7 +67,50 @@ if canvas_result.json_data is not None:
     st.dataframe(pd.json_normalize(canvas_result.json_data["objects"]))
 ```
 
-Consult the `st_canvas` API docs for more information on each argument.
+You will find more detailed examples [on the demo app](https://github.com/andfanilo/streamlit-drawable-canvas-demo/).
+
+## API
+
+```
+st_canvas(
+    fill_color: str
+    stroke_width: int
+    stroke_color: str
+    background_color: str
+    background_image: Image
+    update_streamlit: bool
+    height: int
+    width: int
+    drawing_mode: str
+    initial_drawing: dict
+    display_toolbar: bool
+    key: str
+)
+```
+
+- **fill_color** : Color of fill for Rect in CSS color property. Defaults to "#eee".
+- **stroke_width** : Width of drawing brush in CSS color property. Defaults to 20.
+- **stroke_color** : Color of drawing brush in hex. Defaults to "black".
+- **background_color** : Color of canvas background in CSS color property. Defaults to "" which is transparent. Overriden by background_image. Changing background_color will reset the drawing.
+- **background_image** : Pillow Image to display behind canvas. Automatically resized to canvas dimensions. Being behind the canvas, it is not sent back to Streamlit on mouse event. Overrides background_color.
+- **update_streamlit** : Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up.
+- **height** : Height of canvas in pixels. Defaults to 400.
+- **width** : Width of canvas in pixels. Defaults to 600.
+- **drawing_mode** : Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect", "circle". Defaults to "freedraw".
+- **initial_drawing** : Initialize canvas with drawings from here. Should be the `json_data` output from other canvas. Beware: if you try to import a drawing from a bigger/smaller canvas, no rescaling is done in the canvas and the import could fail.
+
+Example:
+
+```python
+import streamlit as st
+from streamlit_drawable_canvas import st_canvas
+
+canvas_result = st_canvas()
+st_canvas(initial_drawing=canvas_result.json_data)
+```
+
+- **display_toolbar** : Display the undo/redo/reset toolbar.
+- **key** : An optional string to use as the unique key for the widget. Assign a key so the component is not remount every time the script is rerun.
 
 ## Development
 

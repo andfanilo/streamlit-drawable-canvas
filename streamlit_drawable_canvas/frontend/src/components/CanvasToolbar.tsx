@@ -101,10 +101,7 @@ const CanvasToolbar = ({
       style={{
         position: "absolute",
         top: topPosition + 4,
-        left:
-          leftPosition -
-          iconElements.length * ICON_SIZE -
-          2 * GAP_BETWEEN_ICONS,
+        left: 0,
         display: "flex",
         gap: GAP_BETWEEN_ICONS,
         zIndex: 20,
