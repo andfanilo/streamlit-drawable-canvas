@@ -62,10 +62,11 @@ class CircleTool extends FabricTool {
     if (!this.isMouseDown) return
     let canvas = this._canvas
     let pointer = canvas.getPointer(o.e)
-    let _radius = this.linearDistance(
-          { x: this.currentStartX, y: this.currentStartY },
-          { x: pointer.x, y: pointer.y }
-        ) / 2
+    let _radius =
+      this.linearDistance(
+        { x: this.currentStartX, y: this.currentStartY },
+        { x: pointer.x, y: pointer.y }
+      ) / 2
     this.currentCircle.set({
       radius: Math.max(_radius, this._minRadius),
       angle:

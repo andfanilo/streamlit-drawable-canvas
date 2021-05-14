@@ -73,8 +73,8 @@ class RectTool extends FabricTool {
     if (this.currentStartY > pointer.y) {
       this.currentRect.set({ top: Math.abs(pointer.y) })
     }
-    let _width = Math.abs(this.currentStartX - pointer.x);
-    let _height = Math.abs(this.currentStartY - pointer.y);
+    let _width = Math.abs(this.currentStartX - pointer.x)
+    let _height = Math.abs(this.currentStartY - pointer.y)
     this.currentRect.set({
       width: Math.max(_width, this._minLength * 2),
       height: Math.max(_height, this._minLength * 2),
