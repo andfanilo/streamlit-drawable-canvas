@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2021-05-14
+
+- `initial_drawing` is now used as the initial canvas state. If `None` provided then we create one on the Python side. This provokes the following changes:
+  - a change in `background_color` will reset the drawing.
+  - `background_color` will override the background color present in `initial_drawing`.
+  - if `background_image` is present then `background_color` is removed from `st_canvas` call.
+- Upgrade Fabric.js to version 4.4.0.
+- Toolbar is now on the bottom left to account for large canvas width.
+- Add argument to make the toolbar invisible.
+- Make `stroke_width` the minimum size constraint to create a rectangle and circle. Thanks [hiankun](https://github.com/hiankun) for the PR!
+
 ## [0.6.0] - 2021-01-30
 
 - Add `initial_drawing` argument to initialize canvas with an exported canvas state
