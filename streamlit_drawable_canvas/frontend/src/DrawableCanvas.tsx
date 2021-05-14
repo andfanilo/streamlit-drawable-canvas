@@ -27,6 +27,7 @@ export interface PythonArgs {
   canvasHeight: number
   drawingMode: string
   initialDrawing: Object
+  displayToolbar: boolean
 }
 
 /**
@@ -44,6 +45,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     strokeWidth,
     strokeColor,
     initialDrawing,
+    displayToolbar,
   }: PythonArgs = args
 
   /**
@@ -217,21 +219,23 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           style={{ border: "lightgrey 1px solid" }}
         />
       </div>
-      <CanvasToolbar
-        topPosition={canvasHeight}
-        leftPosition={canvasWidth}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        downloadCallback={forceStreamlitUpdate}
-        undoCallback={undo}
-        redoCallback={redo}
-        resetCallback={() => {
-          canvas.clear()
-          canvas.setBackgroundColor(backgroundColor, () => {
-            resetState(canvas.toJSON())
-          })
-        }}
-      />
+      {displayToolbar && (
+        <CanvasToolbar
+          topPosition={canvasHeight}
+          leftPosition={canvasWidth}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          downloadCallback={forceStreamlitUpdate}
+          undoCallback={undo}
+          redoCallback={redo}
+          resetCallback={() => {
+            canvas.clear()
+            canvas.setBackgroundColor(backgroundColor, () => {
+              resetState(canvas.toJSON())
+            })
+          }}
+        />
+      )}
     </div>
   )
 }
