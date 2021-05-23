@@ -27,7 +27,6 @@ export interface PythonArgs {
   canvasHeight: number
   drawingMode: string
   initialDrawing: Object
-  displayToolbar: boolean
 }
 
 /**
@@ -45,13 +44,16 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     strokeWidth,
     strokeColor,
     initialDrawing,
-    displayToolbar,
   }: PythonArgs = args
 
   /**
    * State initialization
    */
-  const [canvas, setCanvas] = useState(new fabric.Canvas(""))
+  const [canvas, setCanvas] = useState(
+    new fabric.Canvas("", {
+      stopContextMenu: true, //FIX: no effect so far
+    })
+  )
   const [backgroundCanvas, setBackgroundCanvas] = useState(
     new fabric.StaticCanvas("")
   )
@@ -88,7 +90,6 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
 
   /**
    * Load user drawing into canvas
-   * Python-side is in charge of initializing drawing with background color if none provided
    */
   useEffect(() => {
     if (!isEqual(initialState, initialDrawing)) {
@@ -98,6 +99,25 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       })
     }
   }, [canvas, initialDrawing, initialState, resetState])
+
+  /**
+   * If state changed from undo/redo, update user-facing canvas
+   */
+  useEffect(() => {
+    if (shouldReloadCanvas) {
+      canvas.loadFromJSON(currentState, () => {})
+    }
+  }, [canvas, shouldReloadCanvas, currentState])
+
+  /**
+   * Update background color
+   */
+  useEffect(() => {
+    canvas.setBackgroundColor(backgroundColor, () => {
+      canvas.renderAll()
+      saveState(canvas.toJSON())
+    })
+  }, [canvas, backgroundColor, saveState])
 
   /**
    * Update background image
@@ -110,24 +130,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       imageData.data.set(backgroundImage)
       backgroundCanvas.getContext().putImageData(imageData, 0, 0)
     }
-  }, [
-    canvas,
-    backgroundCanvas,
-    canvasHeight,
-    canvasWidth,
-    backgroundColor,
-    backgroundImage,
-    saveState,
-  ])
-
-  /**
-   * If state changed from undo/redo/reset, update user-facing canvas
-   */
-  useEffect(() => {
-    if (shouldReloadCanvas) {
-      canvas.loadFromJSON(currentState, () => {})
-    }
-  }, [canvas, shouldReloadCanvas, currentState])
+  }, [backgroundCanvas, canvasHeight, canvasWidth, backgroundImage])
 
   /**
    * Update canvas with selected tool
@@ -142,8 +145,11 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       strokeColor: strokeColor,
     })
 
-    canvas.on("mouse:up", () => {
+    canvas.on("mouse:up", (e: any) => {
       saveState(canvas.toJSON())
+      if (e["button"] === 3 && drawingMode === "polypath") {
+        forceStreamlitUpdate()
+      }
     })
 
     canvas.on("mouse:dblclick", () => {
@@ -218,20 +224,21 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           style={{ border: "lightgrey 1px solid" }}
         />
       </div>
-      {displayToolbar && (
-        <CanvasToolbar
-          topPosition={canvasHeight}
-          leftPosition={canvasWidth}
-          canUndo={canUndo}
-          canRedo={canRedo}
-          downloadCallback={forceStreamlitUpdate}
-          undoCallback={undo}
-          redoCallback={redo}
-          resetCallback={() => {
-            resetState(initialState)
-          }}
-        />
-      )}
+      <CanvasToolbar
+        topPosition={canvasHeight}
+        leftPosition={canvasWidth}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        downloadCallback={forceStreamlitUpdate}
+        undoCallback={undo}
+        redoCallback={redo}
+        resetCallback={() => {
+          canvas.clear()
+          canvas.setBackgroundColor(backgroundColor, () => {
+            resetState(canvas.toJSON())
+          })
+        }}
+      />
     </div>
   )
 }
