@@ -20,9 +20,6 @@ class PolypathTool extends FabricTool {
     this._canvas.selection = false
     this._canvas.forEachObject((o) => (o.selectable = o.evented = false))
 
-    this._canvas.fireRightClick = true
-    this._canvas.stopContextMenu = true
-
     this.strokeWidth = strokeWidth
     this.strokeColor = strokeColor
     this.fillColor = fillColor
@@ -67,7 +64,7 @@ class PolypathTool extends FabricTool {
       canvas.add(this.currentLine)
     }
 
-    if (_start &&  _clicked ===0) {
+    if (_start && _clicked === 0) {
       // Initialize pathString
       this._pathString += `${pointer.x} ${pointer.y} `
       this.startCircle = new fabric.Circle({
@@ -107,7 +104,9 @@ class PolypathTool extends FabricTool {
       selectable: false,
       evented: false,
     })
-    canvas.add(this.currentPath)
+    if (this.currentPath.width !== 0 && this.currentPath.height !== 0) {
+      canvas.add(this.currentPath)
+    }
     if (_clicked === 2) {
       this._pathString = "M "
     }

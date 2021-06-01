@@ -51,11 +51,10 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   /**
    * State initialization
    */
-  const [canvas, setCanvas] = useState(
-    new fabric.Canvas("", {
-      stopContextMenu: true, //FIX: no effect so far
-    })
-  )
+  const [canvas, setCanvas] = useState(new fabric.Canvas(""))
+  canvas.stopContextMenu = true
+  canvas.fireRightClick = true
+
   const [backgroundCanvas, setBackgroundCanvas] = useState(
     new fabric.StaticCanvas("")
   )
@@ -148,7 +147,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
 
     canvas.on("mouse:up", (e: any) => {
       saveState(canvas.toJSON())
-      if (e["button"] === 3 && drawingMode === "polypath") {
+      if (e["button"] === 3) {
         forceStreamlitUpdate()
       }
     })

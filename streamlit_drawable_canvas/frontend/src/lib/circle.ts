@@ -39,6 +39,7 @@ class CircleTool extends FabricTool {
 
   onMouseDown(o: any) {
     let canvas = this._canvas
+    let _clicked = o.e["button"]
     this.isMouseDown = true
     let pointer = canvas.getPointer(o.e)
     this.currentStartX = pointer.x
@@ -55,7 +56,9 @@ class CircleTool extends FabricTool {
       evented: false,
       radius: this._minRadius,
     })
-    canvas.add(this.currentCircle)
+    if (_clicked === 0) {
+      canvas.add(this.currentCircle)
+    }
   }
 
   onMouseMove(o: any) {

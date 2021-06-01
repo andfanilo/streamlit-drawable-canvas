@@ -33,6 +33,11 @@ const SEND_TO_STREAMLIT: CanvasAction = {
   forceSendToStreamlit: true,
 }
 
+const RELOAD_ADN_SEND_TO_STREAMLIT: CanvasAction = {
+  shouldReloadCanvas: true,
+  forceSendToStreamlit: true,
+}
+
 interface CanvasState {
   history: CanvasHistory
   action: CanvasAction
@@ -46,7 +51,7 @@ interface Action {
 }
 
 /**
- * Reducer takes 5 actions: save, undo, redo, reset, forceSendToStreamlit
+ * Reducer takes 4 actions: save, undo, redo, reset
  *
  * On reset, clear everything, set initial and current state to cleared canvas
  *
@@ -165,7 +170,7 @@ const canvasStateReducer = (
           undoStack: [],
           redoStack: [],
         },
-        action: { ...RELOAD_CANVAS },
+        action: { ...RELOAD_ADN_SEND_TO_STREAMLIT },
         initialState: action.state,
         currentState: action.state,
       }
@@ -177,7 +182,7 @@ const canvasStateReducer = (
         currentState: state.currentState,
       }
     default:
-      throw new Error("TS should protect from this")
+      throw new Error()
   }
 }
 
