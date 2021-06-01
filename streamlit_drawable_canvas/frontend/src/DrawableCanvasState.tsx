@@ -51,7 +51,7 @@ interface Action {
 }
 
 /**
- * Reducer takes 4 actions: save, undo, redo, reset
+ * Reducer takes 5 actions: save, undo, redo, reset, forceSendToStreamlit
  *
  * On reset, clear everything, set initial and current state to cleared canvas
  *
@@ -182,7 +182,7 @@ const canvasStateReducer = (
         currentState: state.currentState,
       }
     default:
-      throw new Error()
+      throw new Error("TS should protect from this")
   }
 }
 
