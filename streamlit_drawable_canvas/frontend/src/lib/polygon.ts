@@ -1,7 +1,7 @@
 import { fabric } from "fabric"
 import FabricTool, { ConfigureCanvasProps } from "./fabrictool"
 
-class PolypathTool extends FabricTool {
+class PolygonTool extends FabricTool {
   isMouseDown: boolean = false
   fillColor: string = "#ffffff"
   strokeWidth: number = 10
@@ -86,8 +86,7 @@ class PolypathTool extends FabricTool {
       canvas.remove(this.currentPath)
       if (_clicked === 0) {
         // Update pathString
-        this._pathString += `L ${pointer.x} `
-        this._pathString += `${pointer.y} `
+        this._pathString += `L ${pointer.x} ${pointer.y} `
       }
       if (_clicked === 2) {
         // Close pathString
@@ -156,4 +155,4 @@ class PolypathTool extends FabricTool {
     canvas.add(this.currentPath)
   }
 }
-export default PolypathTool
+export default PolygonTool

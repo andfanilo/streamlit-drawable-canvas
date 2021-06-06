@@ -85,8 +85,8 @@ def st_canvas(
         Height of canvas in pixels. Defaults to 400.
     width: int
         Width of canvas in pixels. Defaults to 600.
-    drawing_mode: {'freedraw', 'transform', 'line', 'rect', 'circle', 'polypath'}
-        Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect", "circle", "polypath".
+    drawing_mode: {'freedraw', 'transform', 'line', 'rect', 'circle', 'polygon'}
+        Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect", "circle", "polygon".
         Defaults to "freedraw".
     initial_drawing: dict
         Redraw canvas with given initial_drawing. If changed to None then empties canvas.
@@ -123,7 +123,7 @@ def st_canvas(
         strokeColor=stroke_color,
         backgroundColor=background_color,
         backgroundImage=background_image,
-        realtimeUpdateStreamlit=update_streamlit and (drawing_mode != 'polypath'),
+        realtimeUpdateStreamlit=update_streamlit and (drawing_mode != 'polygon'),
         canvasHeight=height,
         canvasWidth=width,
         drawingMode=drawing_mode,
