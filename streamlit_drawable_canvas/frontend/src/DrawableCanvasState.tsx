@@ -33,6 +33,11 @@ const SEND_TO_STREAMLIT: CanvasAction = {
   forceSendToStreamlit: true,
 }
 
+const RELOAD_AND_SEND_TO_STREAMLIT: CanvasAction = {
+  shouldReloadCanvas: true,
+  forceSendToStreamlit: true,
+}
+
 interface CanvasState {
   history: CanvasHistory
   action: CanvasAction
@@ -165,7 +170,7 @@ const canvasStateReducer = (
           undoStack: [],
           redoStack: [],
         },
-        action: { ...RELOAD_CANVAS },
+        action: { ...RELOAD_AND_SEND_TO_STREAMLIT },
         initialState: action.state,
         currentState: action.state,
       }
