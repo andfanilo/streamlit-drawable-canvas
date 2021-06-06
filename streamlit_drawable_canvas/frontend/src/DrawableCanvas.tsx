@@ -170,6 +170,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     drawingMode,
     initialDrawing,
     saveState,
+    forceStreamlitUpdate,
   ])
 
   /**
