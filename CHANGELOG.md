@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2021-06-06
+
+- New `polygon` drawing mode:
+  - left-click will add point
+  - right click will close polygon
+  - double click will remove latest point
+- the Bin button in the toolbar which deletes the canvas content will now empty the history and send back to Streamlit a blank state, even if `update_streamlit` is set to `False`.
+- Right-click fires the `send canvas data back to Streamlit` event for all tools (not only the `polygon`) even if `update_streamlit` is set to `False`.
+
 ## [0.7.0] - 2021-05-14
 
 - `initial_drawing` is now used as the initial canvas state. If `None` provided then we create one on the Python side. This provokes the following changes:
