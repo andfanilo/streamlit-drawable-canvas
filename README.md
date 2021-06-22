@@ -13,12 +13,12 @@ Streamlit component which provides a sketching canvas using [Fabric.js](http://f
 
 ## Features
 
-- Draw freely, lines, circles and boxes on the canvas, with options on stroke & fill
+- Draw freely, lines, circles, boxes and polygons on the canvas, with options on stroke & fill
 - Rotate, skew, scale, move any object of the canvas on demand
 - Select a background color or image to draw on
 - Get image data and every drawn object properties back to Streamlit !
 - Choose to fetch back data in realtime or on demand with a button
-- Undo, Redo or Drop canvas
+- Undo, Redo or Delete canvas contents
 - Save canvas data as JSON to reuse for another session
 
 ## Installation
@@ -92,12 +92,14 @@ st_canvas(
 - **stroke_width** : Width of drawing brush in CSS color property. Defaults to 20.
 - **stroke_color** : Color of drawing brush in hex. Defaults to "black".
 - **background_color** : Color of canvas background in CSS color property. Defaults to "" which is transparent. Overriden by background_image. Changing background_color will reset the drawing.
-- **background_image** : Pillow Image to display behind canvas. Automatically resized to canvas dimensions. Being behind the canvas, it is not sent back to Streamlit on mouse event. Overrides background_color.
+- **background_image** : Pillow Image to display behind canvas. Automatically resized to canvas dimensions. Being behind the canvas, it is not sent back to Streamlit on mouse event. Overrides background_color. Changes to this will reset canvas contents.
 - **update_streamlit** : Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up.
 - **height** : Height of canvas in pixels. Defaults to 400.
 - **width** : Width of canvas in pixels. Defaults to 600.
-- **drawing_mode** : Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect", "circle". Defaults to "freedraw".
+- **drawing_mode** : Enable free drawing when "freedraw", object manipulation when "transform", otherwise create new objects with "line", "rect", "circle" and "polygon". Defaults to "freedraw".
+  - On "polygon" mode, double-clicking will remove the latest point and right-clicking will close the polygon.
 - **initial_drawing** : Initialize canvas with drawings from here. Should be the `json_data` output from other canvas. Beware: if you try to import a drawing from a bigger/smaller canvas, no rescaling is done in the canvas and the import could fail.
+- **display_toolbar** : If `False`, don't display the undo/redo/delete toolbar.
 
 Example:
 

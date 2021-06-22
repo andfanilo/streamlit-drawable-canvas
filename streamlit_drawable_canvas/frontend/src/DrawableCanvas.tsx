@@ -52,6 +52,9 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
    * State initialization
    */
   const [canvas, setCanvas] = useState(new fabric.Canvas(""))
+  canvas.stopContextMenu = true
+  canvas.fireRightClick = true
+
   const [backgroundCanvas, setBackgroundCanvas] = useState(
     new fabric.StaticCanvas("")
   )
@@ -142,8 +145,11 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       strokeColor: strokeColor,
     })
 
-    canvas.on("mouse:up", () => {
+    canvas.on("mouse:up", (e: any) => {
       saveState(canvas.toJSON())
+      if (e["button"] === 3) {
+        forceStreamlitUpdate()
+      }
     })
 
     canvas.on("mouse:dblclick", () => {
@@ -164,6 +170,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     drawingMode,
     initialDrawing,
     saveState,
+    forceStreamlitUpdate,
   ])
 
   /**

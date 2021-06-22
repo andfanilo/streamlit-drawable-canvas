@@ -32,6 +32,7 @@ class LineTool extends FabricTool {
 
   onMouseDown(o: any) {
     let canvas = this._canvas
+    let _clicked = o.e["button"]
     this.isMouseDown = true
     var pointer = canvas.getPointer(o.e)
     var points = [pointer.x, pointer.y, pointer.x, pointer.y]
@@ -44,7 +45,9 @@ class LineTool extends FabricTool {
       selectable: false,
       evented: false,
     })
-    canvas.add(this.currentLine)
+    if (_clicked === 0) {
+      canvas.add(this.currentLine)
+    }
   }
 
   onMouseMove(o: any) {
@@ -58,6 +61,10 @@ class LineTool extends FabricTool {
 
   onMouseUp(o: any) {
     this.isMouseDown = false
+    let canvas = this._canvas
+    if (this.currentLine.width === 0 && this.currentLine.height === 0) {
+      canvas.remove(this.currentLine)
+    }
   }
 
   onMouseOut(o: any) {

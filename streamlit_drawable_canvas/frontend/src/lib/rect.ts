@@ -39,6 +39,7 @@ class RectTool extends FabricTool {
 
   onMouseDown(o: any) {
     let canvas = this._canvas
+    let _clicked = o.e["button"]
     this.isMouseDown = true
     let pointer = canvas.getPointer(o.e)
     this.currentStartX = pointer.x
@@ -48,8 +49,8 @@ class RectTool extends FabricTool {
       top: this.currentStartY,
       originX: "left",
       originY: "top",
-      width: pointer.x - this.currentStartX,
-      height: pointer.y - this.currentStartY,
+      width: this._minLength,
+      height: this._minLength,
       stroke: this.strokeColor,
       strokeWidth: this.strokeWidth,
       fill: this.fillColor,
@@ -60,7 +61,9 @@ class RectTool extends FabricTool {
       noScaleCache: false,
       angle: 0,
     })
-    canvas.add(this.currentRect)
+    if (_clicked === 0) {
+      canvas.add(this.currentRect)
+    }
   }
 
   onMouseMove(o: any) {
