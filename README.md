@@ -64,7 +64,10 @@ canvas_result = st_canvas(
 if canvas_result.image_data is not None:
     st.image(canvas_result.image_data)
 if canvas_result.json_data is not None:
-    st.dataframe(pd.json_normalize(canvas_result.json_data["objects"]))
+    objects = pd.json_normalize(canvas_result.json_data["objects"]) # need to convert obj to str because PyArrow
+    for col in objects.select_dtypes(include=['object']).columns:
+        objects[col] = objects[col].astype("str")
+    st.dataframe(objects)
 ```
 
 You will find more detailed examples [on the demo app](https://github.com/andfanilo/streamlit-drawable-canvas-demo/).
