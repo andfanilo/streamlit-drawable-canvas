@@ -5,6 +5,9 @@ import numpy as np
 from PIL import Image
 import streamlit.components.v1 as components
 
+import base64
+import io
+
 _RELEASE = False  # on packaging, pass this to True
 
 if not _RELEASE:
@@ -32,6 +35,11 @@ class CanvasResult:
     image_data: np.array = None
     json_data: dict = None
 
+
+def _data_url_to_image(data_url: str) -> Image:
+    """Convert DataURL string to the image."""
+    _, _data_url  = data_url.split(';base64,')
+    return Image.open(io.BytesIO(base64.b64decode(_data_url)))
 
 def _resize_img(img: Image, new_height: int = 700, new_width: int = 700) -> Image:
     """Resize the image to the provided resolution."""
@@ -138,5 +146,5 @@ def st_canvas(
     w = component_value["width"]
     h = component_value["height"]
     return CanvasResult(
-        np.reshape(component_value["data"], (h, w, 4)), component_value["raw"],
+        np.asarray(_data_url_to_image(component_value["data"])), component_value["raw"],
     )
