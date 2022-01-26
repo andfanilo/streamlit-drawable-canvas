@@ -4,11 +4,12 @@ from dataclasses import dataclass
 import numpy as np
 from PIL import Image
 import streamlit.components.v1 as components
+import streamlit.elements.image as st_image
 
 import base64
 import io
 
-_RELEASE = False  # on packaging, pass this to True
+_RELEASE = True  # on packaging, pass this to True
 
 if not _RELEASE:
     _component_func = components.declare_component(
@@ -118,7 +119,8 @@ def st_canvas(
     # Then override background_color
     if background_image:
         background_image = _resize_img(background_image, height, width)
-        background_image = _img_to_array(background_image)
+        # Reduce network traffic and cache when switch another configure, use streamlit in-mem filemanager to convert image to URL
+        background_image = st_image.image_to_url(background_image, width, True, "RGB", "PNG", "drawable-canvas-bg-%s" % key)
         background_color = ""
 
     # Clean initial drawing, override its background color
