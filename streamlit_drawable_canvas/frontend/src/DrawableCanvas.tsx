@@ -28,6 +28,7 @@ export interface PythonArgs {
   drawingMode: string
   initialDrawing: Object
   displayToolbar: boolean
+  displayRadius: number
 }
 
 /**
@@ -44,6 +45,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     fillColor,
     strokeWidth,
     strokeColor,
+    displayRadius,
     initialDrawing,
     displayToolbar,
   }: PythonArgs = args
@@ -143,6 +145,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       fillColor: fillColor,
       strokeWidth: strokeWidth,
       strokeColor: strokeColor,
+      displayRadius: displayRadius
     })
 
     canvas.on("mouse:up", (e: any) => {
@@ -166,6 +169,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     canvas,
     strokeWidth,
     strokeColor,
+    displayRadius,
     fillColor,
     drawingMode,
     initialDrawing,

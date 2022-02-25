@@ -58,6 +58,7 @@ def st_canvas(
     drawing_mode: str = "freedraw",
     initial_drawing: dict = None,
     display_toolbar: bool = True,
+    point_display_radius: int = 3,
     key=None,
 ) -> CanvasResult:
     """Create a drawing canvas in Streamlit app. Retrieve the RGBA image data into a 4D numpy array (r, g, b, alpha)
@@ -95,6 +96,8 @@ def st_canvas(
         it should be ran on user's side.
     display_toolbar: bool
         Display the undo/redo/reset toolbar.
+    point_display_radius: int
+        The radius to use when displaying point objects. Defaults to 3.
     key: str
         An optional string to use as the unique key for the widget.
         Assign a key so the component is not remount every time the script is rerun.
@@ -129,6 +132,7 @@ def st_canvas(
         drawingMode=drawing_mode,
         initialDrawing=initial_drawing,
         displayToolbar=display_toolbar,
+        displayRadius=point_display_radius,
         key=key,
         default=None,
     )

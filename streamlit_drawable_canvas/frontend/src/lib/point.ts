@@ -9,12 +9,13 @@ class PointTool extends FabricTool {
   currentCircle: fabric.Circle = new fabric.Circle()
   currentStartX: number = 0
   currentStartY: number = 0
-  _minRadius: number = 1
+  displayRadius: number = 1
 
   configureCanvas({
     strokeWidth,
     strokeColor,
     fillColor,
+    displayRadius
   }: ConfigureCanvasProps): () => void {
     this._canvas.isDrawingMode = false
     this._canvas.selection = false
@@ -23,7 +24,7 @@ class PointTool extends FabricTool {
     this.strokeWidth = strokeWidth
     this.strokeColor = strokeColor
     this.fillColor = fillColor
-    this._minRadius = strokeWidth
+    this.displayRadius = displayRadius
 
     this._canvas.on("mouse:down", (e: any) => this.onMouseDown(e))
     this._canvas.on("mouse:move", (e: any) => this.onMouseMove(e))
@@ -42,8 +43,8 @@ class PointTool extends FabricTool {
     let _clicked = o.e["button"]
     this.isMouseDown = true
     let pointer = canvas.getPointer(o.e)
-    this.currentStartX = pointer.x - this._minRadius
-    this.currentStartY = pointer.y + this._minRadius
+    this.currentStartX = pointer.x - (this.displayRadius + this.strokeWidth / 2.)
+    this.currentStartY = pointer.y //- (this._minRadius + this.strokeWidth)
     this.currentCircle = new fabric.Circle({
       left: this.currentStartX,
       top: this.currentStartY,
@@ -54,7 +55,7 @@ class PointTool extends FabricTool {
       fill: this.fillColor,
       selectable: false,
       evented: false,
-      radius: this._minRadius,
+      radius: this.displayRadius,
     })
     if (_clicked === 0) {
       canvas.add(this.currentCircle)
