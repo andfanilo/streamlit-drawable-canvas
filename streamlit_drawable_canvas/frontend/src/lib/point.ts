@@ -76,19 +76,6 @@ class PointTool extends FabricTool {
     this.isMouseDown = false
   }
 
-  /**
-   * Calculate the distance of two x,y points
-   *
-   * @param point1 an object with x,y attributes representing the start point
-   * @param point2 an object with x,y attributes representing the end point
-   *
-   * @returns {number}
-   */
-  linearDistance = (point1: any, point2: any) => {
-    let xs = point2.x - point1.x
-    let ys = point2.y - point1.y
-    return Math.sqrt(xs * xs + ys * ys)
-  }
 }
 
 export default PointTool
