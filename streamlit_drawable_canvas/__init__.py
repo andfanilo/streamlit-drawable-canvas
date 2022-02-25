@@ -85,8 +85,8 @@ def st_canvas(
         Height of canvas in pixels. Defaults to 400.
     width: int
         Width of canvas in pixels. Defaults to 600.
-    drawing_mode: {'freedraw', 'transform', 'line', 'rect', 'circle', 'polygon'}
-        Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect", "circle", "polygon".
+    drawing_mode: {'freedraw', 'transform', 'line', 'rect', 'circle', 'point', 'polygon'}
+        Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect", "circle", "point", "polygon".
         Defaults to "freedraw".
     initial_drawing: dict
         Redraw canvas with given initial_drawing. If changed to None then empties canvas.
