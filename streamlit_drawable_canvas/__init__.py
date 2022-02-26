@@ -9,7 +9,7 @@ import streamlit.components.v1 as components
 import streamlit.elements.image as st_image
 from PIL import Image
 
-_RELEASE = True  # on packaging, pass this to True
+_RELEASE = False  # on packaging, pass this to True
 
 if not _RELEASE:
     _component_func = components.declare_component(
@@ -124,6 +124,10 @@ def st_canvas(
         background_image_url = st_image.image_to_url(
             background_image, width, True, "RGB", "PNG", f"drawable-canvas-bg-{md5(background_image.tobytes()).hexdigest()}-{key}" 
         )
+        # on a dev environment, tell React to fetch image from Streamlit server
+        # on a build environment, the URL hosts are the same
+        if not _RELEASE:
+            background_image_url = f"http://localhost:8501{background_image_url}"
         background_color = ""
 
     # Clean initial drawing, override its background color
