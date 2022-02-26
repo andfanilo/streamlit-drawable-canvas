@@ -38,14 +38,20 @@ import streamlit as st
 from streamlit_drawable_canvas import st_canvas
 
 # Specify canvas parameters in application
+drawing_mode = st.sidebar.selectbox(
+    "Drawing tool:", ("point", "freedraw", "line", "rect", "circle", "transform")
+)
+
 stroke_width = st.sidebar.slider("Stroke width: ", 1, 25, 3)
+if drawing_mode == 'point':
+    point_display_radius = st.sidebar.slider("Point display radius: ", 1, 25, 3)
 stroke_color = st.sidebar.color_picker("Stroke color hex: ")
 bg_color = st.sidebar.color_picker("Background color hex: ", "#eee")
 bg_image = st.sidebar.file_uploader("Background image:", type=["png", "jpg"])
-drawing_mode = st.sidebar.selectbox(
-    "Drawing tool:", ("freedraw", "line", "rect", "circle", "transform")
-)
+
 realtime_update = st.sidebar.checkbox("Update in realtime", True)
+
+    
 
 # Create a canvas component
 canvas_result = st_canvas(
@@ -57,6 +63,7 @@ canvas_result = st_canvas(
     update_streamlit=realtime_update,
     height=150,
     drawing_mode=drawing_mode,
+    point_display_radius=point_display_radius if drawing_mode == 'point' else 0,
     key="canvas",
 )
 
@@ -87,6 +94,7 @@ st_canvas(
     drawing_mode: str
     initial_drawing: dict
     display_toolbar: bool
+    point_display_radius: int
     key: str
 )
 ```
@@ -102,6 +110,7 @@ st_canvas(
 - **drawing_mode** : Enable free drawing when "freedraw", object manipulation when "transform", otherwise create new objects with "line", "rect", "circle" and "polygon". Defaults to "freedraw".
   - On "polygon" mode, double-clicking will remove the latest point and right-clicking will close the polygon.
 - **initial_drawing** : Initialize canvas with drawings from here. Should be the `json_data` output from other canvas. Beware: if you try to import a drawing from a bigger/smaller canvas, no rescaling is done in the canvas and the import could fail.
+- **point_display_radius** : To make points visible on the canvas, they are drawn as circles. This parameter modifies the radius of the displayed circle.
 - **display_toolbar** : If `False`, don't display the undo/redo/delete toolbar.
 
 Example:
