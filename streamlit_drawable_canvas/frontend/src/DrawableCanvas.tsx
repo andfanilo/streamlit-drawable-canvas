@@ -113,7 +113,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       bgImage.onload = function() {
         backgroundCanvas.getContext().drawImage(bgImage, 0, 0);
       };
-      bgImage.src =  backgroundImageURL; // TODO: On dev, should prepend with `"http://localhost:8501" +`
+      bgImage.src =  backgroundImageURL;
     }
   }, [
     canvas,
