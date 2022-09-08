@@ -124,10 +124,9 @@ def st_canvas(
         background_image_url = st_image.image_to_url(
             background_image, width, True, "RGB", "PNG", f"drawable-canvas-bg-{md5(background_image.tobytes()).hexdigest()}-{key}" 
         )
-        # on a dev environment, tell React to fetch image from Streamlit server
-        # on a build environment, the URL hosts are the same
-        if not _RELEASE:
-            background_image_url = f"http://localhost:8501{background_image_url}"
+        # always send relative URLs, the frontend handles this
+        if background_image_url[0] == '/':
+            background_image_url = background_image_url[1:]
         background_color = ""
 
     # Clean initial drawing, override its background color
