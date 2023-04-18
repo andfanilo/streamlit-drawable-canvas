@@ -137,6 +137,11 @@ cd frontend
 npm install
 ```
 
+In case of opensslErrorStack :
+```shell script
+export NODE_OPTIONS=--openssl-legacy-provider
+```
+
 - Python side
 
 ```shell script

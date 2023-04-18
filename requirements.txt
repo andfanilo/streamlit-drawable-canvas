@@ -1,0 +1,3 @@
+streamlit
+pdf2image
+python-poppler
