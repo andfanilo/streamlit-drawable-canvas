@@ -85,7 +85,7 @@ if not st.session_state["initialized"]:
     col3, col4 = st.columns([8, 1])
     if col4.button("Next"):
         st.session_state["initialized"] = True
-        next_page()
+        st.experimental_rerun()
 
 elif len(st.session_state["OCR_output_files"]) == 0:
     st.markdown("<h1 style='text-align: center;'>You're done!</h1>", unsafe_allow_html=True)
