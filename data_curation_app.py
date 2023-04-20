@@ -66,6 +66,9 @@ if "output_folder_path" not in st.session_state:
 if "curation_output_files" not in st.session_state:
     st.session_state["curation_output_files"] = list()
 
+if "refresh_counter" not in st.session_state:
+    st.session_state["refresh_counter"] = 0
+
 if not st.session_state["initialized"]:
 
     st.markdown(
@@ -101,6 +104,8 @@ elif "label_folder_path" in st.session_state:
     st.write(
         f'##### Files done : {len(st.session_state.get("curation_output_files", []))}, files left : {len(st.session_state.get("OCR_output_files", []))}')
 
+    if st.button("Refresh image"):
+        st.session_state["refresh_counter"] += 1
 
     canvas_result = st_canvas(
         background_image=image,
@@ -109,7 +114,7 @@ elif "label_folder_path" in st.session_state:
         height=image.size[1],
         width=image.size[0],
         drawing_mode="transform",
-        key=image_file_name,
+        key=f"{image_file_name}_{st.session_state['refresh_counter']}",
         initial_drawing=bounding_boxes,
     )
     st.write(image_file_name)
