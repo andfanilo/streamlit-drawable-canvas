@@ -94,12 +94,13 @@ elif "label_folder_path" in st.session_state:
     current_file = st.session_state["OCR_output_files"][0]
     with open(os.path.join(st.session_state["label_folder_path"], current_file), "r") as file:
         bounding_boxes = json.load(file)
-    if len(bounding_boxes) > 0 and bounding_boxes[0]["user_reviewed"] == 1 and not st.session_state["previous_clicked"]:
+    if len(bounding_boxes["objects"]) > 0 and bounding_boxes["user_reviewed"] == 1 and not st.session_state["previous_clicked"]:
         next_page()
 
     image, image_file_name, bounding_boxes = handle_image_and_bounding_box(current_file, images_path, bounding_boxes)
     st.write(
-        f'Files done : {len(st.session_state.get("curation_output_files", []))}, files left : {len(st.session_state.get("OCR_output_files", []))}')
+        f'##### Files done : {len(st.session_state.get("curation_output_files", []))}, files left : {len(st.session_state.get("OCR_output_files", []))}')
+
 
     canvas_result = st_canvas(
         background_image=image,
@@ -109,7 +110,7 @@ elif "label_folder_path" in st.session_state:
         width=image.size[0],
         drawing_mode="transform",
         key=image_file_name,
-        initial_drawing={"objects": bounding_boxes},
+        initial_drawing=bounding_boxes,
     )
     st.write(image_file_name)
     st.write("")
@@ -129,11 +130,11 @@ elif "label_folder_path" in st.session_state:
     st.write("")
     st.write("")
 
-    col3, col4 = st.columns([8, 1])
+    col1, col2 = st.columns([8, 1])
     if len(st.session_state.get("curation_output_files", [])) > 0:
-        if col3.button("Previous"):
+        if col1.button("Previous"):
             previous_page()
-    if col4.button("Next"):
+    if col2.button("Next"):
         next_page()
 
     if canvas_result.json_data is not None:

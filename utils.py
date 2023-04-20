@@ -40,55 +40,66 @@ def resize_image(image, max_width, max_height):
 
 
 def scale_bounding_box(bounding_boxes, width_scale, height_scale):
-    for index, obj in enumerate(bounding_boxes):
-        bounding_boxes[index]["left"] *= width_scale
-        bounding_boxes[index]["top"] *= height_scale
-        bounding_boxes[index]["width"] *= width_scale
-        bounding_boxes[index]["height"] *= height_scale
+    for index, obj in enumerate(bounding_boxes["objects"]):
+        bounding_boxes["objects"][index]["left"] *= width_scale
+        bounding_boxes["objects"][index]["top"] *= height_scale
+        bounding_boxes["objects"][index]["width"] *= width_scale
+        bounding_boxes["objects"][index]["height"] *= height_scale
     return bounding_boxes
 
 
 def save_current_state(file_name, bounding_boxes, label_folder_path):
 
     with open(os.path.join(label_folder_path, file_name), "r") as json_file:
-        saved_bounding_boxes = json.load(json_file)
+        saved_data = json.load(json_file)
+        saved_data["user_reviewed"] = bounding_boxes.get("user_reviewed", 0)
+        saved_data["missing_information"] = bounding_boxes.get("missing_information", False)
+        saved_data["wrong_datapoint"] = bounding_boxes.get("wrong_datapoint", False)
 
-    for idx, saved_bounding_box in enumerate(saved_bounding_boxes):
-        saved_bounding_box["user_reviewed"] = bounding_boxes[idx].get("user_reviewed", 0)
-        saved_bounding_box["result"] = bounding_boxes[idx].get("result", True)
-        saved_bounding_box["missing_information"] = bounding_boxes[idx].get("missing_information", False)
-        saved_bounding_box["wrong_datapoint"] = bounding_boxes[idx].get("wrong_datapoint", False)
+    for idx, _ in enumerate(saved_data["objects"]):
+        saved_data["objects"][idx]["result"] = bounding_boxes["objects"][idx].get("result", True)
 
     with open(os.path.join(label_folder_path, file_name), "w") as json_file:
-        json.dump(saved_bounding_boxes, json_file, indent=2)
+        json.dump(saved_data, json_file, indent=2)
 
 
-def handle_wrong_datapoint(bounding_boxes):
-    for obj in bounding_boxes:
-        obj["wrong_datapoint"], obj["user_reviewed"], obj["result"], obj["missing_information"] = True, 1, False, False
-    return bounding_boxes
+def handle_wrong_datapoint(data):
+    data["wrong_datapoint"] = True
+    data["user_reviewed"] = 1
+    data["missing_information"] = False
+    for obj in data["objects"]:
+        obj["result"] = False
+    return data
 
 
-def handle_missing_datapoint(bounding_boxes):
-    for obj in bounding_boxes:
-        obj["missing_information"], obj["user_reviewed"], obj["result"], obj["wrong_datapoint"] = True, 1, False, False
-    return bounding_boxes
+def handle_missing_datapoint(data):
+    data["missing_information"] = True
+    data["user_reviewed"] = 1
+    data["wrong_datapoint"] = False
+    for obj in data["objects"]:
+        obj["result"] = False
+    return data
 
 
-def handle_user_choice(bounding_boxes, canvas_bounding_boxes):
+def handle_user_choice(data, canvas_bounding_boxes):
     any_dark_green_box = False
+    clicked_box_index = None
+
     for i, canvas_bounding_box in enumerate(canvas_bounding_boxes):
-        ocr_bounding_box = bounding_boxes[i]
-        if canvas_bounding_box["fill"] == "rgb(208, 240, 192, 0.2)":
-            ocr_bounding_box["result"] = True
-        elif canvas_bounding_box["fill"] == "rgb(1, 50, 32, 0.2)":
+        if canvas_bounding_box["fill"] == "rgb(1, 50, 32, 0.2)":
             any_dark_green_box = True
-            ocr_bounding_box["result"] = True
-        ocr_bounding_box.update(canvas_bounding_box)
+            clicked_box_index = i
+            break
+
     if any_dark_green_box:
-        for i, canvas_bounding_box in enumerate(canvas_bounding_boxes):
-            ocr_bounding_box = bounding_boxes[i]
-            ocr_bounding_box["user_reviewed"] = 1
-            ocr_bounding_box["missing_information"] = False
-            ocr_bounding_box["wrong_datapoint"] = False
-    return any_dark_green_box, bounding_boxes
+        for i, ocr_bounding_box in enumerate(data["objects"]):
+            ocr_bounding_box["result"] = (i == clicked_box_index)
+            if i == clicked_box_index:
+                ocr_bounding_box.update(canvas_bounding_boxes[clicked_box_index])
+
+        data["user_reviewed"] = 1
+        data["missing_information"] = False
+        data["wrong_datapoint"] = False
+
+    return any_dark_green_box, data
+
