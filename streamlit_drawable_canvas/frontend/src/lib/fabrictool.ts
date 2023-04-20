@@ -28,3 +28,4 @@ abstract class FabricTool {
 }
 
 export default FabricTool
+

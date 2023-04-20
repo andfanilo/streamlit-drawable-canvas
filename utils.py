@@ -76,14 +76,19 @@ def handle_missing_datapoint(bounding_boxes):
 
 
 def handle_user_choice(bounding_boxes, canvas_bounding_boxes):
-    any_green_box = False
+    any_dark_green_box = False
     for i, canvas_bounding_box in enumerate(canvas_bounding_boxes):
         ocr_bounding_box = bounding_boxes[i]
         if canvas_bounding_box["fill"] == "rgb(208, 240, 192, 0.2)":
-            any_green_box = True
             ocr_bounding_box["result"] = True
-        ocr_bounding_box["user_reviewed"] = 1
-        ocr_bounding_box["missing_information"] = False
-        ocr_bounding_box["wrong_datapoint"] = False
+        elif canvas_bounding_box["fill"] == "rgb(1, 50, 32, 0.2)":
+            any_dark_green_box = True
+            ocr_bounding_box["result"] = True
         ocr_bounding_box.update(canvas_bounding_box)
-    return any_green_box, bounding_boxes
+    if any_dark_green_box:
+        for i, canvas_bounding_box in enumerate(canvas_bounding_boxes):
+            ocr_bounding_box = bounding_boxes[i]
+            ocr_bounding_box["user_reviewed"] = 1
+            ocr_bounding_box["missing_information"] = False
+            ocr_bounding_box["wrong_datapoint"] = False
+    return any_dark_green_box, bounding_boxes

@@ -50,6 +50,9 @@ yarn-error.log*
 # Dependency directories
 node_modules/
 
+# Exception for fabric.js
+!node_modules/fabric/dist/fabric.js
+
 # Coverage directory used by tools like istanbul
 coverage/
 

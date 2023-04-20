@@ -137,7 +137,7 @@ elif "label_folder_path" in st.session_state:
         next_page()
 
     if canvas_result.json_data is not None:
-        any_green_box, bounding_boxes = handle_user_choice(bounding_boxes, canvas_result.json_data["objects"])
-        if any_green_box:
+        any_dark_green_box, bounding_boxes = handle_user_choice(bounding_boxes, canvas_result.json_data["objects"])
+        if any_dark_green_box:
             save_current_state(current_file, bounding_boxes, st.session_state["label_folder_path"])
             next_page()
