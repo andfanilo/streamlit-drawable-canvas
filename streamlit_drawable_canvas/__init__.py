@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from hashlib import md5
 
 import numpy as np
+import streamlit as st
 import streamlit.components.v1 as components
 import streamlit.elements.image as st_image
 from PIL import Image
@@ -141,6 +142,7 @@ def st_canvas(
         strokeColor=stroke_color,
         backgroundColor=background_color,
         backgroundImageURL=background_image_url,
+        streamlitServerBaseUrlPath=st._config.get_option("server.baseUrlPath"),
         realtimeUpdateStreamlit=update_streamlit and (drawing_mode != "polygon"),
         canvasHeight=height,
         canvasWidth=width,
