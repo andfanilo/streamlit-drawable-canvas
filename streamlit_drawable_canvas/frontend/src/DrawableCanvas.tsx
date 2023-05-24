@@ -36,7 +36,6 @@ export interface PythonArgs {
   strokeColor: string
   backgroundColor: string
   backgroundImageURL: string
-  streamlitServerBaseUrlPath: string
   realtimeUpdateStreamlit: boolean
   canvasWidth: number
   canvasHeight: number
@@ -55,7 +54,6 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     canvasHeight,
     backgroundColor,
     backgroundImageURL,
-    streamlitServerBaseUrlPath,
     realtimeUpdateStreamlit,
     drawingMode,
     fillColor,
@@ -130,8 +128,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
         backgroundCanvas.getContext().drawImage(bgImage, 0, 0);
       };
       const baseUrl = getStreamlitBaseUrl() ?? ""
-      bgImage.src =
-        baseUrl + "/" + streamlitServerBaseUrlPath + backgroundImageURL
+      bgImage.src = baseUrl + backgroundImageURL
     }
   }, [
     canvas,
