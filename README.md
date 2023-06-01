@@ -76,6 +76,12 @@ if canvas_result.json_data is not None:
     for col in objects.select_dtypes(include=['object']).columns:
         objects[col] = objects[col].astype("str")
     st.dataframe(objects)
+
+if st.button('Save'):
+    file_name = '_'.join(bg_image.name.split('.')[:-1])
+    with open(f'{file_name}.json', 'w') as f:
+        json.dump(canvas_result.json_data["objects"], f)
+    st.success(f'Object saved to {file_name}.json')
 ```
 
 You will find more detailed examples [on the demo app](https://github.com/andfanilo/streamlit-drawable-canvas-demo/).
