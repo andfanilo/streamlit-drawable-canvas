@@ -13,6 +13,13 @@ import UpdateStreamlit from "./components/UpdateStreamlit"
 import { useCanvasState } from "./DrawableCanvasState"
 import { tools, FabricTool } from "./lib"
 
+interface CustomFabricCanvas extends fabric.Canvas {
+  isDragging?: boolean;
+  selection?: boolean;
+  lastPosX?: number;
+  lastPosY?: number;
+}
+
 /**
  * Arguments Streamlit receives from the Python side
  */
@@ -53,13 +60,11 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   /**
    * State initialization
    */
-  const [canvas, setCanvas] = useState(new fabric.Canvas(""))
+  const [canvas, setCanvas] = useState<CustomFabricCanvas>(new fabric.Canvas("") as CustomFabricCanvas);
   canvas.stopContextMenu = true
   canvas.fireRightClick = true
 
-  const [backgroundCanvas, setBackgroundCanvas] = useState(
-    new fabric.StaticCanvas("")
-  )
+  const [backgroundCanvas, setBackgroundCanvas] = useState<CustomFabricCanvas>(new fabric.Canvas("") as CustomFabricCanvas);
   const {
     canvasState: {
       action: { shouldReloadCanvas, forceSendToStreamlit },
@@ -83,7 +88,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     const c = new fabric.Canvas("canvas", {
       enableRetinaScaling: false,
     })
-    const imgC = new fabric.StaticCanvas("backgroundimage-canvas", {
+    const imgC = new fabric.Canvas("backgroundimage-canvas", {
       enableRetinaScaling: false,
     })
     setCanvas(c)
@@ -136,6 +141,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     }
   }, [canvas, shouldReloadCanvas, currentState])
 
+
   /**
    * Update canvas with selected tool
    * PS: add initialDrawing in dependency so user drawing update reinits tool
@@ -150,25 +156,129 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       displayRadius: displayRadius
     })
 
-    canvas.on("mouse:up", (e: any) => {
-      saveState(canvas.toJSON())
-      if (e["button"] === 3) {
-        forceStreamlitUpdate()
+    canvas.on("mouse:down", function (this: CustomFabricCanvas, opt) {
+      var evt = opt.e as MouseEvent;
+      if (evt.altKey === true) {
+        this.isDragging = true;
+        this.selection = false;
+        this.lastPosX = evt.clientX;
+        this.lastPosY = evt.clientY;
       }
     })
+
+    canvas.on("mouse:move", function (this: CustomFabricCanvas, opt) {
+      if (this.isDragging) {
+        var e = opt.e as MouseEvent;
+        var vpt = this.viewportTransform;
+        if (vpt) { // Check if vpt is defined
+          vpt[4] += e.clientX - (this.lastPosX || 0);
+          vpt[5] += e.clientY - (this.lastPosY || 0);
+          this.requestRenderAll();
+          this.lastPosX = e.clientX;
+          this.lastPosY = e.clientY;
+        }
+      }
+    })
+        
+    canvas.on("mouse:wheel", function (this: CustomFabricCanvas, opt) {
+      var e = opt.e as WheelEvent;
+      var delta = e.deltaY;
+      var zoom = canvas.getZoom();
+      zoom *= 0.999 ** delta;
+      if (zoom > 20) zoom = 20;
+      if (zoom < 0.01) zoom = 0.01;
+      var point = new fabric.Point(e.offsetX, e.offsetY); 
+      canvas.zoomToPoint(point, zoom);
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    })
+
+    canvas.on("mouse:up", (e: any) => {
+      saveState(canvas.toJSON());
+      if (e["button"] === 3) {
+        forceStreamlitUpdate();
+      }
+    
+      // Add your logic here for handling mouse up events
+      canvas.setViewportTransform(canvas.viewportTransform as number[]);
+      canvas.isDragging = false;
+      canvas.selection = true;
+    });
 
     canvas.on("mouse:dblclick", () => {
       saveState(canvas.toJSON())
     })
+    
+    backgroundCanvas.on("mouse:down", function (this: CustomFabricCanvas, opt) {
+      var evt = opt.e as MouseEvent;
+      if (evt.altKey === true) {
+        this.isDragging = true;
+        this.selection = false;
+        this.lastPosX = evt.clientX;
+        this.lastPosY = evt.clientY;
+      }
+    })
+
+    backgroundCanvas.on("mouse:move", function (this: CustomFabricCanvas, opt) {
+      if (this.isDragging) {
+        var e = opt.e as MouseEvent;
+        var vpt = this.viewportTransform;
+        if (vpt) { // Check if vpt is defined
+          vpt[4] += e.clientX - (this.lastPosX || 0);
+          vpt[5] += e.clientY - (this.lastPosY || 0);
+          this.requestRenderAll();
+          this.lastPosX = e.clientX;
+          this.lastPosY = e.clientY;
+        }
+      }
+    })
+        
+    backgroundCanvas.on("mouse:wheel", function (this: CustomFabricCanvas, opt) {
+      var e = opt.e as WheelEvent;
+      var delta = e.deltaY;
+      var zoom = backgroundCanvas.getZoom();
+      zoom *= 0.999 ** delta;
+      if (zoom > 20) zoom = 20;
+      if (zoom < 0.01) zoom = 0.01;
+      var point = new fabric.Point(e.offsetX, e.offsetY); 
+      backgroundCanvas.zoomToPoint(point, zoom);
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    })
+
+    backgroundCanvas.on("mouse:up", (e: any) => {
+      saveState(backgroundCanvas.toJSON());
+      if (e["button"] === 3) {
+        forceStreamlitUpdate();
+      }
+      // Add your logic here for handling mouse up events
+      backgroundCanvas.setViewportTransform(backgroundCanvas.viewportTransform as number[]);
+      backgroundCanvas.isDragging = false;
+      backgroundCanvas.selection = true;
+    })
+
+    backgroundCanvas.on("mouse:dblclick", () => {
+      saveState(backgroundCanvas.toJSON())
+    })
+
 
     // Cleanup tool + send data to Streamlit events
     return () => {
       cleanupToolEvents()
+      canvas.off("mouse:down")
+      canvas.off("mouse:move")
       canvas.off("mouse:up")
+      canvas.off("mouse:wheel")
       canvas.off("mouse:dblclick")
+      backgroundCanvas.off("mouse:down")
+      backgroundCanvas.off("mouse:move")
+      backgroundCanvas.off("mouse:up")
+      backgroundCanvas.off("mouse:wheel")
+      backgroundCanvas.off("mouse:dblclick")
     }
   }, [
     canvas,
+    backgroundCanvas,
     strokeWidth,
     strokeColor,
     displayRadius,
