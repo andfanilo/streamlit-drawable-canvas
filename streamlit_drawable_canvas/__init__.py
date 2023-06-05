@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from hashlib import md5
 
 import numpy as np
+import streamlit as st
 import streamlit.components.v1 as components
 import streamlit.elements.image as st_image
 from PIL import Image
@@ -124,9 +125,7 @@ def st_canvas(
         background_image_url = st_image.image_to_url(
             background_image, width, True, "RGB", "PNG", f"drawable-canvas-bg-{md5(background_image.tobytes()).hexdigest()}-{key}" 
         )
-        # always send relative URLs, the frontend handles this
-        if background_image_url[0] == '/':
-            background_image_url = background_image_url[1:]
+        background_image_url = st._config.get_option("server.baseUrlPath") + background_image_url
         background_color = ""
 
     # Clean initial drawing, override its background color

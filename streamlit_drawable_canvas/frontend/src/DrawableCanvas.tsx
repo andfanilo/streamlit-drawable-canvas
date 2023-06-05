@@ -13,6 +13,20 @@ import UpdateStreamlit from "./components/UpdateStreamlit"
 import { useCanvasState } from "./DrawableCanvasState"
 import { tools, FabricTool } from "./lib"
 
+function getStreamlitBaseUrl(): string | null {
+  const params = new URLSearchParams(window.location.search)
+  const baseUrl = params.get("streamlitUrl")
+  if (baseUrl == null) {
+    return null
+  }
+
+  try {
+    return new URL(baseUrl).origin
+  } catch {
+    return null
+  }
+}
+
 /**
  * Arguments Streamlit receives from the Python side
  */
@@ -113,9 +127,8 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       bgImage.onload = function() {
         backgroundCanvas.getContext().drawImage(bgImage, 0, 0);
       };
-      const params = new URLSearchParams(window.location.search);
-      const baseUrl = params.get('streamlitUrl')
-      bgImage.src = baseUrl + backgroundImageURL;
+      const baseUrl = getStreamlitBaseUrl() ?? ""
+      bgImage.src = baseUrl + backgroundImageURL
     }
   }, [
     canvas,
