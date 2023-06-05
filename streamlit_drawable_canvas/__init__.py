@@ -45,12 +45,50 @@ def _data_url_to_image(data_url: str) -> Image:
     return Image.open(io.BytesIO(base64.b64decode(_data_url)))
 
 
-def _resize_img(img: Image, new_height: int = 700, new_width: int = 700) -> Image:
-    """Resize the image to the provided resolution."""
-    h_ratio = new_height / img.height
-    w_ratio = new_width / img.width
-    img = img.resize((int(img.width * w_ratio), int(img.height * h_ratio)))
-    return img
+def _resize_img(img: Image, max_height: int = 700, max_width: int = 700, keep_aspect_ratio:bool = False) -> Image:
+    """
+    Resize the image to the given maximum height and width. If keep_aspect_ratio is True, the image will be resized
+
+    Parameters
+    ----------
+    img : Image
+        Image to be resized
+    max_height : int, optional
+        Maximum height for image, by default 700
+    max_width : int, optional
+        Maximum width for image, by default 700
+    keep_aspect_ratio : bool, optional
+        Whether to keep the aspect ratio of the image, by default False
+
+    Returns
+    -------
+    Image
+        Resized image
+    """
+    # If keep_aspect_ratio is True, the image will be resized to the maximum height or width, whichever is smaller
+    if keep_aspect_ratio:
+        width, height = img.size
+        aspect_ratio = width / height
+
+        if width > height:
+            # If the image is wider than it is tall
+            new_width = max_width
+            new_height = int(new_width / aspect_ratio)
+        else:
+            # If the image is taller than it is wide
+            new_height = max_height
+            new_width = int(new_height * aspect_ratio)
+
+        # Ensure neither dimension is larger than the maximum
+        new_width = min(new_width, max_width)
+        new_height = min(new_height, max_height)
+    
+    else:
+        new_width = max_width
+        new_height = max_height
+
+    resized_image = img.resize((new_width, new_height))
+    return resized_image
 
 
 def st_canvas(
@@ -62,6 +100,7 @@ def st_canvas(
     update_streamlit: bool = True,
     height: int = 400,
     width: int = 600,
+    keep_aspect_ratio: bool = False,
     drawing_mode: str = "freedraw",
     initial_drawing: dict = None,
     display_toolbar: bool = True,
@@ -93,6 +132,8 @@ def st_canvas(
         Height of canvas in pixels. Defaults to 400.
     width: int
         Width of canvas in pixels. Defaults to 600.
+    keep_aspect_ratio: bool
+        Whether to keep the aspect ratio of the canvas when resizing. Defaults to False.
     drawing_mode: {'freedraw', 'transform', 'line', 'rect', 'circle', 'point', 'polygon'}
         Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect", "circle", "point", "polygon".
         Defaults to "freedraw".
@@ -120,7 +161,7 @@ def st_canvas(
     # Then override background_color
     background_image_url = None
     if background_image:
-        background_image = _resize_img(background_image, height, width)
+        background_image = _resize_img(background_image, height, width, keep_aspect_ratio)
         # Reduce network traffic and cache when switch another configure, use streamlit in-mem filemanager to convert image to URL
         background_image_url = st_image.image_to_url(
             background_image, width, True, "RGB", "PNG", f"drawable-canvas-bg-{md5(background_image.tobytes()).hexdigest()}-{key}" 

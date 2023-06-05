@@ -62,6 +62,7 @@ canvas_result = st_canvas(
     background_image=Image.open(bg_image) if bg_image else None,
     update_streamlit=realtime_update,
     height=150,
+    keep_aspect_ratio=True,
     drawing_mode=drawing_mode,
     point_display_radius=point_display_radius if drawing_mode == 'point' else 0,
     key="canvas",
@@ -75,6 +76,12 @@ if canvas_result.json_data is not None:
     for col in objects.select_dtypes(include=['object']).columns:
         objects[col] = objects[col].astype("str")
     st.dataframe(objects)
+
+if st.button('Save'):
+    file_name = '_'.join(bg_image.name.split('.')[:-1])
+    with open(f'{file_name}.json', 'w') as f:
+        json.dump(canvas_result.json_data["objects"], f)
+    st.success(f'Object saved to {file_name}.json')
 ```
 
 You will find more detailed examples [on the demo app](https://github.com/andfanilo/streamlit-drawable-canvas-demo/).
@@ -91,6 +98,7 @@ st_canvas(
     update_streamlit: bool
     height: int
     width: int
+    keep_aspect_ratio: bool
     drawing_mode: str
     initial_drawing: dict
     display_toolbar: bool
@@ -106,6 +114,7 @@ st_canvas(
 - **background_image** : Pillow Image to display behind canvas. Automatically resized to canvas dimensions. Being behind the canvas, it is not sent back to Streamlit on mouse event. Overrides background_color. Changes to this will reset canvas contents.
 - **update_streamlit** : Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up.
 - **height** : Height of canvas in pixels. Defaults to 400.
+- **keep_aspect_ratio** : If True, canvas will keep its aspect ratio when resized.
 - **width** : Width of canvas in pixels. Defaults to 600.
 - **drawing_mode** : Enable free drawing when "freedraw", object manipulation when "transform", otherwise create new objects with "line", "rect", "circle" and "polygon". Defaults to "freedraw".
   - On "polygon" mode, double-clicking will remove the latest point and right-clicking will close the polygon.
