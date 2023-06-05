@@ -10,7 +10,7 @@ import streamlit.components.v1 as components
 import streamlit.elements.image as st_image
 from PIL import Image
 
-_RELEASE = False  # on packaging, pass this to True
+_RELEASE = True  # on packaging, pass this to True
 
 if not _RELEASE:
     _component_func = components.declare_component(
