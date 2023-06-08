@@ -61,7 +61,7 @@ class RectTool extends FabricTool {
       noScaleCache: false,
       angle: 0,
     })
-    if (_clicked === 0) {
+    if (_clicked === 0 || o.e instanceof TouchEvent) {
       canvas.add(this.currentRect)
     }
   }
