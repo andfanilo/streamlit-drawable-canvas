@@ -1,4 +1,4 @@
-#= Streamlit - Drawable Canvas (landingai custom version)
+# Streamlit - Drawable Canvas (landingai custom version)
 
 Streamlit component which provides a sketching canvas using [Fabric.js](http://fabricjs.com/).
 
