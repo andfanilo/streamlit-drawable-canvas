@@ -5,7 +5,7 @@
   "dependencies": {
     "apache-arrow": "^0.17.0",
     "event-target-shim": "^5.0.1",
-    "fabric": "4.4.0",
+    "fabric": "5.3.0",
     "hoist-non-react-statics": "^3.3.2",
     "lodash": "^4.17.20",
     "react": "^16.13.1",
