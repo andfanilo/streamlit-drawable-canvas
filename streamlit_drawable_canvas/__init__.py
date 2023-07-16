@@ -125,7 +125,11 @@ def st_canvas(
         background_image_url = st_image.image_to_url(
             background_image, width, True, "RGB", "PNG", f"drawable-canvas-bg-{md5(background_image.tobytes()).hexdigest()}-{key}" 
         )
-        background_image_url = st._config.get_option("server.baseUrlPath") + background_image_url
+        base_url_path: str = st._config.get_option("server.baseUrlPath").strip("/")
+        if base_url_path:
+            base_url_path = "/" + base_url_path
+        background_image_url = base_url_path + background_image_url
+
         background_color = ""
 
     # Clean initial drawing, override its background color
