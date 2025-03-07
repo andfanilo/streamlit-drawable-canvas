@@ -43,6 +43,7 @@ export interface PythonArgs {
   initialDrawing: Object
   displayToolbar: boolean
   displayRadius: number
+  fontFamily: string
 }
 
 /**
@@ -62,6 +63,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     displayRadius,
     initialDrawing,
     displayToolbar,
+	fontFamily,
   }: PythonArgs = args
 
   /**
@@ -88,22 +90,100 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     forceStreamlitUpdate,
     resetState,
   } = useCanvasState()
+  
+  
+  const resetZoom = () => {
+  canvas.setZoom(1) // Reset zoom to default (1)
+  canvas.setViewportTransform([1, 0, 0, 1, 0, 0]) // Reset the viewport transform
+  canvas.renderAll() // Re-render the canvas to apply the reset
+}
+
 
   /**
    * Initialize canvases on component mount
    * NB: Remount component by changing its key instead of defining deps
    */
-  useEffect(() => {
-    const c = new fabric.Canvas("canvas", {
-      enableRetinaScaling: false,
-    })
-    const imgC = new fabric.StaticCanvas("backgroundimage-canvas", {
-      enableRetinaScaling: false,
-    })
-    setCanvas(c)
-    setBackgroundCanvas(imgC)
-    Streamlit.setFrameHeight()
-  }, [])
+// Initialize the canvas only once
+useEffect(() => {
+  const c = new fabric.Canvas("canvas", {
+    enableRetinaScaling: false,
+  });
+  const imgC = new fabric.StaticCanvas("backgroundimage-canvas", {
+    enableRetinaScaling: false,
+  });
+  setCanvas(c);
+  setBackgroundCanvas(imgC);
+  Streamlit.setFrameHeight();
+  
+  // Clean up the canvas on component unmount to avoid memory leaks
+  return () => {
+    c.dispose();
+    imgC.dispose();
+  };
+}, []);
+
+useEffect(() => {
+  const handleZoom = (event: WheelEvent) => {
+    event.preventDefault()
+    const delta = event.deltaY
+    let zoom = canvas.getZoom()
+    zoom = zoom + delta * -0.001 // Adjust zoom sensitivity
+    zoom = Math.max(0.5, Math.min(zoom, 18)) // Limit zoom level
+    const pointer = canvas.getPointer(event as unknown as MouseEvent)
+
+    // Create a fabric.Point from the pointer
+    const point = new fabric.Point(pointer.x, pointer.y)
+
+    // Use fabric.Point in the zoomToPoint method
+    canvas.zoomToPoint(point, zoom)
+  }
+
+  // Use the native addEventListener for the canvas' container element
+  const canvasElement = canvas.getElement().parentNode
+  if (canvasElement) {
+    canvasElement.addEventListener("wheel", (event) => handleZoom(event as WheelEvent))
+  }
+
+  return () => {
+    if (canvasElement) {
+      canvasElement.removeEventListener("wheel", (event) => handleZoom(event as WheelEvent))
+    }
+  }
+}, [canvas])
+
+
+// Handle resize logic without reinitializing the canvas
+useEffect(() => {
+  const handleResize = () => {
+    // Check if the canvas exists
+    if (!canvas) return;
+
+    // Save the current state before resizing
+    const savedState = canvas.toJSON();
+
+    // Resize the canvas
+    canvas.setDimensions({
+      width: canvasWidth,
+      height: canvasHeight,
+    });
+
+    backgroundCanvas.setDimensions({
+      width: canvasWidth,
+      height: canvasHeight,
+    });
+
+    // Reload the saved state after resizing
+    canvas.loadFromJSON(savedState, () => {
+      canvas.renderAll();
+    });
+  };
+
+  // Call the resize handler whenever width or height changes
+  handleResize();
+}, [canvasWidth, canvasHeight, canvas, backgroundCanvas]);
+  
+  
+  
 
   /**
    * Load user drawing into canvas
@@ -119,35 +199,49 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   }, [canvas, initialDrawing, initialState, resetState])
 
   /**
-   * Update background image
+   * Update background image and ensure it persists through undo/redo
    */
-  useEffect(() => {
+useEffect(() => {
+  const setBackgroundImage = () => {
     if (backgroundImageURL) {
-      var bgImage = new Image();
-      bgImage.onload = function() {
-        backgroundCanvas.getContext().drawImage(bgImage, 0, 0);
-      };
       const baseUrl = getStreamlitBaseUrl() ?? ""
-      bgImage.src = baseUrl + backgroundImageURL
-    }
-  }, [
-    canvas,
-    backgroundCanvas,
-    canvasHeight,
-    canvasWidth,
-    backgroundColor,
-    backgroundImageURL,
-    saveState,
-  ])
+      fabric.Image.fromURL(baseUrl + backgroundImageURL, (img) => {
+        // Ensure the image scales to fit the canvas dimensions
+        img.scaleToWidth(canvasWidth)
+        img.scaleToHeight(canvasHeight)
+        img.set({
+          selectable: false, // Prevent users from selecting the background image
+          evented: false,    // Disable events on the background image
+          excludeFromExport: true, // Exclude this image from being exported
+        })
 
-  /**
-   * If state changed from undo/redo/reset, update user-facing canvas
-   */
-  useEffect(() => {
-    if (shouldReloadCanvas) {
-      canvas.loadFromJSON(currentState, () => {})
+        // Set the image as the background of the canvas
+        canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas))
+      })
     }
-  }, [canvas, shouldReloadCanvas, currentState])
+  }
+
+  // Set the background image initially
+  setBackgroundImage()
+
+  // Ensure the background image is reapplied after undo/redo
+  if (shouldReloadCanvas) {
+    canvas.loadFromJSON(currentState, () => {
+      canvas.renderAll()
+      setBackgroundImage() // Reapply the background image after loading the state
+    })
+  }
+}, [
+  canvas,
+  backgroundCanvas,
+  canvasHeight,
+  canvasWidth,
+  backgroundColor,
+  backgroundImageURL,
+  currentState,
+  shouldReloadCanvas,
+  saveState,
+])
 
   /**
    * Update canvas with selected tool
@@ -160,7 +254,8 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       fillColor: fillColor,
       strokeWidth: strokeWidth,
       strokeColor: strokeColor,
-      displayRadius: displayRadius
+      displayRadius: displayRadius,
+	  fontFamily: fontFamily
     })
 
     canvas.on("mouse:up", (e: any) => {
@@ -186,6 +281,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     strokeColor,
     displayRadius,
     fillColor,
+	fontFamily,
     drawingMode,
     initialDrawing,
     saveState,
@@ -256,6 +352,8 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           resetCallback={() => {
             resetState(initialState)
           }}
+		  resetZoomCallback={resetZoom}
+
         />
       )}
     </div>

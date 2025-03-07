@@ -7,7 +7,7 @@ from hashlib import md5
 import numpy as np
 import streamlit as st
 import streamlit.components.v1 as components
-import streamlit.elements.image as st_image
+import streamlit.elements.lib.image_utils as st_image
 from PIL import Image
 
 _RELEASE = True  # on packaging, pass this to True
@@ -66,6 +66,7 @@ def st_canvas(
     initial_drawing: dict = None,
     display_toolbar: bool = True,
     point_display_radius: int = 3,
+    font_name: str = "Arial",  # Pass font name
     key=None,
 ) -> CanvasResult:
     """Create a drawing canvas in Streamlit app. Retrieve the RGBA image data into a 4D numpy array (r, g, b, alpha)
@@ -125,8 +126,12 @@ def st_canvas(
         background_image_url = st_image.image_to_url(
             background_image, width, True, "RGB", "PNG", f"drawable-canvas-bg-{md5(background_image.tobytes()).hexdigest()}-{key}" 
         )
-        background_image_url = st._config.get_option("server.baseUrlPath") + background_image_url
+        base_url_path: str = st._config.get_option("server.baseUrlPath").strip("/")
+        if base_url_path:
+            base_url_path = "/" + base_url_path
+        background_image_url = base_url_path + background_image_url
         background_color = ""
+        
 
     # Clean initial drawing, override its background color
     initial_drawing = (
@@ -147,6 +152,7 @@ def st_canvas(
         initialDrawing=initial_drawing,
         displayToolbar=display_toolbar,
         displayRadius=point_display_radius,
+        fontFamily=font_name,
         key=key,
         default=None,
     )

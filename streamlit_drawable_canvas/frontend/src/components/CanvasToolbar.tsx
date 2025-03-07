@@ -5,6 +5,7 @@ import styles from "./CanvasToolbar.module.css"
 import bin from "../img/bin.png"
 import undo from "../img/undo.png"
 import download from "../img/download.png"
+import zoomReset from "../img/zoomReset.png" // New icon for Reset Zoom
 
 interface SquareIconProps {
   imgUrl: string
@@ -50,6 +51,8 @@ interface CanvasToolbarProps {
   undoCallback: () => void
   redoCallback: () => void
   resetCallback: () => void
+  resetZoomCallback: () => void  // New prop for reset zoom
+
 }
 
 const CanvasToolbar = ({
@@ -61,6 +64,7 @@ const CanvasToolbar = ({
   undoCallback,
   redoCallback,
   resetCallback,
+  resetZoomCallback, // Added this prop
 }: CanvasToolbarProps) => {
   const GAP_BETWEEN_ICONS = 4
   const ICON_SIZE = 24
@@ -93,6 +97,13 @@ const CanvasToolbar = ({
       invertX: false,
       enabled: true,
       clickCallback: resetCallback,
+    },
+	{
+      imgUrl: zoomReset,  // New icon for reset zoom
+      altText: "Reset Zoom",
+      invertX: false,
+      enabled: true,
+      clickCallback: resetZoomCallback, // Trigger reset zoom
     },
   ]
 

@@ -5,6 +5,7 @@ export interface ConfigureCanvasProps {
     strokeWidth: number
     strokeColor: string
     displayRadius: number
+	fontFamily?: string
 }
 
 /**

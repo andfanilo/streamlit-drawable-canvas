@@ -4,9 +4,9 @@
   "private": true,
   "dependencies": {
     "apache-arrow": "^0.17.0",
-    "clipper-lib": "^6.4.2",
+    "build": "^0.1.4",
     "event-target-shim": "^5.0.1",
-    "fabric": "^5.0.0",
+    "fabric": "4.5.0",
     "hoist-non-react-statics": "^3.3.2",
     "lodash": "^4.17.20",
     "react": "^16.13.1",
@@ -22,17 +22,13 @@
     "@types/lodash": "^4.14.161",
     "@types/node": "^12.0.0",
     "@types/react": "^16.9.0",
-    "@types/react-dom": "^16.9.0",
-    "copyfiles": "^2.4.1"
+    "@types/react-dom": "^16.9.0"
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && npm run copy-fonts",
-	"copy-fonts": "copyfiles -u 1 src/fonts/**/* build/",
-	"fabric-build": "cd node_modules/fabric && node build.js modules=ALL requirejs exclude=gestures,accessors",
+    "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-	"postinstall": "npm run fabric-build"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": "react-app"

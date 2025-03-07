@@ -60,11 +60,11 @@ class PolygonTool extends FabricTool {
       selectable: false,
       evented: false,
     })
-    if (_clicked === 0) {
+    if (_clicked === 0 || o.e instanceof TouchEvent) {
       canvas.add(this.currentLine)
     }
 
-    if (_start && _clicked === 0) {
+    if (_start && (_clicked === 0 || o.e instanceof TouchEvent)) {
       // Initialize pathString
       this._pathString += `${pointer.x} ${pointer.y} `
       this.startCircle = new fabric.Circle({
@@ -84,7 +84,7 @@ class PolygonTool extends FabricTool {
       _start = false
     } else {
       canvas.remove(this.currentPath)
-      if (_clicked === 0) {
+      if (_clicked === 0 || o.e instanceof TouchEvent) {
         // Update pathString
         this._pathString += `L ${pointer.x} ${pointer.y} `
       }

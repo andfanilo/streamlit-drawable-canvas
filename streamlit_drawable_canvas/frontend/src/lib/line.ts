@@ -45,7 +45,7 @@ class LineTool extends FabricTool {
       selectable: false,
       evented: false,
     })
-    if (_clicked === 0) {
+    if (_clicked === 0 || o.e instanceof TouchEvent) {
       canvas.add(this.currentLine)
     }
   }

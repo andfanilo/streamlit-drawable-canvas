@@ -57,7 +57,7 @@ class PointTool extends FabricTool {
       evented: false,
       radius: this.displayRadius,
     })
-    if (_clicked === 0) {
+    if (_clicked === 0 || o.e instanceof TouchEvent) {
       canvas.add(this.currentCircle)
     }
   }

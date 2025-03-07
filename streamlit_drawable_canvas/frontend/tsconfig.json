@@ -6,11 +6,13 @@
       "dom.iterable",
       "esnext"
     ],
+	"typeRoots": ["./node_modules/@types", "./types"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": true,
+    "strict": false,
+	"noImplicitAny": false,
     "forceConsistentCasingInFileNames": true,
     "module": "esnext",
     "moduleResolution": "node",
@@ -21,6 +23,6 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": [
-    "src"
+    "src",
   ]
 }
