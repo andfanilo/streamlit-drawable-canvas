@@ -43,6 +43,7 @@ export interface PythonArgs {
   initialDrawing: Object
   displayToolbar: boolean
   displayRadius: number
+  resetCanvas: boolean // Add this flag
 }
 
 /**
@@ -62,6 +63,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     displayRadius,
     initialDrawing,
     displayToolbar,
+    resetCanvas, // Destructure the resetCanvas flag
   }: PythonArgs = args
 
   /**
@@ -191,6 +193,19 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     saveState,
     forceStreamlitUpdate,
   ])
+
+  /**
+   * Handle canvas reset from Python side
+   */
+  useEffect(() => {
+    if (resetCanvas) {
+      canvas.loadFromJSON(initialDrawing, () => {
+        canvas.renderAll()
+        resetState(initialDrawing)
+        Streamlit.setComponentValue({ canvasReset: true }) // Send confirmation to Streamlit
+      })
+    }
+  }, [resetCanvas, initialDrawing, canvas, resetState])
 
   /**
    * Render canvas w/ toolbar
