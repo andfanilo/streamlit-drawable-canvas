@@ -16,26 +16,37 @@ interface CanvasHistory {
 interface CanvasAction {
   shouldReloadCanvas: boolean // reload currentState into app canvas, on undo/redo
   forceSendToStreamlit: boolean // send currentState back to Streamlit
+  resetView: boolean // reset view to initial state
 }
 
 const NO_ACTION: CanvasAction = {
   shouldReloadCanvas: false,
   forceSendToStreamlit: false,
+  resetView: false,
 }
 
 const RELOAD_CANVAS: CanvasAction = {
   shouldReloadCanvas: true,
   forceSendToStreamlit: false,
+  resetView: false,
 }
 
 const SEND_TO_STREAMLIT: CanvasAction = {
   shouldReloadCanvas: false,
   forceSendToStreamlit: true,
+  resetView: false,
 }
 
 const RELOAD_AND_SEND_TO_STREAMLIT: CanvasAction = {
   shouldReloadCanvas: true,
   forceSendToStreamlit: true,
+  resetView: false,
+}
+
+const RESET_VIEW: CanvasAction = {
+  shouldReloadCanvas: false,
+  forceSendToStreamlit: false,
+  resetView: true,
 }
 
 interface CanvasState {
@@ -46,7 +57,7 @@ interface CanvasState {
 }
 
 interface Action {
-  type: "save" | "undo" | "redo" | "reset" | "forceSendToStreamlit"
+  type: "save" | "undo" | "redo" | "reset" | "forceSendToStreamlit" | "resetView"
   state?: Object
 }
 
@@ -181,6 +192,14 @@ const canvasStateReducer = (
         initialState: state.initialState,
         currentState: state.currentState,
       }
+    
+    case "resetView":
+      return {
+        history: { ...state.history },
+        action: { ...RESET_VIEW },
+        initialState: state.initialState,
+        currentState: state.currentState,
+      }
     default:
       throw new Error("TS should protect from this")
   }
@@ -194,6 +213,7 @@ const initialState: CanvasState = {
   action: {
     forceSendToStreamlit: false,
     shouldReloadCanvas: false,
+    resetView: false,
   },
   initialState: {},
   currentState: {},
@@ -208,6 +228,7 @@ interface CanvasStateContextProps {
   canUndo: boolean
   canRedo: boolean
   resetState: (state: Object) => void
+  initalView: () => void
 }
 
 const CanvasStateContext = createContext<CanvasStateContextProps>(
@@ -235,6 +256,7 @@ export const CanvasStateProvider = ({
     (state) => dispatch({ type: "reset", state: state }),
     [dispatch]
   )
+  const initalView = useCallback(() => dispatch({ type: "resetView" }), [dispatch])
 
   const canUndo = canvasState.history.undoStack.length !== 0
   const canRedo = canvasState.history.redoStack.length !== 0
@@ -250,6 +272,7 @@ export const CanvasStateProvider = ({
         canRedo,
         forceStreamlitUpdate,
         resetState,
+        initalView,
       }}
     >
       {children}

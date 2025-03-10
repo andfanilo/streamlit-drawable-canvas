@@ -72,11 +72,11 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
   canvas.fireRightClick = true
 
   const [backgroundCanvas, setBackgroundCanvas] = useState(
-    new fabric.StaticCanvas("")
+    new fabric.Canvas("")
   )
   const {
     canvasState: {
-      action: { shouldReloadCanvas, forceSendToStreamlit },
+      action: { shouldReloadCanvas, forceSendToStreamlit, resetView },
       currentState,
       initialState,
     },
@@ -87,6 +87,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     canRedo,
     forceStreamlitUpdate,
     resetState,
+    initalView,
   } = useCanvasState()
 
   /**
@@ -97,7 +98,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     const c = new fabric.Canvas("canvas", {
       enableRetinaScaling: false,
     })
-    const imgC = new fabric.StaticCanvas("backgroundimage-canvas", {
+    const imgC = new fabric.Canvas("backgroundimage-canvas", {
       enableRetinaScaling: false,
     })
     setCanvas(c)
@@ -125,7 +126,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     if (backgroundImageURL) {
       var bgImage = new Image();
       bgImage.onload = function() {
-        backgroundCanvas.getContext().drawImage(bgImage, 0, 0);
+        backgroundCanvas.add(new fabric.Image(bgImage));
       };
       const baseUrl = getStreamlitBaseUrl() ?? ""
       bgImage.src = baseUrl + backgroundImageURL
@@ -149,6 +150,17 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     }
   }, [canvas, shouldReloadCanvas, currentState])
 
+  /**
+   * Reset view on resetView state change
+   */
+  useEffect(() => {
+    if (resetView) {
+      canvas.setZoom(1.0);
+      backgroundCanvas.setZoom(1.0);
+      canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      backgroundCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+    }
+  }, [canvas, backgroundCanvas, resetView])
   /**
    * Update canvas with selected tool
    * PS: add initialDrawing in dependency so user drawing update reinits tool
@@ -174,6 +186,46 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       saveState(canvas.toJSON())
     })
 
+    function setZoom(canvas: fabric.Canvas, e: WheelEvent) {
+      var delta = e.deltaY;
+      var offsetX = e.offsetX;
+      var offsetY = e.offsetY;
+      var zoom = canvas.getZoom();
+
+      zoom *= 0.999 ** delta;
+      if (zoom > 20) zoom = 20;
+      if (zoom < 0.01) zoom = 0.01;
+      canvas.zoomToPoint(new fabric.Point(offsetX, offsetY), zoom);
+
+      var vpt = canvas.viewportTransform? canvas.viewportTransform : [1, 0, 0, 1, 0, 0];
+      if (zoom < 400 / 1000) {
+        vpt[4] = 200 - 1000 * zoom / 2;
+        vpt[5] = 200 - 1000 * zoom / 2;
+      } else {
+        if (vpt[4] >= 0) {
+          vpt[4] = 0;
+        } else if (vpt[4] < canvas.getWidth() - 1000 * zoom) {
+          vpt[4] = canvas.getWidth() - 1000 * zoom;
+        }
+        if (vpt[5] >= 0) {
+          vpt[5] = 0;
+        } else if (vpt[5] < canvas.getHeight() - 1000 * zoom) {
+          vpt[5] = canvas.getHeight() - 1000 * zoom;
+        }
+      }
+    }
+    
+    canvas.on('mouse:wheel', function(opt: any) {
+      setZoom(canvas, opt.e);
+      setZoom(backgroundCanvas, opt.e);
+
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    });
+
+    
+
+
     // Cleanup tool + send data to Streamlit events
     return () => {
       cleanupToolEvents()
@@ -182,6 +234,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     }
   }, [
     canvas,
+    backgroundCanvas,
     strokeWidth,
     strokeColor,
     displayRadius,
@@ -190,6 +243,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
     initialDrawing,
     saveState,
     forceStreamlitUpdate,
+    initalView,
   ])
 
   /**
@@ -256,6 +310,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
           resetCallback={() => {
             resetState(initialState)
           }}
+          resetZoomCallback={initalView}
         />
       )}
     </div>
