@@ -33,10 +33,13 @@ class CanvasResult:
         RGBA Matrix of Image Data.
     json_data: dict
         JSON string of canvas and objects.
+    image_bytes: 
+        DataURL string of Image Data
     """
 
     image_data: np.array = None
     json_data: dict = None
+    image_bytes: bytes = None
 
 
 def _data_url_to_image(data_url: str) -> Image:
@@ -156,4 +159,5 @@ def st_canvas(
     return CanvasResult(
         np.asarray(_data_url_to_image(component_value["data"])),
         component_value["raw"],
+        component_value["data"]
     )
