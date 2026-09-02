@@ -1,0 +1,184 @@
+{
+  "version": "4.4.0",
+  "objects": [
+    {
+      "type": "path",
+      "version": "4.4.0",
+      "originX": "left",
+      "originY": "top",
+      "left": 16.5,
+      "top": 16.5,
+      "width": 228.01,
+      "height": 58.79,
+      "fill": null,
+      "stroke": "#000000",
+      "strokeWidth": 5,
+      "strokeDashArray": null,
+      "strokeLineCap": "round",
+      "strokeDashOffset": 0,
+      "strokeLineJoin": "round",
+      "strokeUniform": false,
+      "strokeMiterLimit": 10,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "flipX": false,
+      "flipY": false,
+      "opacity": 1,
+      "shadow": null,
+      "visible": true,
+      "backgroundColor": "",
+      "fillRule": "nonzero",
+      "paintFirst": "fill",
+      "globalCompositeOperation": "source-over",
+      "skewX": 0,
+      "skewY": 0,
+      "path": [
+        [
+          "M",
+          18.995,
+          18.995
+        ],
+        [
+          "Q",
+          19,
+          19,
+          25,
+          23
+        ],
+        [
+          "Q",
+          31,
+          27,
+          37,
+          31
+        ],
+        [
+          "Q",
+          43,
+          35,
+          49,
+          39
+        ],
+        [
+          "Q",
+          55,
+          43,
+          61,
+          47
+        ],
+        [
+          "Q",
+          67,
+          51,
+          73,
+          55
+        ],
+        [
+          "Q",
+          79,
+          59,
+          85,
+          55
+        ],
+        [
+          "Q",
+          91,
+          51,
+          97,
+          47
+        ],
+        [
+          "Q",
+          103,
+          43,
+          109,
+          39
+        ],
+        [
+          "Q",
+          115,
+          35,
+          121,
+          31
+        ],
+        [
+          "Q",
+          127,
+          27,
+          133,
+          23
+        ],
+        [
+          "Q",
+          139,
+          19,
+          145,
+          25
+        ],
+        [
+          "Q",
+          151,
+          31,
+          157,
+          37
+        ],
+        [
+          "Q",
+          163,
+          43,
+          169,
+          49
+        ],
+        [
+          "Q",
+          175,
+          55,
+          181,
+          61
+        ],
+        [
+          "Q",
+          187,
+          67,
+          193,
+          73
+        ],
+        [
+          "Q",
+          199,
+          79,
+          205,
+          75
+        ],
+        [
+          "Q",
+          211,
+          71,
+          217,
+          67
+        ],
+        [
+          "Q",
+          223,
+          63,
+          229,
+          59
+        ],
+        [
+          "Q",
+          235,
+          55,
+          241,
+          51
+        ],
+        [
+          "L",
+          247.005,
+          46.995
+        ]
+      ]
+    }
+  ],
+  "background": "#eeeeee"
+}

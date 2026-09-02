@@ -176,35 +176,42 @@ later session to get wrong.
 
 ### Tasks
 
-- [ ] Build the Fabric 4 frontend (Phase A) and confirm `_RELEASE = True`
-- [ ] Create `e2e_playwright/` with `conftest.py` adapted from
+- [x] Build the Fabric 4 frontend (Phase A) and confirm `_RELEASE = True`
+- [x] Create `e2e_playwright/` with `conftest.py` adapted from
       `../streamlit-echarts/e2e_playwright/conftest.py` (which descends from
       `../streamlit-bokeh`'s). Bring `shared/git_utils.py` too
-- [ ] Write a capture app + script (suggested: `e2e_playwright/fixtures/capture_app.py`
+- [x] Write a capture app + script (suggested: `e2e_playwright/fixtures/capture_app.py`
       and `scripts/capture_v4_fixtures.py`) that drives the v1 component with synthetic
       Playwright mouse events and writes `json_data` to disk
-- [ ] Capture one fixture per drawing mode, using **fixed, documented coordinates** so
+- [x] Capture one fixture per drawing mode, using **fixed, documented coordinates** so
       the geometry is predictable and reviewable:
-  - [ ] `freedraw` — a multi-segment stroke (produces a `Path`)
-  - [ ] `line`
-  - [ ] `rect`
-  - [ ] `circle`
-  - [ ] `point` (a `Circle` at fixed `point_display_radius`)
-  - [ ] `polygon` — several points, right-click to close
-  - [ ] `transform` — an object that has been moved, scaled **and rotated** (this
+  - [x] `freedraw` — a multi-segment stroke (produces a `Path`)
+  - [x] `line`
+  - [x] `rect`
+  - [x] `circle`
+  - [x] `point` (a `Circle` at fixed `point_display_radius`)
+  - [x] `polygon` — several points, right-click to close
+  - [x] `transform` — an object that has been moved, scaled **and rotated** (this
         exercises `angle`, `scaleX`/`scaleY` and the `originX`/`originY` semantics that
-        Fabric 7 changes the defaults for; it is the fixture most likely to expose R3)
-  - [ ] `kitchen-sink` — every shape type on one canvas, plus a `background` colour
-- [ ] Commit fixtures under `e2e_playwright/fixtures/fabric-v4/`
-- [ ] Capture the matching `*.v4-reference.png` for each
-- [ ] Write `e2e_playwright/fixtures/fabric-v4/README.md` recording:
+        Fabric 7 changes the defaults for; it is the fixture most likely to expose R3).
+        Captured: `scaleX = scaleY = 1.42`, `angle ≈ 25.24°`
+  - [x] `kitchen-sink` — every shape type on one canvas, plus a `background` colour
+- [x] Commit fixtures under `e2e_playwright/fixtures/fabric-v4/`
+- [x] Capture the matching `*.v4-reference.png` for each. Each `transform`/`kitchen-sink`
+      capture deselects before screenshotting, so the reference PNG shows the plain
+      shape rather than Fabric's selection handles
+- [x] Write `e2e_playwright/fixtures/fabric-v4/README.md` recording:
   - Fabric version (`4.4.0`), the component version, Node version, capture date
   - The exact coordinates used per fixture
   - The JSON-vs-PNG role distinction above, stated explicitly
   - That `scripts/capture_v4_fixtures.py` **will not run after stage 2** deletes the v1
     frontend, and is kept only as a record of provenance
-- [ ] Sanity-check each JSON by eye: correct `version` field, expected object `type`,
+- [x] Sanity-check each JSON by eye: correct `version` field, expected object `type`,
       plausible coordinates. A fixture that is silently empty is worse than no fixture
+      (this caught a real bug: the first `transform` capture attempt produced an empty
+      `objects: []` because `page.mouse.*` doesn't auto-scroll a below-the-fold canvas
+      into view the way `Locator.click()` does — fixed by scrolling each canvas into
+      view before every raw-mouse interaction)
 
 ---
 
