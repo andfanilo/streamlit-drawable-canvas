@@ -136,46 +136,35 @@ st_canvas(initial_drawing=canvas_result.json_data)
 
 ## Development
 
+Tasks are automated with [just](https://github.com/casey/just) (see `justfile`) and [uv](https://docs.astral.sh/uv/).
+
 ### Install
 
-- JS side
-
 ```shell script
-cd frontend
-npm install
-```
-
-- Python side
-
-```shell script
-conda create -n streamlit-drawable-canvas python=3.7
-conda activate streamlit-drawable-canvas
-pip install -e .
+just setup        # uv venv + editable install + npm ci in the frontend
+just reinstall    # same, but wipes .venv / node_modules / build outputs first
 ```
 
 ### Run
 
-Both webpack dev server and Streamlit should run at the same time.
-
-- JS side
+Both the frontend dev server and Streamlit should run at the same time.
 
 ```shell script
-cd frontend
-npm run start
+just dev   # flips _RELEASE to False, then serves the component on :3001
+just run   # streamlit run e2e/app_to_test.py
 ```
 
-- Python side
-
-```shell script
-streamlit run app.py
-```
+To run against the packaged frontend instead of the dev server: `just build` (which
+flips `_RELEASE` back to True and builds `frontend/build`), then `just run`.
 
 ### Cypress integration tests
 
-- Install Cypress: `cd e2e; npm i` or `npx install cypress` (with `--force` if cache problem)
-- Start Streamlit frontend server: `cd streamlit_drawable_canvas/frontend; npm run start`
-- Start Streamlit test script: `streamlit run e2e/app_to_test.py`
-- Start Cypress app: `cd e2e; npm run cypress:open`
+```shell script
+just e2e-setup   # one-time cypress install
+just dev         # in one shell (or `just build` if you want the packaged frontend)
+just run         # in another shell
+just e2e-open    # or `just e2e` for headless
+```
 
 ## References
 
