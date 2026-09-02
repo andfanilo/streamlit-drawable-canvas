@@ -90,17 +90,27 @@ the point of T1 is that the two repos look the same.
 
 ### B3 — Lint, format, hygiene
 
-- [ ] `.pre-commit-config.yaml` from echarts; adapt the prettier hook's `cd` path and the
+- [x] `.pre-commit-config.yaml` from echarts; adapt the prettier hook's `cd` path and the
       `build/` exclude paths to `streamlit_drawable_canvas/frontend/`
-- [ ] `.gitattributes` from echarts (LF normalization — this repo is developed on Windows
+- [x] `.gitattributes` from echarts (LF normalization — this repo is developed on Windows
       and this is what keeps ruff/prettier stable across platforms)
-- [ ] Add `[tool.ruff]` config to `pyproject.toml` matching echarts
-- [ ] Merge echarts' `.gitignore` additions into the existing one (`.venv/`, `uv.lock`
+- [x] Add `[tool.ruff]` config to `pyproject.toml` matching echarts — echarts itself
+      carries **no** `[tool.ruff]` section (ruff runs on its defaults there), so this
+      repo matches that by adding nothing
+- [x] Merge echarts' `.gitignore` additions into the existing one (`.venv/`, `uv.lock`
       is **tracked**, `test-results/`, `__snapshots__` handling, `.ruff_cache/`)
-- [ ] `uv run pre-commit install`
-- [ ] Run `uv run pre-commit run --all-files` and fix fallout. Expect churn from LF
+- [x] `uv run pre-commit install`
+- [x] Run `uv run pre-commit run --all-files` and fix fallout. Expect churn from LF
       normalization and ruff formatting the existing `__init__.py` — that is fine and
-      expected, but keep it in its **own commit** so it does not obscure real changes
+      expected, but keep it in its **own commit** so it does not obscure real changes.
+      Also hit: ruff (0.16.5) reformats embedded Python fences inside Markdown too, so
+      README.md and docs/plans/v2-migration/02-frontend.md picked up trivial
+      quote-style/wrapping diffs from running `ruff format .` repo-wide — cosmetic only,
+      kept in the same formatting commit. Also: the v1 CRA `package.json` had no
+      `prettier` devDependency at all (echarts' hook assumes one); added `prettier@^3.6.2`
+      and formatted the 15 previously-never-formatted frontend `.ts`/`.tsx` files —
+      whitespace-only, rebuilt and confirmed the frontend still compiles identically
+      (+1 byte gzipped) after the pass.
 
 ### B4 — Python test scaffolding
 
