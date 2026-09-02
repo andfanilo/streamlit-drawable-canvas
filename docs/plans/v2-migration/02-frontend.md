@@ -512,9 +512,91 @@ The reason stage 1 existed.
 - [x] Install with `[image]`; confirm `return_image_data=True` yields a numpy array —
       verified live, `(150, 200, 4)` array returned after drawing
 - [x] `uv run pre-commit run --all-files` clean
-- [ ] Run `/code-review`
+- [x] Run `/code-review` — 10 findings (9 CONFIRMED, 1 PLAUSIBLE). Triage below;
+      resuming after compaction should work straight off this list, not re-review.
+
+  **To fix now (real bugs, low-risk mechanical fixes):**
+  - [ ] `instance.ts` — `onUndo`/`onRedo`/`onReset` call `sendToStreamlit` (which
+        reads `image_data` via `canvas.toDataURL`) synchronously right after firing
+        an un-awaited `reloadCanvasFromHistory` (`canvas.loadFromJSON(...).then(...)`,
+        never awaited). `json_data` is correct (comes from `history.current`, not the
+        canvas) but `image_data` is one reload stale. Fix: make
+        `reloadCanvasFromHistory` return its promise; `await`/`.then()` it before
+        calling `sendToStreamlit` in all three handlers.
+  - [ ] `instance.ts` mouse:up handler — `saveAndMaybeSend` already sends when
+        `changed && realtimeUpdateStreamlit`; right after it, an unconditional
+        `if (button === 2) sendToStreamlit(...)` sends **again** for the same state
+        with no dedup, double-doing the PNG encode + `setStateValue` round-trip on
+        every right-click that also happened to trigger a realtime send. Fix: inline
+        one `state`/`changed` computation, send once — force-send on right-click OR
+        (changed && realtime), not both.
+  - [ ] `instance.ts` `mouse:dblclick` (registered once in `createInstance`, always
+        *before* any tool's own dblclick handler added later via `reconfigureTool`)
+        fires `saveAndMaybeSend` **before** e.g. `transform.ts`'s
+        `handleDoubleClick` removes the active object, or `polygon.ts`'s finish
+        logic — snapshotting stale state. Fix: defer the instance-level handler's
+        body with `queueMicrotask(...)` so same-tick synchronous tool handlers
+        (registered on the same event) finish mutating first, regardless of
+        listener registration order.
+  - [ ] `instance.ts` `applyData` — race: if a tool-only-change call (B) lands
+        while an `initialDrawing`-change call's (A) `loadFromJSON` is still in
+        flight, B synchronously applies its own tool config (correct), but when
+        A's promise later resolves it unconditionally re-`reconfigureTool`s using
+        **A's stale closed-over `data`**, clobbering B's newer tool config and
+        `lastToolKey`. Fix: track `data` on `instance.latest` (alongside
+        `realtimeUpdateStreamlit`/`returnImageData`), set it first thing every
+        `applyData` call, and have the `loadFromJSON().then()` callback
+        reconfigure using `instance.latest.data` instead of its closure's `data`.
+        (The one PLAUSIBLE-rated finding — narrow timing window — but the fix is
+        cheap and low-risk, so do it anyway.)
+  - [ ] `background.ts` `FabricImage.fromURL(url)` has no error handling, and its
+        caller in `instance.ts` attaches no `.catch` — a failed load (bad bytes,
+        unreachable URL) is silently swallowed, and since `lastBackgroundImageURL`
+        is set *before* the load settles, the same `background_image` value never
+        retries on a later rerun. Fix: `.catch()` the `applyBackgroundImage(...)`
+        call in `instance.ts`; on failure (and only if still the latest
+        generation), reset `instance.lastBackgroundImageURL = null` so the next
+        `applyData` treats it as changed again and retries.
+  - [ ] `background.ts` / `__init__.py` — `background_image` is no longer scaled to
+        canvas dimensions anywhere. `background.ts`'s own comment claims "Python
+        has already resized" it, but `__init__.py` dropped the old `_resize_img`
+        call entirely; the `st_canvas` docstring still promises "Automatically
+        scaled to canvas dimensions." Fix on the **frontend** side (simpler, no
+        Pillow dependency, and `backgroundCanvas.width/height` are already known
+        at this point): after `FabricImage.fromURL`, set
+        `scaleX = backgroundCanvas.width / img.width`,
+        `scaleY = backgroundCanvas.height / img.height` alongside the existing
+        `left/top/originX/originY`. Update the stale frontend comment too.
+  - [ ] `__init__.py` docstring for `update_streamlit` — silently doesn't mention
+        that `realtimeUpdateStreamlit` is forced off for `drawing_mode="polygon"`
+        (`update_streamlit and (drawing_mode != "polygon")`). Fix: document the
+        exception and why (an in-progress multi-click polygon isn't a meaningful
+        intermediate value; the completed polygon still sends on right-click-close).
+  - [ ] `__init__.py` `st_canvas` — an unrecognized `drawing_mode` silently falls
+        back to freedraw on the frontend (`tools[data.drawingMode] ?? tools.freedraw`)
+        with no error anywhere; v1 threw on an invalid tool key. Fix: validate
+        `drawing_mode` against the documented literal set in Python and raise
+        `ValueError` naming the allowed values, so a typo fails loudly at the API
+        boundary instead of silently drawing with the wrong tool.
+  - [ ] `__init__.py` `_bg_image_cache` — plain unbounded module-level `dict`,
+        never evicted; a long-running multi-user server accumulates one entry per
+        distinct `background_image` ever seen, for the life of the process. Fix:
+        cap it — swap to an `OrderedDict` with a small `maxsize` (e.g. 32),
+        `move_to_end` on hit, `popitem(last=False)` when over budget.
+
+  **Deliberately not fixing now — documented as known behavioural differences
+  from v1 instead (final report, not a fix-it item):**
+  - No debounce on `setComponentValue`/`sendToStreamlit`. v1's `UpdateStreamlit.tsx`
+    debounced by 200ms; the v2 rewrite sends immediately on every qualifying
+    `mouse:up`. A burst of quick shapes now triggers one Streamlit rerun per shape
+    instead of one coalesced rerun. Reintroducing this needs a real design call
+    (timer ownership/cleanup on dispose, what interval) — flag it in the report,
+    don't improvise a value here.
+- [ ] Apply the "to fix now" list above, re-run `just lint && just test && just e2e`,
+      tick each sub-item as done
 - [ ] Tick every box and commit
 - [ ] Report: R2 and R3 outcomes explicitly, plus any Fabric 7 behaviour that differs
+      (including the debounce-removal note above)
 
 **Do not push, do not open a PR, do not bump the version.** Wait for maintainer sign-off
 **and the Opus review pass**.
