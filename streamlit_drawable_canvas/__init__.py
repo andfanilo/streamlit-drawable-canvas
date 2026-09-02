@@ -63,7 +63,7 @@ def st_canvas(
     height: int = 400,
     width: int = 600,
     drawing_mode: str = "freedraw",
-    initial_drawing: dict = None,
+    initial_drawing: dict | None = None,
     display_toolbar: bool = True,
     point_display_radius: int = 3,
     key=None,
@@ -123,9 +123,16 @@ def st_canvas(
         background_image = _resize_img(background_image, height, width)
         # Reduce network traffic and cache when switch another configure, use streamlit in-mem filemanager to convert image to URL
         background_image_url = st_image.image_to_url(
-            background_image, width, True, "RGB", "PNG", f"drawable-canvas-bg-{md5(background_image.tobytes()).hexdigest()}-{key}" 
+            background_image,
+            width,
+            True,
+            "RGB",
+            "PNG",
+            f"drawable-canvas-bg-{md5(background_image.tobytes()).hexdigest()}-{key}",
         )
-        background_image_url = st._config.get_option("server.baseUrlPath") + background_image_url
+        background_image_url = (
+            st._config.get_option("server.baseUrlPath") + background_image_url
+        )
         background_color = ""
 
     # Clean initial drawing, override its background color

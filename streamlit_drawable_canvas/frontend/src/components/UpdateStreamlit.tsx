@@ -8,9 +8,7 @@ const DELAY_DEBOUNCE = 200
  * Download image and JSON data from canvas to send back to Streamlit
  */
 const sendDataToStreamlit = (canvas: fabric.Canvas): void => {
-  const data = canvas
-    .getContext()
-    .canvas.toDataURL()
+  const data = canvas.getContext().canvas.toDataURL()
   Streamlit.setComponentValue({
     data: data,
     width: canvas.getWidth(),

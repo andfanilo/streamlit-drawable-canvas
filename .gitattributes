@@ -1,0 +1,7 @@
+# Normalize all text files to LF in the working tree and repo,
+# so prettier/ruff/git stay in sync across Windows + Unix.
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf

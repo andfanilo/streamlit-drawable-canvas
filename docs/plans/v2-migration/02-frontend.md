@@ -226,7 +226,7 @@ Facts that shape the implementation:
       out = st.components.v2.component(
           "streamlit-drawable-canvas.streamlit_drawable_canvas",
           js="index-*.js",
-          css="index-*.css",   # only if Vite emits one; otherwise omit and inline styles
+          css="index-*.css",  # only if Vite emits one; otherwise omit and inline styles
           html='<div class="canvas-root"></div>',
           isolate_styles=True,
       )

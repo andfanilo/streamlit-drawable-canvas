@@ -15,7 +15,7 @@ class PointTool extends FabricTool {
     strokeWidth,
     strokeColor,
     fillColor,
-    displayRadius
+    displayRadius,
   }: ConfigureCanvasProps): () => void {
     this._canvas.isDrawingMode = false
     this._canvas.selection = false
@@ -43,7 +43,7 @@ class PointTool extends FabricTool {
     let _clicked = o.e["button"]
     this.isMouseDown = true
     let pointer = canvas.getPointer(o.e)
-    this.currentStartX = pointer.x - (this.displayRadius + this.strokeWidth / 2.)
+    this.currentStartX = pointer.x - (this.displayRadius + this.strokeWidth / 2)
     this.currentStartY = pointer.y //- (this._minRadius + this.strokeWidth)
     this.currentCircle = new fabric.Circle({
       left: this.currentStartX,
@@ -76,7 +76,6 @@ class PointTool extends FabricTool {
   onMouseOut(o: any) {
     this.isMouseDown = false
   }
-
 }
 
 export default PointTool

@@ -15,7 +15,7 @@ const tools: any = {
   polygon: PolygonTool,
   rect: RectTool,
   transform: TransformTool,
-  point: PointTool
+  point: PointTool,
 }
 
 export { tools, FabricTool }
