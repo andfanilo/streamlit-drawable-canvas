@@ -119,32 +119,37 @@ preserved; what changes is the Fabric API surface (risk R4).
 
 Apply to every file:
 
-- [ ] `import { fabric } from "fabric"` → named imports:
+- [x] `import { fabric } from "fabric"` → named imports:
       `import { Canvas, StaticCanvas, Line, Rect, Circle, Path, Point } from "fabric"`
-- [ ] `canvas.getPointer(o.e)` → `canvas.getScenePoint(o.e)` — **removed** in v7, present
+- [x] `canvas.getPointer(o.e)` → `canvas.getScenePoint(o.e)` — **removed** in v7, present
       in all five tool files. Use `getScenePoint` (scene coordinates, matching what the
       old `getPointer` returned for an untransformed canvas), not `getViewportPoint`
-- [ ] `canvas.freeDrawingBrush` is no longer auto-instantiated — `freedraw.ts` must
+- [x] `canvas.freeDrawingBrush` is no longer auto-instantiated — `freedraw.ts` must
       `canvas.freeDrawingBrush = new PencilBrush(canvas)` before setting `width`/`color`
-- [ ] Keep every explicit `originX`/`originY` — v7 changes the *defaults* to `center`, and
+- [x] Keep every explicit `originX`/`originY` — v7 changes the *defaults* to `center`, and
       these explicit settings are what insulate us. **Verify** each shape renders at the
       expected position rather than assuming
-- [ ] `strokeUniform`, `noScaleCache`, `selectable`, `evented`, `setCoords()` are unchanged
+- [x] `strokeUniform`, `noScaleCache`, `selectable`, `evented`, `setCoords()` are unchanged
 
 Per-file notes:
 
-- [ ] `freedraw.ts` — brush instantiation, above
-- [ ] `line.ts` — `getScenePoint`
-- [ ] `rect.ts` — `getScenePoint`; verify `originX: "left"`, `originY: "top"`
-- [ ] `circle.ts` — `getScenePoint`; verify `radius`/`angle` behaviour
-- [ ] `point.ts` — `getScenePoint`; fixed-radius `Circle`
-- [ ] `polygon.ts` — `getScenePoint`; uses `Line`, `Circle` **and** `Path`. Preserve the
+- [x] `freedraw.ts` — brush instantiation, above
+- [x] `line.ts` — `getScenePoint`
+- [x] `rect.ts` — `getScenePoint`; verify `originX: "left"`, `originY: "top"`
+- [x] `circle.ts` — `getScenePoint`; verify `radius`/`angle` behaviour
+- [x] `point.ts` — `getScenePoint`; fixed-radius `Circle`
+- [x] `polygon.ts` — `getScenePoint`; uses `Line`, `Circle` **and** `Path`. Preserve the
       existing interaction contract: left-click adds a point, right-click closes the
       polygon, double-click removes the most recent point
-- [ ] `transform.ts` — `getActiveObject()`, double-click to delete
-- [ ] Preserve `canvas.stopContextMenu = true` and `canvas.fireRightClick = true`. v7
+- [x] `transform.ts` — `getActiveObject()`, double-click to delete
+- [x] Preserve `canvas.stopContextMenu = true` and `canvas.fireRightClick = true`. v7
       changes these defaults to `true`, but keep them explicit — the behaviour must not
       depend on a framework default
+
+All seven tools manually verified live in a running Streamlit app (freedraw, line, rect,
+circle, point, polygon, transform) via synthetic pointer events with exact geometry
+assertions -- see the stage-2 report for the full account. `originX`/`originY` positions
+matched expected geometry exactly in every case; no origin-default surprises.
 
 ---
 
@@ -188,54 +193,77 @@ Facts that shape the implementation:
 
 ### D2 — Instance model (F3)
 
-- [ ] Module-scoped `const instances = new WeakMap<Element, CanvasInstance>()`
-- [ ] On invocation: look up `parentElement`; create the instance if absent, otherwise
+- [x] Module-scoped `const instances = new WeakMap<Element, CanvasInstance>()`
+- [x] On invocation: look up `parentElement`; create the instance if absent, otherwise
       reuse it
-- [ ] `CanvasInstance` owns: the Fabric `Canvas`, the background `StaticCanvas`, the
+- [x] `CanvasInstance` owns: the Fabric `Canvas`, the background `StaticCanvas`, the
       history store, the active tool and its cleanup, and the last-applied data snapshot
-- [ ] Diff incoming `data` against the snapshot and apply only what changed. Follow
+- [x] Diff incoming `data` against the snapshot and apply only what changed. Follow
       echarts' memoized-generator pattern (`../streamlit-echarts/streamlit_echarts/frontend/src/index.ts`)
-- [ ] Reloading the canvas from `initialDrawing` must happen **only** when
+- [x] Reloading the canvas from `initialDrawing` must happen **only** when
       `initialDrawing` actually changed — otherwise every unrelated rerun wipes the
       user's in-progress drawing
-- [ ] The returned cleanup disposes the Fabric canvas, removes listeners, and deletes the
+- [x] The returned cleanup disposes the Fabric canvas, removes listeners, and deletes the
       WeakMap entry
+
+Verified live: undo history and in-progress state survive unrelated reruns (drew on one
+canvas, triggered reruns via other canvases, history/toolbar state was untouched); two
+canvases on one page do not interfere with each other's tool/history state.
 
 ### D3 — History (undo/redo)
 
-- [ ] Port `DrawableCanvasState.tsx`'s reducer to a plain `history.ts` store: `save`,
+- [x] Port `DrawableCanvasState.tsx`'s reducer to a plain `history.ts` store: `save`,
       `undo`, `redo`, `reset`, `canUndo`, `canRedo`, `forceSend`
-- [ ] **No Fabric imports, no DOM access** — it operates on opaque JSON snapshots
-- [ ] History lives on the `CanvasInstance` and therefore survives reruns (this is the
+- [x] **No Fabric imports, no DOM access** — it operates on opaque JSON snapshots
+- [x] History lives on the `CanvasInstance` and therefore survives reruns (this is the
       whole point of F3)
-- [ ] `loadFromJSON` is Promise-based in v7 and now **always defers via a microtask**,
+- [x] `loadFromJSON` is Promise-based in v7 and now **always defers via a microtask**,
       even when it could complete synchronously. The old callback form sometimes ran
       synchronously. Audit the `resetState` / `saveState` ordering around all three call
       sites — this is a real behavioural difference, not a syntax change
-- [ ] `canvas.toJSON()` is **no longer an alias of `toObject()`** in v7. State saving
+- [x] `canvas.toJSON()` is **no longer an alias of `toObject()`** in v7. State saving
       currently relies on `toJSON()`. Decide per call site which is correct and make it
       explicit; `toObject()` is what produces the full serialization we want
 
+`toObject()` is used everywhere state is captured (`instance.ts`'s `saveAndMaybeSend`,
+toolbar send). All three `loadFromJSON` call sites (`initialDrawing` load, undo/redo
+reload) are guarded with a per-purpose monotonic generation counter so a stale resolution
+can't clobber newer state if a second load starts before the first's microtask settles.
+
 ### D4 — Toolbar (F5)
 
-- [ ] Rebuild as plain DOM in `toolbar.ts` — undo, redo, download/send, clear
-- [ ] **Inline SVG** icons, stroked/filled with `currentColor`
-- [ ] Colour from `var(--st-text-color)`; delete the hardcoded
+- [x] Rebuild as plain DOM in `toolbar.ts` — undo, redo, download/send, clear
+- [x] **Inline SVG** icons, stroked/filled with `currentColor`
+- [x] Colour from `var(--st-text-color)`; delete the hardcoded
       `filter: invert(95%) sepia(10%) hue-rotate(184deg)` chains entirely. Dark mode must
       work — it never has
-- [ ] Disabled state via opacity/`cursor`, not a filter hack
-- [ ] Preserve behaviour: the clear button empties history *and* pushes a blank state to
+- [x] Disabled state via opacity/`cursor`, not a filter hack
+- [x] Preserve behaviour: the clear button empties history *and* pushes a blank state to
       Streamlit even when `update_streamlit=False`
-- [ ] Respect `displayToolbar`
+- [x] Respect `displayToolbar`
+
+Verified live: send/undo/redo/reset all work correctly end-to-end (toolbar state
+disabled/enabled correctly tracks history); reset always sends regardless of
+`update_streamlit`.
 
 ### D5 — Background (P6/P7 frontend half)
 
-- [ ] Background image is drawn to the separate `StaticCanvas` behind the drawing canvas,
+- [x] Background image is drawn to the separate `StaticCanvas` behind the drawing canvas,
       as today
-- [ ] The frontend receives a plain URL string — either an ordinary `http(s)` URL or a
+- [x] The frontend receives a plain URL string — either an ordinary `http(s)` URL or a
       `data:` URI. It does not care which. **Delete `getStreamlitBaseUrl()`** and the
       `streamlitUrl` query-param logic; it was iframe-era plumbing and there is no iframe
-- [ ] Background colour continues to come through `initialDrawing.background`
+- [x] Background colour continues to come through `initialDrawing.background`
+
+**Real bug caught and fixed during manual testing:** the first implementation drew the
+background image with raw `ctx.drawImage()` on the `StaticCanvas`'s 2D context. That
+canvas is Fabric-managed -- `StaticCanvas` re-renders itself from its own object model
+(background image included) on `renderAll()`/`setDimensions()`, and anything drawn by
+reaching past that API into the raw context gets silently wiped on the next
+Fabric-driven render. Visually this showed as the background image never appearing.
+Fixed by switching to Fabric's own `FabricImage.fromURL()` + `backgroundCanvas.
+backgroundImage = img` + `renderAll()` -- the supported API for exactly this. Verified
+live afterward with a real photo URL.
 
 ---
 
@@ -243,7 +271,7 @@ Facts that shape the implementation:
 
 ### E1 — Component registration
 
-- [ ] Create the inner manifest `streamlit_drawable_canvas/pyproject.toml`:
+- [x] Create the inner manifest `streamlit_drawable_canvas/pyproject.toml`:
       ```toml
       [project]
       name = "streamlit-drawable-canvas"
@@ -253,8 +281,8 @@ Facts that shape the implementation:
       name = "streamlit_drawable_canvas"
       asset_dir = "frontend/build"
       ```
-- [ ] Add `"pyproject.toml"` to `[tool.setuptools.package-data]` in the root `pyproject.toml`
-- [ ] Register the component:
+- [x] Add `"pyproject.toml"` to `[tool.setuptools.package-data]` in the root `pyproject.toml`
+- [x] Register the component:
       ```python
       out = st.components.v2.component(
           "streamlit-drawable-canvas.streamlit_drawable_canvas",
@@ -264,9 +292,14 @@ Facts that shape the implementation:
           isolate_styles=True,
       )
       ```
-- [ ] Delete the `_RELEASE` flag and both `declare_component` branches
-- [ ] Delete the `dev-mode` / `release-mode` / `:3001` justfile recipes and
+- [x] Delete the `_RELEASE` flag and both `declare_component` branches
+- [x] Delete the `dev-mode` / `release-mode` / `:3001` justfile recipes and
       `export NODE_OPTIONS` (all marked `# DELETE IN STAGE 2` in stage 1)
+
+Vite's lib-mode CSS output doesn't hash-substitute for a secondary asset -- the emitted
+file is literally named `index-_hash_.css` (deterministic every build). `css="index-*.css"`
+still resolves it fine since the glob matches on the literal text; noted here so it isn't
+mistaken for a bug later.
 
 `css=` and `js=` are resolved as `asset_dir`-relative globs that must match **exactly one**
 file. `html=` is always treated as literal content — the docstring claims it accepts a
@@ -276,41 +309,47 @@ path, but the implementation does not resolve it. Do not pass a path there.
 
 Existing parameters keep their names and defaults exactly (P1). Two are added:
 
-- [ ] `return_image_data: bool = False` — controls whether the frontend sends the PNG at
+- [x] `return_image_data: bool = False` — controls whether the frontend sends the PNG at
       all (P2). *Name is a routine implementation call; change it only with the
       maintainer's agreement.*
-- [ ] `on_change: Callable | None = None` — wired to the component's `on_drawing_change`
+- [x] `on_change: Callable | None = None` — wired to the component's `on_drawing_change`
 
 Behaviour:
 
-- [ ] `background_image` accepts a URL string, a path, `bytes`, or a PIL `Image` (P6).
+- [x] `background_image` accepts a URL string, a path, `bytes`, or a PIL `Image` (P6).
       Only the raw-pixel branches import Pillow. **If a user passes a PIL object they
       demonstrably have Pillow installed** — the optional extra does not break this
-- [ ] Raw pixels → base64 `data:` URI, **memoized by content hash** (P7). Reuse the
+- [x] Raw pixels → base64 `data:` URI, **memoized by content hash** (P7). Reuse the
       existing `md5(img.tobytes())` idea for the cache key
-- [ ] Remove the `st_image.image_to_url` call and the
+- [x] Remove the `st_image.image_to_url` call and the
       `st._config.get_option("server.baseUrlPath")` prefixing entirely
-- [ ] Mount with `width="content", height="content"` (P9); `width`/`height` stay canvas
+- [x] Mount with `width="content", height="content"` (P9); `width`/`height` stay canvas
       pixel dims passed through `data`
-- [ ] Every `default=` key must have a matching `on_<key>_change` callback registered, or
+- [x] Every `default=` key must have a matching `on_<key>_change` callback registered, or
       Streamlit raises `BidiComponentInvalidDefaultKeyError`. Only use `default=` for keys
       you have registered
-- [ ] Fix the live bug: `if component_value is None: return CanvasResult` returns the
+- [x] Fix the live bug: `if component_value is None: return CanvasResult` returns the
       **class**. It must return `CanvasResult()` (P11)
+
+`out(...)` originally omitted `width`/`height`, silently defaulting to `width="stretch"`
+(the mount command's own default) instead of `"content"` -- caught while re-reading this
+checklist against the code, not from external review. Fixed by passing both explicitly.
+`ComponentResult` is never `None` in v2 (always at least `{}`), so P11's literal bug can't
+recur; `CanvasResult(...)` is always constructed as a real instance.
 
 ### E3 — `CanvasResult` and the optional extra
 
-- [ ] Move `Pillow` and `numpy` out of `dependencies` into `[project.optional-dependencies]`
+- [x] Move `Pillow` and `numpy` out of `dependencies` into `[project.optional-dependencies]`
       as `image = ["Pillow", "numpy"]` (P3). Base install becomes `["streamlit >= 1.53"]`
-- [ ] Raise `requires-python` to `>=3.10`; add trove classifiers as echarts has them
-- [ ] Accessing `image_data` when `return_image_data=False` must **raise** with a message
+- [x] Raise `requires-python` to `>=3.10`; add trove classifiers as echarts has them
+- [x] Accessing `image_data` when `return_image_data=False` must **raise** with a message
       naming both the parameter and the extra (P4). Something like:
       *"image_data was not requested. Pass return_image_data=True to st_canvas(), and
       install the image extra: pip install streamlit-drawable-canvas[image]"*
-- [ ] Import numpy/Pillow **lazily**, inside the decode path only — a base install must be
+- [x] Import numpy/Pillow **lazily**, inside the decode path only — a base install must be
       importable without them
-- [ ] No auto-detection of installed packages (P5)
-- [ ] Full type annotations; **no `py.typed`** (P10)
+- [x] No auto-detection of installed packages (P5)
+- [x] Full type annotations; **no `py.typed`** (P10)
 
 ---
 

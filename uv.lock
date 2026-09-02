@@ -1793,11 +1793,15 @@ name = "streamlit-drawable-canvas"
 version = "0.9.3"
 source = { editable = "." }
 dependencies = [
+    { name = "streamlit" },
+]
+
+[package.optional-dependencies]
+image = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
     { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "pillow" },
-    { name = "streamlit" },
 ]
 
 [package.dev-dependencies]
@@ -1819,10 +1823,11 @@ e2e = [
 
 [package.metadata]
 requires-dist = [
-    { name = "numpy" },
-    { name = "pillow" },
-    { name = "streamlit", specifier = ">=0.63" },
+    { name = "numpy", marker = "extra == 'image'" },
+    { name = "pillow", marker = "extra == 'image'" },
+    { name = "streamlit", specifier = ">=1.53" },
 ]
+provides-extras = ["image"]
 
 [package.metadata.requires-dev]
 dev = [

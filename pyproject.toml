@@ -21,12 +21,15 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Topic :: Scientific/Engineering :: Visualization",
 ]
-dependencies = ["Pillow", "numpy", "streamlit >= 0.63"]
+dependencies = ["streamlit >= 1.53"]
 
 [project.urls]
 Homepage = "https://github.com/andfanilo/streamlit-drawable-canvas"
 "Source Code" = "https://github.com/andfanilo/streamlit-drawable-canvas"
 "Bug Tracker" = "https://github.com/andfanilo/streamlit-drawable-canvas/issues"
+
+[project.optional-dependencies]
+image = ["Pillow", "numpy"]
 
 [dependency-groups]
 dev = [
