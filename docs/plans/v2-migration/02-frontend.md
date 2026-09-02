@@ -599,8 +599,57 @@ The reason stage 1 existed.
 - [x] Report: R2 and R3 outcomes explicitly, plus any Fabric 7 behaviour that differs
       (including the debounce-removal note above) — delivered to maintainer in chat
 
-**Do not push, do not open a PR, do not bump the version.** Wait for maintainer sign-off
-**and the Opus review pass**.
+### Opus review pass
+
+Ran `/code-review high` on Opus against the full `feat/components-v2` diff. All 11
+findings verified against the code and fixed:
+
+- [x] `mouse:up` snapshot ran before tool listeners, inverting v1 order — a
+      click-without-drag in `line` mode sent a phantom 0×0 line to Python and pushed it
+      onto the undo stack before `LineTool.onMouseUp` removed it. Deferred via
+      `queueMicrotask`, matching the existing `mouse:dblclick` handler
+- [x] Background image was never rescaled on canvas resize — added
+      `rescaleBackgroundImage`, applied when dimensions change and the URL doesn't
+- [x] `update_streamlit` docstring claimed a polygon is sent on double-click. It isn't,
+      and shouldn't be: `PolygonTool.onMouseDoubleClick` *removes* the last points;
+      only right-click appends `"z"` and closes. Fixed the docstring (and README), not
+      the send path
+- [x] **`onSend` echoed the Python-supplied JSON, making the whole Fabric 4 compat suite
+      vacuous.** `history.current` is the dict Python just sent after
+      `history.reset(data.initialDrawing)`, so `fabric_v4_compat_test.py` compared each
+      fixture to itself and would have passed even if `loadFromJSON` dropped every
+      object — precisely the risk (R3) stage 1 existed to cover. `onSend` now sends
+      `canvas.toObject()`. **R3 evidence is only real as of this fix**; see below
+- [x] README quickstart raised under the new opt-in `image_data`; also documented
+      `background_image` as Pillow-only. Updated, plus the missing `return_image_data`
+      / `key` / `on_change` entries and the `[image]` extra
+- [x] `data:` URI as `background_image` fell through to `Path(...).read_bytes()`
+- [x] `demo_app.py` imported pandas, which is in no dependency group
+- [x] `vite.config.ts` nested `esbuild` under `build`, so `drop: ["console"]` was inert.
+      Deleted the block rather than relocating it — `minify: "esbuild"` already covers
+      the minify flags, and dropping console would have stripped the deliberate
+      `console.error` in `background.ts`
+- [x] Emitted CSS was literally `index-style.css` with an uninterpolated `[hash]`. Lib
+      mode can't hash CSS; set `lib.cssFileName` to a deliberate name that still matches
+      the `css="index-*.css"` glob
+- [x] `reloadCanvasFromHistory` had no generation guard, unlike `applyData` — two fast
+      undos could render the older snapshot. Now shares `loadGeneration`
+- [x] Objects regained `selectable`/`evented` after undo/redo/reset, since
+      `loadFromJSON` restores Fabric defaults and those paths never re-ran
+      `reconfigureTool`. They do now
+
+**R3, re-confirmed against a non-vacuous test.** With the echo removed, all 8 fixtures
+still pass the real round-trip (object count and type), so Fabric 7 genuinely loads v4
+JSON. The one assertion that flipped was `type == "circle"` → `"Circle"`: re-serialized
+by Fabric 7, loaded objects now report the capitalized class name. That is confirmation
+the objects are real Fabric 7 instances, not passthrough JSON. The
+radians→degrees `startAngle`/`endAngle` break stands as previously decided — declared
+breaking, not shimmed.
+
+- [x] `just lint && just test && just build && just e2e` all green after the fixes
+      (5 pytest + 27 vitest, 23/23 Playwright)
+
+**Do not push, do not open a PR, do not bump the version.** Wait for maintainer sign-off.
 
 ---
 

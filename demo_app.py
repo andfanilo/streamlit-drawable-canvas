@@ -1,6 +1,5 @@
 """Manual smoke-test app for the dev loop (`just dev` + `just run`)."""
 
-import pandas as pd
 import streamlit as st
 
 from streamlit_drawable_canvas import st_canvas
@@ -22,4 +21,4 @@ canvas_result = st_canvas(
 if canvas_result.image_data is not None:
     st.image(canvas_result.image_data)
 if canvas_result.json_data is not None:
-    st.dataframe(pd.json_normalize(canvas_result.json_data["objects"]))
+    st.dataframe(canvas_result.json_data["objects"])

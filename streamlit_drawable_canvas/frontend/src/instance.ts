@@ -4,7 +4,7 @@ import type {
   FrontendState,
 } from "@streamlit/component-v2-lib";
 
-import { applyBackgroundImage } from "./background";
+import { applyBackgroundImage, rescaleBackgroundImage } from "./background";
 import { HistoryStore } from "./history";
 import { buildToolbar, setToolbarState, ToolbarHandles } from "./toolbar";
 import { tools } from "./tools";
@@ -66,9 +66,8 @@ export interface CanvasInstance {
   };
 }
 
-/** Saves canvas state to history and sends it if it changed. Returns
- *  whether it sent, so callers that also need to force-send on top (e.g.
- *  polygon close on right-click) can avoid sending twice. */
+/** Saves canvas state to history, sending it if it changed. Returns whether
+ *  it sent, so a caller that force-sends on top can avoid sending twice. */
 const saveAndMaybeSend = (instance: CanvasInstance): boolean => {
   const state = instance.canvas.toObject();
   const changed = instance.history.save(state);
@@ -89,13 +88,21 @@ const sendToStreamlit = (
   instance.latest.setStateValue("drawing", { raw: state, data });
 };
 
+/** Reloads the canvas from `history.current`. Returns false if a newer load
+ *  superseded this one. */
 const reloadCanvasFromHistory = async (
   instance: CanvasInstance
-): Promise<void> => {
+): Promise<boolean> => {
   const state = instance.history.current;
-  if (state == null) return;
+  if (state == null) return false;
+  const generation = ++instance.loadGeneration;
   await instance.canvas.loadFromJSON(state);
+  if (generation !== instance.loadGeneration) return false;
   instance.canvas.renderAll();
+  if (instance.latest.data) {
+    reconfigureTool(instance, instance.latest.data);
+  }
+  return true;
 };
 
 const reconfigureTool = (
@@ -174,13 +181,13 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
 
   instance.toolbarHandles = buildToolbar(toolbarEl, {
     onSend: () => {
-      sendToStreamlit(instance, instance.history.current ?? canvas.toObject());
+      sendToStreamlit(instance, canvas.toObject());
     },
     onUndo: () => {
       if (instance.history.undo()) {
-        void reloadCanvasFromHistory(instance).then(() => {
-          if (instance.latest.realtimeUpdateStreamlit) {
-            sendToStreamlit(instance, instance.history.current!);
+        void reloadCanvasFromHistory(instance).then((applied) => {
+          if (applied && instance.latest.realtimeUpdateStreamlit) {
+            sendToStreamlit(instance, canvas.toObject());
           }
         });
         setToolbarState(
@@ -192,9 +199,9 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
     },
     onRedo: () => {
       if (instance.history.redo()) {
-        void reloadCanvasFromHistory(instance).then(() => {
-          if (instance.latest.realtimeUpdateStreamlit) {
-            sendToStreamlit(instance, instance.history.current!);
+        void reloadCanvasFromHistory(instance).then((applied) => {
+          if (applied && instance.latest.realtimeUpdateStreamlit) {
+            sendToStreamlit(instance, canvas.toObject());
           }
         });
         setToolbarState(
@@ -207,10 +214,11 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
     onReset: () => {
       const resetTo = instance.history.initial ?? {};
       instance.history.reset(resetTo);
-      void reloadCanvasFromHistory(instance).then(() => {
-        // Always sent, even when update_streamlit=False -- an explicit
-        // clear is a deliberate user action.
-        sendToStreamlit(instance, resetTo);
+      // Always sent, even when update_streamlit=False.
+      void reloadCanvasFromHistory(instance).then((applied) => {
+        if (applied) {
+          sendToStreamlit(instance, canvas.toObject());
+        }
       });
       setToolbarState(
         instance.toolbarHandles,
@@ -220,25 +228,27 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
     },
   });
 
+  // Both handlers defer via microtask: tool listeners are registered later
+  // and so run after these within the same synchronous `fire()`.
   canvas.on("mouse:up", (opt) => {
-    const sent = saveAndMaybeSend(instance);
     const domEvent = opt.e as MouseEvent;
-    if (domEvent && domEvent.button === 2 && !sent) {
-      sendToStreamlit(instance, instance.history.current ?? canvas.toObject());
-    }
-    setToolbarState(
-      instance.toolbarHandles,
-      instance.history.canUndo(),
-      instance.history.canRedo()
-    );
+    const isRightClick = domEvent != null && domEvent.button === 2;
+    queueMicrotask(() => {
+      const sent = saveAndMaybeSend(instance);
+      if (isRightClick && !sent) {
+        sendToStreamlit(instance, canvas.toObject());
+      }
+      setToolbarState(
+        instance.toolbarHandles,
+        instance.history.canUndo(),
+        instance.history.canRedo()
+      );
+    });
   });
   canvas.on("mouse:dblclick", () => {
-    // Deferred via microtask so tool-specific dblclick handlers -- which are
-    // registered later (on tool reconfiguration) and therefore run after
-    // this listener within the same synchronous `fire()` call -- get a
-    // chance to finish mutating the canvas (e.g. closing a polygon, or
-    // deleting the active object) before we snapshot it.
     queueMicrotask(() => {
+      // In polygon mode a double-click removes the last points; it does not
+      // close the polygon, so it does not force a send.
       saveAndMaybeSend(instance);
       setToolbarState(
         instance.toolbarHandles,
@@ -262,10 +272,10 @@ export const applyData = (
   instance.latest.data = data;
 
   // 1. Resize
-  if (
+  const resized =
     instance.width !== data.canvasWidth ||
-    instance.height !== data.canvasHeight
-  ) {
+    instance.height !== data.canvasHeight;
+  if (resized) {
     instance.width = data.canvasWidth;
     instance.height = data.canvasHeight;
     instance.canvas.setDimensions({
@@ -297,20 +307,17 @@ export const applyData = (
         "streamlit-drawable-canvas: failed to load background image",
         error
       );
-      // Un-memoize so a later rerun with the same (still-broken, or now
-      // fixed) URL gets a retry instead of being silently swallowed by the
-      // memo check above.
+      // Un-memoize so a later rerun with the same URL retries.
       if (generation === instance.backgroundGeneration) {
         instance.lastBackgroundImageURL = null;
       }
     });
+  } else if (resized) {
+    rescaleBackgroundImage(instance.backgroundCanvas);
   }
 
-  // 3. Initial drawing (memoized) -- only reload when it actually changed,
-  //    otherwise every unrelated rerun would wipe the user's in-progress
-  //    drawing. `loadFromJSON` always defers via a microtask in Fabric 7, so
-  //    guard against a stale resolution clobbering newer state with a
-  //    generation counter.
+  // 3. Initial drawing (memoized) -- reloading on every rerun would wipe the
+  //    user's in-progress drawing.
   const initialDrawingKey = JSON.stringify(data.initialDrawing);
   const initialDrawingChanged =
     initialDrawingKey !== instance.lastInitialDrawingKey;
@@ -320,15 +327,10 @@ export const applyData = (
     const generation = ++instance.loadGeneration;
     void instance.canvas.loadFromJSON(data.initialDrawing).then(() => {
       if (generation !== instance.loadGeneration) {
-        // A newer initialDrawing arrived while this load was in flight.
         return;
       }
       instance.canvas.renderAll();
       instance.history.reset(data.initialDrawing);
-      // Use the freshest data, not the closed-over `data` from when this
-      // load started: a tool-only change may have arrived (and returned
-      // synchronously, since it doesn't reload) while this load was still
-      // in flight, and its params must win over this stale snapshot.
       const latestData = instance.latest.data ?? data;
       reconfigureTool(instance, latestData);
       instance.lastToolKey = toolKeyFor(latestData);

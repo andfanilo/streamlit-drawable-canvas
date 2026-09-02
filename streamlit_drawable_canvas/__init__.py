@@ -92,7 +92,7 @@ _VALID_DRAWING_MODES = frozenset(
 
 
 def _looks_like_url(value: str) -> bool:
-    return value.startswith(("http://", "https://"))
+    return value.startswith(("http://", "https://", "data:"))
 
 
 def _sniff_mime(raw: bytes) -> str:
@@ -128,8 +128,8 @@ def _resolve_background_image_url(
 ) -> str | None:
     """Resolve `background_image` to a URL the frontend can use directly.
 
-    Accepts what `st.image` accepts: a URL, a local path, raw bytes, or a
-    PIL Image. Only the PIL.Image branch imports Pillow -- a caller passing
+    Accepts what `st.image` accepts: an http(s) URL, a data: URI, a local
+    path, raw bytes, or a PIL Image. Only the PIL.Image branch imports Pillow -- a caller passing
     one demonstrably already has it installed, so the base (non-`[image]`)
     install stays importable and functional for every other branch.
     """
@@ -201,15 +201,15 @@ def st_canvas(
         which is transparent. Overridden by background_image. Note: changing
         background_color resets the drawing.
     background_image: str | Path | bytes | PIL.Image.Image
-        Image to display behind the canvas: a URL, a local file path, raw
-        image bytes, or a PIL Image. Automatically scaled to canvas
+        Image to display behind the canvas: an http(s) URL, a data: URI, a
+        local file path, raw image bytes, or a PIL Image. Scaled to canvas
         dimensions. Being behind the canvas, it is not sent back to
         Streamlit on mouse event.
     update_streamlit: bool
         Whenever True, send canvas data to Streamlit when an object or
         selection is updated, or on mouse up. Ignored when
-        drawing_mode="polygon": a polygon is only ever sent once closed
-        (double-click, or right-click to close), regardless of this flag.
+        drawing_mode="polygon": a polygon is only ever sent once closed with
+        a right-click, regardless of this flag.
     height: int
         Height of canvas in pixels. Defaults to 400.
     width: int

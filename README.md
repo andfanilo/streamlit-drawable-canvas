@@ -35,6 +35,12 @@ Streamlit component which provides a sketching canvas using [Fabric.js](http://f
 pip install streamlit-drawable-canvas
 ```
 
+`return_image_data=True` additionally requires Pillow and numpy:
+
+```shell
+pip install streamlit-drawable-canvas[image]
+```
+
 ## Example Usage
 
 Copy this code snippet:
@@ -71,6 +77,7 @@ canvas_result = st_canvas(
     height=150,
     drawing_mode=drawing_mode,
     point_display_radius=point_display_radius if drawing_mode == "point" else 0,
+    return_image_data=True,
     key="canvas",
 )
 
@@ -96,7 +103,7 @@ st_canvas(
     stroke_width: int
     stroke_color: str
     background_color: str
-    background_image: Image
+    background_image: str | Path | bytes | Image
     update_streamlit: bool
     height: int
     width: int
@@ -104,7 +111,9 @@ st_canvas(
     initial_drawing: dict
     display_toolbar: bool
     point_display_radius: int
+    return_image_data: bool
     key: str
+    on_change: callable
 )
 ```
 
@@ -112,8 +121,8 @@ st_canvas(
 - **stroke_width** : Width of drawing brush in CSS color property. Defaults to 20.
 - **stroke_color** : Color of drawing brush in hex. Defaults to "black".
 - **background_color** : Color of canvas background in CSS color property. Defaults to "" which is transparent. Overriden by background_image. Changing background_color will reset the drawing.
-- **background_image** : Pillow Image to display behind canvas. Automatically resized to canvas dimensions. Being behind the canvas, it is not sent back to Streamlit on mouse event. Overrides background_color. Changes to this will reset canvas contents.
-- **update_streamlit** : Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up.
+- **background_image** : Image to display behind canvas: an http(s) URL, a `data:` URI, a local file path, raw image bytes, or a Pillow Image. Automatically resized to canvas dimensions. Being behind the canvas, it is not sent back to Streamlit on mouse event. Overrides background_color. Changes to this will reset canvas contents.
+- **update_streamlit** : Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up. Ignored when `drawing_mode="polygon"`: a polygon is only ever sent once closed with a right-click.
 - **height** : Height of canvas in pixels. Defaults to 400.
 - **width** : Width of canvas in pixels. Defaults to 600.
 - **drawing_mode** : Enable free drawing when "freedraw", object manipulation when "transform", otherwise create new objects with "line", "rect", "circle" and "polygon". Defaults to "freedraw".
@@ -121,6 +130,9 @@ st_canvas(
 - **initial_drawing** : Initialize canvas with drawings from here. Should be the `json_data` output from other canvas. Beware: if you try to import a drawing from a bigger/smaller canvas, no rescaling is done in the canvas and the import could fail.
 - **point_display_radius** : To make points visible on the canvas, they are drawn as circles. This parameter modifies the radius of the displayed circle.
 - **display_toolbar** : If `False`, don't display the undo/redo/delete toolbar.
+- **return_image_data** : If `True`, populate `image_data` on the result with the canvas's RGBA pixels. `False` by default -- it PNG-encodes the whole canvas on every send. Requires the `image` extra.
+- **key** : An optional string to use as the unique key for the widget. Assign a key so the component is not remounted on every rerun.
+- **on_change** : Optional callback invoked when the component sends a new drawing.
 
 Example:
 

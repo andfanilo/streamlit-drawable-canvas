@@ -25,7 +25,7 @@ FIXTURE_NAMES = [
 
 def _send_and_read(app: Page, index: int) -> dict:
     # A loaded `initial_drawing` isn't echoed back as widget state on its
-    # own (P8/F3 finding) -- the toolbar's "Send to Streamlit" forces it.
+    # own -- the toolbar's "Send to Streamlit" re-serializes the live canvas.
     root = app.locator("[data-testid=stBidiComponentIsolated]").nth(index)
     root.get_by_label("Send to Streamlit").click()
     wait_for_app_run(app)
@@ -55,7 +55,5 @@ def test_circle_and_point_load_but_geometry_is_declared_breaking(app: Page):
         index = FIXTURE_NAMES.index(name)
         loaded = _send_and_read(app, index)
         assert len(loaded["objects"]) == 1
-        # Loaded objects keep the source JSON's original `type` casing
-        # (round-tripped as-is) -- only freshly-drawn objects get Fabric 7's
-        # capitalized class name. See test_v4_fixture_loads_under_fabric_7.
-        assert loaded["objects"][0]["type"] == "circle"
+        # Re-serialized by Fabric 7, so the type comes back capitalized.
+        assert loaded["objects"][0]["type"] == "Circle"

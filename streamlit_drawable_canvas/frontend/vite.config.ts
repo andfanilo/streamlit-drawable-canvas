@@ -26,15 +26,10 @@ export default defineConfig(() => {
         name: "DrawableCanvas",
         formats: ["es"],
         fileName: "index-[hash]",
+        // Lib mode does not interpolate [hash] for CSS; must still match the
+        // `css="index-*.css"` glob in __init__.py.
+        cssFileName: "index-style",
       },
-      ...(!isDev && {
-        esbuild: {
-          drop: ["console", "debugger"],
-          minifyIdentifiers: true,
-          minifySyntax: true,
-          minifyWhitespace: true,
-        },
-      }),
     },
   } satisfies UserConfig;
 });
