@@ -68,16 +68,25 @@ the point of T1 is that the two repos look the same.
 
 ### B2 — Task runner
 
-- [ ] Write `justfile` from `../streamlit-echarts/justfile`, adapting paths
-- [ ] **Keep the v1-only recipes for now**, each marked with a
-      `# DELETE IN STAGE 2` comment: `export NODE_OPTIONS`, `dev-mode`, `release-mode`,
-      the `:3001` dev-server `dev` recipe, and `--legacy-peer-deps` on `setup-frontend`
-- [ ] Adapt `just bump` — echarts syncs root `pyproject.toml`, the **inner**
+- [x] Write `justfile` from `../streamlit-echarts/justfile`, adapting paths
+- [x] **Keep the v1-only recipes for now**, each marked with a
+      `# DELETE IN STAGE 2` comment: `dev-mode`, `release-mode`,
+      the `:3001` dev-server `dev` recipe, and `--legacy-peer-deps` on `setup-frontend`.
+      **Deviation:** did **not** re-add `export NODE_OPTIONS := "--openssl-legacy-provider"`
+      (present in a pre-existing justfile from before this stage started). Phase A found
+      Node 16 — the version this justfile's own comment says CI pins, and the version
+      that actually builds react-scripts@4 — **rejects that flag outright**
+      (`node.exe: --openssl-legacy-provider is not allowed in NODE_OPTIONS`); only
+      Node 17+ needs/accepts it. Exporting it unconditionally would break `just build`,
+      `just dev`, and `just setup-frontend` under the exact toolchain Phase A just
+      verified works. Flagged for the maintainer in the stage sign-off report.
+- [x] Adapt `just bump` — echarts syncs root `pyproject.toml`, the **inner**
       `pyproject.toml`, `uv.lock` and the frontend `package.json`/`package-lock.json`.
       The inner `pyproject.toml` does not exist until stage 2. Either guard that line or
       leave a `# STAGE 2` comment; do not let `just bump` fail silently
-- [ ] Carry `merge-dependabot` over verbatim
-- [ ] Keep `test-frontend` pointing at `react-scripts test` for now; it becomes Vitest in stage 2
+      (guarded with `Test-Path` around both the inner-pyproject edit and its `git add`)
+- [x] Carry `merge-dependabot` over verbatim
+- [x] Keep `test-frontend` pointing at `react-scripts test` for now; it becomes Vitest in stage 2
 
 ### B3 — Lint, format, hygiene
 
