@@ -24,12 +24,40 @@ computes pointer positions from `getBoundingClientRect` and attaches document-le
 listeners. Shadow-boundary event retargeting could break pointer coordinates, which
 would break every drawing tool.
 
-- [ ] Minimal spike: a v2 component with `isolate_styles=True`, a Fabric 7 canvas inside
+- [x] Minimal spike: a v2 component with `isolate_styles=True`, a Fabric 7 canvas inside
       it, and a freedraw brush
-- [ ] Draw near each corner and near the centre; confirm the stroke lands under the cursor
-- [ ] Confirm with the app scrolled, and with the component inside `st.columns` and
+- [x] Draw near each corner and near the centre; confirm the stroke lands under the cursor
+- [x] Confirm with the app scrolled, and with the component inside `st.columns` and
       `st.expander` (offset parents are where this breaks if it breaks)
-- [ ] Record the result in your report either way
+- [x] Record the result in your report either way
+
+**Result: PASS.** `parentElement` is a real `ShadowRoot` (`instanceof ShadowRoot`
+confirmed at runtime) and Fabric 7's pointer math is unaffected by it. Verified two ways:
+
+1. Synthetic `MouseEvent`s dispatched at known viewport coordinates (mousedown on
+   `canvas.upperCanvasEl`, mousemove/mouseup on `document`, matching Fabric's own listener
+   placement) against four instances — top-level, inside `st.columns`, inside
+   `st.expander`, and scrolled ~2600px down the page. In every case the resulting
+   freedraw `Path`'s raw point coordinates matched the intended canvas-local drag
+   endpoints to within ~1px (sub-pixel brush smoothing noise, not positioning error).
+2. A real OS-level mouse drag (via CDP) near the top-left corner of the top-level canvas,
+   confirmed visually: the stroke lands exactly under the drag path, right at the corner.
+
+Root cause understanding (why this was never at risk): Fabric attaches its `mousedown`
+listener to `upperCanvasEl` itself (which lives inside the shadow root and receives
+events normally), and its `mousemove`/`mouseup` listeners to
+`getDocumentFromElement(upperCanvasEl)` — i.e. `ownerDocument`, the real top-level
+`document`, not something shadow-scoped. Position is computed from
+`upperCanvasEl.getBoundingClientRect()` and `event.clientX/clientY`, neither of which is
+affected by shadow-root retargeting (retargeting only changes `event.target`/
+`composedPath()`, never `clientX/Y` or `getBoundingClientRect()`). `isolate_styles=True`
+stands as decided (F4); no fallback needed.
+
+One incidental finding, not part of R2: a freedraw `Path`'s serialized `left`/`top` in
+Fabric 7 reflect its *center* (origin now defaults to `"center"`, per R4's already-known
+`originX`/`originY` default flip), not its top-left corner as in Fabric 4. This is
+expected R4 work for Phase C/D, not a shadow-DOM bug — the raw `path` point data (used
+for the above verification) was accurate throughout.
 
 > **STOP condition R2.** If pointer coordinates are wrong inside the shadow root and
 > there is no clean fix, **stop and report**. The fallback is `isolate_styles=False`, but
@@ -42,7 +70,7 @@ would break every drawing tool.
 
 Copy from `../streamlit-echarts/streamlit_echarts/frontend/` and adapt.
 
-- [ ] Rewrite `package.json`: `"type": "module"`, scripts
+- [x] Rewrite `package.json`: `"type": "module"`, scripts
       (`build`/`build:frontend:production`/`clean`/`dev`/`format`/`test`/`test:watch`/`typecheck`)
   - dependencies: `@streamlit/component-v2-lib ^0.2.0`, `fabric ^7.4.0`
   - devDependencies: `vite ^8`, `typescript ^5.8`, `vitest ^4`, `@vitest/coverage-v8`,
@@ -50,13 +78,18 @@ Copy from `../streamlit-echarts/streamlit_echarts/frontend/` and adapt.
   - **Remove** `@types/fabric` — Fabric 7 ships its own types
   - **Remove** react, react-dom, react-scripts, apache-arrow, hoist-non-react-statics,
     event-target-shim, lodash and their `@types`
-- [ ] `vite.config.ts` from echarts — library mode, `formats: ["es"]`,
+- [x] `vite.config.ts` from echarts — library mode, `formats: ["es"]`,
       `fileName: "index-[hash]"`, `outDir: "build"`, `base: "./"`
-- [ ] `tsconfig.json` from echarts (`moduleResolution: "bundler"`, `types: ["vite/client"]`)
-- [ ] `vitest.config.ts` from echarts (jsdom environment)
-- [ ] Delete `.env`, `public/`, `src/react-app-env.d.ts`, `src/index.css`
-- [ ] Delete `src/img/*.png` (replaced by inline SVG, F5)
-- [ ] `npm i && npm run typecheck` on an empty-ish `src/` before porting logic
+- [x] `tsconfig.json` from echarts (`moduleResolution: "bundler"`, `types: ["vite/client"]`)
+- [x] `vitest.config.ts` from echarts (jsdom environment)
+- [x] Delete `.env`, `public/`, `src/react-app-env.d.ts`, `src/index.css`
+- [x] Delete `src/img/*.png` (replaced by inline SVG, F5)
+- [x] `npm i && npm run typecheck` on an empty-ish `src/` before porting logic
+
+(Old React/CRA source — `DrawableCanvas.tsx`, `DrawableCanvasState.tsx`, `components/`,
+`lib/`, `index.tsx` — was deleted at this point too, ahead of Phase G's checklist item,
+because it blocked `tsc` from typechecking the new `src/` tree. All of it had already
+been read in full for porting; nothing was lost.)
 
 ### Target `src/` layout
 

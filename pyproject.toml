@@ -62,4 +62,4 @@ namespaces = false
 include-package-data = true
 
 [tool.setuptools.package-data]
-streamlit_drawable_canvas = ["frontend/build/**/*"]
+streamlit_drawable_canvas = ["frontend/build/**/*", "pyproject.toml"]
