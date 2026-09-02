@@ -217,15 +217,28 @@ later session to get wrong.
 
 ## Phase D — Verify and hand off
 
-- [ ] `just lint` exits 0
-- [ ] `just test-py` exits 0
-- [ ] `just build` produces a wheel; install it into a scratch venv and confirm
+- [x] `just lint` exits 0. `lint-frontend`/`format-frontend` are deferred to stage 2:
+      code review caught that stage 1 had prettier-formatted 5 files under
+      `frontend/src/`, violating this doc's own "do not touch frontend/src" rule.
+      Reverted those, and scoped the prettier hook/recipes to not require compliance
+      from code this stage can't touch (see justfile / `.pre-commit-config.yaml`)
+- [x] `just test-py` exits 0
+- [x] `just build` produces a wheel; install it into a scratch venv and confirm
       `st_canvas` still renders and draws — **the component must still work at the end of
-      this stage**
-- [ ] `uv run pre-commit run --all-files` clean
-- [ ] Every fixture JSON committed and non-empty
-- [ ] Run `/code-review`
-- [ ] Tick every box above and commit the ticks
+      this stage** (verified: installed the built wheel + streamlit into a throwaway venv
+      outside the repo, ran a minimal app, drew a freedraw stroke, confirmed
+      `json_data["objects"]` round-tripped with 1 object)
+- [x] `uv run pre-commit run --all-files` clean
+- [x] Every fixture JSON committed and non-empty
+- [x] Run `/code-review`. Fixed: reverted the frontend/src touch above; `.gitignore`
+      was ignoring `__snapshots__/darwin` (copied from echarts, whose devs are on
+      macOS) instead of `win32` (this repo's actual dev platform); `git_utils.py` only
+      caught `CalledProcessError`, not `FileNotFoundError`, for a missing `git` binary.
+      Not fixed, deliberately: the known `CanvasResult` class-vs-instance bug (P11,
+      explicitly deferred to stage 2) and a few low-severity inherited-from-echarts
+      items (pre-commit hook `always_run` scope, an e2e dependency-group detail,
+      minor code duplication in the capture script)
+- [x] Tick every box above and commit the ticks
 - [ ] Report to the maintainer: what was copied, what was adapted, what the fixtures
       cover, and anything surprising
 

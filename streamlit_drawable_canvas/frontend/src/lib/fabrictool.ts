@@ -1,10 +1,10 @@
 import { fabric } from "fabric"
 
 export interface ConfigureCanvasProps {
-  fillColor: string
-  strokeWidth: number
-  strokeColor: string
-  displayRadius: number
+    fillColor: string
+    strokeWidth: number
+    strokeColor: string
+    displayRadius: number
 }
 
 /**

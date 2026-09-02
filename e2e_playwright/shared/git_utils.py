@@ -14,5 +14,5 @@ def get_git_root() -> Path:
             .strip()
             .decode("utf-8")
         )
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         raise RuntimeError("Not a git repository or git is not installed.")

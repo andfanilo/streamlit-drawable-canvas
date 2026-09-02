@@ -5,9 +5,8 @@ gets its own fixed-size canvas and a st.code(json.dumps(...)) readback so the
 capture script can scrape the exact component_value it received, without
 needing any other channel back to Python.
 
-Not a general-purpose demo app -- see docs/plans/v2-migration/01-infra.md
-Phase C and e2e_playwright/fixtures/fabric-v4/README.md for what this exists
-to produce and why it won't run past stage 1.
+Not a general-purpose demo app -- see fabric-v4/README.md for what this
+produces and why.
 """
 
 import json

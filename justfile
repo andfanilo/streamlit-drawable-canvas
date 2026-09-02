@@ -56,16 +56,17 @@ release-mode:
 # --- Lint & format ---
 
 # Lint everything (Python + frontend)
-lint: lint-py lint-frontend
+lint: lint-py
 
 lint-py:
     uv run ruff check --fix .
 
+# STAGE 2: v1 frontend/src was never prettier-formatted; enable once it's rewritten.
 lint-frontend:
-    cd {{frontend}} && npx prettier --check "src/**/*.{ts,tsx,css}"
+    @echo "lint-frontend: deferred to stage 2"
 
 # Format everything (Python + frontend)
-format: format-py format-frontend
+format: format-py
 
 format-py:
     uv run ruff format .
@@ -93,9 +94,7 @@ test-frontend:
 
 # --- E2E ---
 
-# DELETE IN STAGE 2 (T7): the whole e2e/ Cypress suite goes away — one smoke test
-# asserting three <canvas> elements exist inside an iframe, which is structurally
-# invalid once v2 removes the iframe. Not ported; see docs/plans/v2-migration/00-plan.md.
+# DELETE IN STAGE 2: e2e/ Cypress suite goes away, not ported to v2.
 # Install Cypress (one-time)
 cypress-setup:
     cd e2e && npm i

@@ -123,10 +123,10 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
    */
   useEffect(() => {
     if (backgroundImageURL) {
-      var bgImage = new Image()
-      bgImage.onload = function () {
-        backgroundCanvas.getContext().drawImage(bgImage, 0, 0)
-      }
+      var bgImage = new Image();
+      bgImage.onload = function() {
+        backgroundCanvas.getContext().drawImage(bgImage, 0, 0);
+      };
       const baseUrl = getStreamlitBaseUrl() ?? ""
       bgImage.src = baseUrl + backgroundImageURL
     }
@@ -160,7 +160,7 @@ const DrawableCanvas = ({ args }: ComponentProps) => {
       fillColor: fillColor,
       strokeWidth: strokeWidth,
       strokeColor: strokeColor,
-      displayRadius: displayRadius,
+      displayRadius: displayRadius
     })
 
     canvas.on("mouse:up", (e: any) => {
