@@ -131,11 +131,17 @@ the point of T1 is that the two repos look the same.
 
 ### B6 — Agent and contributor docs
 
-- [ ] `AGENTS.md` adapted from echarts' — describe the **current** (v1) architecture
+- [x] `AGENTS.md` adapted from echarts' — describe the **current** (v1) architecture
       honestly, with a prominent pointer to `docs/plans/v2-migration/`
-- [ ] `CLAUDE.md` and `GEMINI.md` as one-line pointers to `AGENTS.md` (echarts' pattern)
-- [ ] `CONTRIBUTING.md` from echarts, adapted
-- [ ] `.claude/` directory (agents, commands, skills) copied from echarts
+- [x] `CLAUDE.md` and `GEMINI.md` as one-line pointers to `AGENTS.md` (echarts' pattern)
+- [x] `CONTRIBUTING.md` from echarts, adapted
+- [x] `.claude/` directory (agents, commands, skills) copied from echarts — the
+      `agents/` and `commands/` content is adapted to this repo's real structure
+      (v1/React/Fabric4, Jest not Vitest, Cypress+Playwright coexisting); `skills/` is
+      repo-agnostic and copied verbatim. Did **not** copy `.claude/hooks/`,
+      `.claude/settings.json`/`.local.json`, or `.gemini/` — the B6 checklist item only
+      names agents/commands/skills, and the Stop-hook + permission allowlist in
+      echarts' settings are project-specific choices not asked for here
 
 ---
 
