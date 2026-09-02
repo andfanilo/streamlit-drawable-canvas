@@ -596,8 +596,8 @@ The reason stage 1 existed.
       tick each sub-item as done — all green: `just lint` (ruff + tsc + prettier),
       `just test` (5 pytest + 27 vitest), `just build`, `just e2e` (23/23 Playwright)
 - [x] Tick every box and commit
-- [ ] Report: R2 and R3 outcomes explicitly, plus any Fabric 7 behaviour that differs
-      (including the debounce-removal note above)
+- [x] Report: R2 and R3 outcomes explicitly, plus any Fabric 7 behaviour that differs
+      (including the debounce-removal note above) — delivered to maintainer in chat
 
 **Do not push, do not open a PR, do not bump the version.** Wait for maintainer sign-off
 **and the Opus review pass**.
