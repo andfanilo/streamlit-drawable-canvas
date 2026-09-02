@@ -387,20 +387,43 @@ pixels.
 
 The reason stage 1 existed.
 
-- [ ] For each `e2e_playwright/fixtures/fabric-v4/*.json`: pass it as `initial_drawing`,
+- [x] For each `e2e_playwright/fixtures/fabric-v4/*.json`: pass it as `initial_drawing`,
       confirm it loads without error and renders
-- [ ] Assert the loaded object model matches the fixture's — same object count, same
+- [x] Assert the loaded object model matches the fixture's — same object count, same
       types, same geometry
-- [ ] Human review step: compare each Fabric 7 render against its `*.v4-reference.png`
+- [x] Human review step: compare each Fabric 7 render against its `*.v4-reference.png`
       **by eye, once**. If they match, commit the Fabric 7 render as the snapshot baseline
-- [ ] **Never pixel-compare v7 output against a v4 reference in an automated test** —
+- [x] **Never pixel-compare v7 output against a v4 reference in an automated test** —
       cross-major rasterization differences will produce false failures. The v4 PNGs are
       human review references only
 
-> **STOP condition R3.** If a fixture fails to load, or renders visibly differently, stop
-> and report which fixture and how. The choice between a version-sniffing migration shim
-> and declaring the format breaking was explicitly deferred to the maintainer. The
-> `transform` fixture (rotation + scaling + origin semantics) is the likeliest to fail.
+> **STOP condition R3 — TRIGGERED. Resolved by maintainer.**
+>
+> All 8 fixtures load without a JS exception or console error. Visual comparison against
+> `*.v4-reference.png` (live, in a running app, via `initial_drawing`):
+>
+> | Fixture | Result |
+> |---|---|
+> | `line`, `rect`, `polygon`, `freedraw`, `transform` | **Match.** Pixel-plausible match to reference; `transform` (flagged as likeliest to fail, origin semantics) matches exactly — our explicit `originX`/`originY` insulation held. |
+> | `circle`, `point` | **FAIL.** Renders as a ~1.7%-of-circle sliver instead of the full shape. |
+> | `kitchen-sink` | **Partial FAIL** — its `rect`/`line`/freedraw-`path` objects match; its two `circle`-type objects (one `circle`-mode, one `point`-mode) show the same sliver failure. |
+>
+> **Root cause (confirmed against Fabric 7's own source, not inferred):** Fabric 4 wrote
+> `Circle.startAngle`/`endAngle` in **radians** (`endAngle: 6.283185307179586` = 2π = "full
+> circle" in v4's own terms). Fabric 7 redefined these same JSON keys as **degrees**
+> (`Circle.d.ts`: *"Angle for the end of the circle, in degrees... @default 360"*).
+> `loadFromJSON` doesn't consult the `version` field (as the plan already warned), so it
+> takes `6.283185307179586` literally as **6.28 degrees**, drawing a razor-thin arc
+> instead of the full disc. `left`/`top`/`width`/`height`/`radius` are unaffected — this is
+> narrowly a `startAngle`/`endAngle` unit reinterpretation, nothing else.
+>
+> **Maintainer's decision (asked live, mid-stage): declare it breaking, no migration
+> shim.** Circle and Point objects (the two drawing modes that produce a Fabric `Circle`)
+> persisted by streamlit-drawable-canvas <0.10.0 will render incorrectly — a thin sliver,
+> not the original shape — if fed back in via `initial_drawing` on 0.10.0+. Line, Rect,
+> freedraw (Path), Polygon (Path), and Transform are unaffected; only Circle-type objects
+> carry `startAngle`/`endAngle`. This must be called out prominently in the 0.10.0
+> `CHANGELOG.md` entry in stage 3 (not yet written — stage 3's job).
 
 ---
 
