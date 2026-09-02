@@ -239,8 +239,64 @@ later session to get wrong.
       items (pre-commit hook `always_run` scope, an e2e dependency-group detail,
       minor code duplication in the capture script)
 - [x] Tick every box above and commit the ticks
-- [ ] Report to the maintainer: what was copied, what was adapted, what the fixtures
+- [x] Report to the maintainer: what was copied, what was adapted, what the fixtures
       cover, and anything surprising
+
+      **Copied from `../streamlit-echarts` near-verbatim:** `pyproject.toml` shape
+      (`[tool.setuptools.packages.find]`/`package-data`, `[dependency-groups]`
+      `dev`/`e2e`, the `testpypi` index), `justfile` structure, `.pre-commit-config.yaml`,
+      `.gitattributes`, the `.gitignore` additions, `tests/conftest.py` pattern,
+      `.github/workflows/enforce-pre-commit.yml` and `python-tests.yml`,
+      `CONTRIBUTING.md`, and `.claude/{agents,commands,skills}`.
+
+      **Adapted, not copied:** kept the v1-only justfile recipes
+      (`dev-mode`/`release-mode`/`:3001 dev`/`--legacy-peer-deps`) alive and marked
+      `# DELETE IN STAGE 2`; deliberately did **not** export
+      `NODE_OPTIONS=--openssl-legacy-provider` (Node 16 — the version this justfile
+      already claimed CI pins, and the version Phase A proved actually builds
+      `react-scripts@4` — rejects that flag outright; only Node 17+ needs it); guarded
+      `just bump`'s inner-`pyproject.toml` edit since that file doesn't exist until
+      stage 2; deps left exactly as `["Pillow", "numpy", "streamlit >= 0.63"]` rather
+      than restructured into an `[image]` extra (that's stage 2 decision P2/P3); no
+      `ts-tests.yml`/`playwright.yml` yet, since there's no Vitest/v2 frontend to test.
+
+      **Fixtures:** 8 Fabric 4.4.0 canvas JSONs under
+      `e2e_playwright/fixtures/fabric-v4/` — one per drawing mode
+      (freedraw/line/rect/circle/point/polygon/transform) plus a `kitchen-sink`
+      combining every shape type with a background colour. Each has a matching
+      `*.v4-reference.png` for one-time human comparison against Fabric 7's render in
+      stage 2 — **not** an automated pixel-diff target (cross-major antialiasing
+      differences would make that flaky). Captured with Node 16.20.2 against fixed,
+      documented coordinates; `transform` specifically exercises `angle`
+      (≈25.24°) and non-uniform `scaleX`/`scaleY` (1.42) to stress the
+      `originX`/`originY` default Fabric 7 changes. Provenance and the
+      JSON-vs-PNG distinction are written up in the fixtures' own `README.md`.
+
+      **Surprises:**
+      1. My own stage-1 pass briefly prettier-formatted 5 files under
+         `frontend/src/` — against this doc's explicit "do not touch frontend/src"
+         rule. `/code-review` caught it; reverted, and rescoped the prettier
+         hook/recipes so stage 1 isn't required to keep code it can't touch compliant.
+      2. Echarts' `.gitignore` ignores `__snapshots__/darwin` — echarts' devs are on
+         macOS, this repo is developed on Windows, so the real path is `win32`. Copied
+         blindly, would have silently failed to ignore anything. Fixed.
+      3. `git_utils.py` (from echarts) only caught `CalledProcessError` around the `git`
+         subprocess call, not `FileNotFoundError` — so a machine with no `git` binary at
+         all would raise an unhandled exception instead of the intended fallback. Fixed.
+      4. The capture script's first `transform` fixture attempt produced an empty
+         `objects: []`: `page.mouse.*` doesn't auto-scroll a below-the-fold canvas into
+         view the way Playwright's `Locator.click()` does. Fixed by scrolling each
+         canvas into view before raw-mouse interaction — worth remembering for any
+         future Playwright work in this repo that uses raw mouse events instead of
+         locator clicks.
+
+      Deliberately **not** fixed in this stage: the known `CanvasResult`
+      class-vs-instance bug on the `component_value is None` branch (P11, explicitly
+      deferred to stage 2 — stage 2 replaces this whole class), and a few low-severity
+      items inherited from echarts (pre-commit hook `always_run` scope, an e2e
+      dependency-group detail, minor duplication in the capture script) that weren't
+      worth touching on top of an already-working v1 component this stage isn't
+      supposed to change the behaviour of.
 
 **Do not push, do not open a PR, do not begin stage 2.** Wait for sign-off.
 
