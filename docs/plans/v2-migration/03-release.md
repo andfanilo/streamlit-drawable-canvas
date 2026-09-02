@@ -14,19 +14,24 @@ Make 0.10.0 explicable to the people it breaks, give the repo a demo app matchin
 
 ## Phase A — Demo app
 
-- [ ] Write `demo_app.py` at the repo root — what `just demo` runs (T8)
-- [ ] Exercise every `drawing_mode`: freedraw, transform, line, rect, circle, point, polygon
+**Partly done in stage 2** — the mode/param coverage was pulled forward so the stage-2
+surface could be verified by hand before sign-off (commit `9697da9`). What remains is
+the `background_image` / `initial_drawing` / form coverage and the `just demo` recipe.
+
+- [ ] `demo_app.py` exists at the repo root, but there is no `just demo` recipe yet (T8) —
+      the justfile only defines a `demo_app` variable
+- [x] Exercise every `drawing_mode`: freedraw, transform, line, rect, circle, point, polygon
 - [ ] Exercise the changed surface specifically:
-  - `background_image` with each accepted input type (URL, path, bytes, PIL) — this is
-    the parameter that was broken, so it should be the most visible thing in the demo
-  - `return_image_data=True` alongside the default, so the difference is legible
-  - `update_streamlit=False` plus force-send
-  - `initial_drawing` round-trip
-  - `display_toolbar=False`
-  - a canvas inside `st.form`
+  - [ ] `background_image` with each accepted input type (URL, path, bytes, PIL) — this is
+        the parameter that was broken, so it should be the most visible thing in the demo
+  - [x] `return_image_data=True` alongside the default, so the difference is legible
+  - [x] `update_streamlit=False` plus force-send
+  - [ ] `initial_drawing` round-trip
+  - [x] `display_toolbar=False`
+  - [ ] a canvas inside `st.form`
 - [ ] Verify the toolbar renders correctly in **both** light and dark themes — F5 gave it
       dark-mode support for the first time and this is where you confirm it
-- [ ] Keep it readable. `../streamlit-echarts/demo_app.py` is 36 KB; this does not need to be
+- [x] Keep it readable. `../streamlit-echarts/demo_app.py` is 36 KB; this does not need to be
 
 ---
 

@@ -688,6 +688,29 @@ re-execution of the user's script — which is what this coalesces.
 - [x] `just lint && just test && just build && just e2e` all green
       (5 pytest + 38 vitest, 23/23 Playwright)
 
+### Manual verification
+
+Automated gates never touch `demo_app.py`, and the app was hardcoded to freedraw, so most
+of the surface had never been exercised by hand. Mode/param coverage was pulled forward
+from stage 3 Phase A (`9697da9`) and the maintainer ran it.
+
+- [x] Every `drawing_mode` draws under Fabric 7
+- [x] Polygon right-click closes and sends immediately; double-click removes the last
+      points without closing — the corrected semantics, and the debounce-cancellation path
+      that had only unit coverage
+- [x] Switching mode mid-drawing preserves the drawing (T2 diffing)
+- [x] `update_streamlit=False` holds until a right-click or toolbar force-send
+- [x] `return_image_data=False` hides the image without raising
+- [x] Toolbar undo/redo/reset
+- [x] **200ms confirmed as the right interval** by the maintainer — no perceptible lag
+
+One regression caught this way: `demo_app.py` raised `StreamlitDataframeConversionError`
+on the second stroke. Fixed in `fd14832`. It was introduced by the review pass's finding 7
+— the finding (undeclared pandas import) was correct and verified, but removing the import
+also removed an `astype("str")` loop that was a load-bearing Arrow workaround, labelled as
+such in the README two lines away. **Verifying a finding is not the same as checking what
+a fix deletes alongside it.**
+
 **Do not push, do not open a PR, do not bump the version.** Wait for maintainer sign-off.
 
 ---
