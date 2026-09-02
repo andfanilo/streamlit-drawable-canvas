@@ -357,11 +357,21 @@ recur; `CanvasResult(...)` is always constructed as a real instance.
 
 ### F1 — Vitest (pure logic only, T2)
 
-- [ ] `history.test.ts` — save/undo/redo/reset/canUndo/canRedo, boundary conditions
-- [ ] Data-diffing helpers
-- [ ] Data-URI / hashing helpers if any live frontend-side
-- [ ] **Do not** attempt to instantiate a Fabric canvas in Vitest. jsdom's `<canvas>` has
-      no 2D context and adding `node-canvas` is on the do-not list
+- [x] `history.test.ts` — save/undo/redo/reset/canUndo/canRedo, boundary conditions.
+      27 cases, including `isEmptyValue`/`deepEqual` directly, the empty-current
+      re-baseline behaviour, and the `HISTORY_MAX_COUNT` (100) eviction edge case
+      where `undo()` reports a reload and duplicates onto redo without actually
+      changing `current` (the quirk the module's own docstring calls out)
+- [x] Data-diffing helpers — `toolKeyFor` (`instance.ts`) was the only such helper;
+      exported it (was module-private) and added `instance.test.ts` asserting it
+      changes only on tool-affecting fields and ignores the rest
+- [x] Data-URI / hashing helpers if any live frontend-side — none do; that logic is
+      entirely server-side (`_encode_bytes_to_data_url` et al. in `__init__.py`), so
+      nothing to test here
+- [x] **Do not** attempt to instantiate a Fabric canvas in Vitest. jsdom's `<canvas>` has
+      no 2D context and adding `node-canvas` is on the do-not list — confirmed:
+      `background.ts`'s `applyBackgroundImage` and the rest of `instance.ts` touch
+      Fabric/DOM directly and were left untested here; that's Playwright's job (F2)
 
 ### F2 — Playwright (T3)
 

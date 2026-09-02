@@ -106,7 +106,8 @@ const reconfigureTool = (
   });
 };
 
-const toolKeyFor = (data: DrawableCanvasData): string =>
+/** Pure diffing key: changes iff a tool-affecting param changes (T2). */
+export const toolKeyFor = (data: DrawableCanvasData): string =>
   JSON.stringify([
     data.drawingMode,
     data.fillColor,
