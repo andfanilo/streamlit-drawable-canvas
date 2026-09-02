@@ -21,4 +21,10 @@ canvas_result = st_canvas(
 if canvas_result.image_data is not None:
     st.image(canvas_result.image_data)
 if canvas_result.json_data is not None:
-    st.dataframe(canvas_result.json_data["objects"])
+    # Every value stringified: `path` is a nested mixed-type list Arrow can't type.
+    st.dataframe(
+        [
+            {k: str(v) for k, v in obj.items()}
+            for obj in canvas_result.json_data["objects"]
+        ]
+    )
