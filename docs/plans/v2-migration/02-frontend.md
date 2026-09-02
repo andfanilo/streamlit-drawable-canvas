@@ -711,7 +711,15 @@ also removed an `astype("str")` loop that was a load-bearing Arrow workaround, l
 such in the README two lines away. **Verifying a finding is not the same as checking what
 a fix deletes alongside it.**
 
-**Do not push, do not open a PR, do not bump the version.** Wait for maintainer sign-off.
+### Sign-off
+
+**Stage 2 signed off by the maintainer on 2026-09-03.** Both gate conditions from
+`00-plan.md` §"Stages" are met: maintainer sign-off, and the Opus review pass recorded
+above. Stage 3 (`03-release.md`) may begin.
+
+Still true, and carried into stage 3: **do not push, do not open a PR, do not bump the
+version** without explicit approval. Stage 3's own gate is a further sign-off, and
+nothing is published without a separate instruction.
 
 ---
 
