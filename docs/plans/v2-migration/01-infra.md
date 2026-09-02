@@ -114,10 +114,12 @@ the point of T1 is that the two repos look the same.
 
 ### B4 — Python test scaffolding
 
-- [ ] Create `tests/` with `conftest.py` and a minimal `test_init.py` (import the package,
+- [x] Create `tests/` with `conftest.py` and a minimal `test_init.py` (import the package,
       assert `st_canvas` is callable, assert `CanvasResult` fields). Model on
-      `../streamlit-echarts/tests/`
-- [ ] `just test-py` passes
+      `../streamlit-echarts/tests/`. No mocking needed here (unlike echarts' conftest):
+      v1's `declare_component(path=...)` doesn't validate the path exists at import
+      time, so the package imports cleanly with no built frontend present
+- [x] `just test-py` passes
 
 ### B5 — CI workflows
 
