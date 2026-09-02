@@ -47,7 +47,7 @@ the point of T1 is that the two repos look the same.
 
 ### B1 — Packaging
 
-- [ ] Write `pyproject.toml` (from `../streamlit-echarts/pyproject.toml`)
+- [x] Write `pyproject.toml` (from `../streamlit-echarts/pyproject.toml`)
   - `name = "streamlit-drawable-canvas"`, `version = "0.9.3"` — **do not bump yet**,
     the bump to `0.10.0` happens in stage 3
   - `requires-python = ">=3.10"`
@@ -60,11 +60,11 @@ the point of T1 is that the two repos look the same.
     Add `"pyproject.toml"` to that list in **stage 2**, when the inner v2 manifest exists
   - Carry over the `[[tool.uv.index]] testpypi` block
   - `[dependency-groups]` `dev` and `e2e`, as echarts has them
-- [ ] Delete `setup.py`
-- [ ] Update `MANIFEST.in` (keep `recursive-include .../frontend/build *`, add `include pyproject.toml`)
-- [ ] `uv lock` → commit `uv.lock`
-- [ ] Delete the committed/untracked `streamlit_drawable_canvas.egg-info/`
-- [ ] Verify: `uv build` produces a wheel containing `frontend/build/`
+- [x] Delete `setup.py`
+- [x] Update `MANIFEST.in` (keep `recursive-include .../frontend/build *`, add `include pyproject.toml`)
+- [x] `uv lock` → commit `uv.lock`
+- [x] Delete the committed/untracked `streamlit_drawable_canvas.egg-info/` (was already gitignored, untracked-only)
+- [x] Verify: `uv build` produces a wheel containing `frontend/build/`
 
 ### B2 — Task runner
 
