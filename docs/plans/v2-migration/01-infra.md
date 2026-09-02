@@ -22,10 +22,12 @@ about the component's *behaviour* changes here. If you find yourself editing
 This is risk **R1**. Everything downstream depends on it. Do not start Phase B until
 this passes.
 
-- [ ] `npm ci --legacy-peer-deps` succeeds in `streamlit_drawable_canvas/frontend`
-- [ ] `NODE_OPTIONS=--openssl-legacy-provider npm run build` produces `frontend/build/`
-- [ ] `streamlit run e2e/app_to_test.py` renders a canvas you can draw on
-- [ ] Record the Node version used, in the fixtures README (Phase C)
+- [x] `npm ci --legacy-peer-deps` succeeds in `streamlit_drawable_canvas/frontend`
+- [x] `NODE_OPTIONS=--openssl-legacy-provider npm run build` produces `frontend/build/`
+      (Node 16.20.2 ships OpenSSL 1.1.1 and rejects this flag outright — built with
+      plain `npm run build`, no `NODE_OPTIONS` needed. Node 17+ is what requires the flag.)
+- [x] `streamlit run e2e/app_to_test.py` renders a canvas you can draw on
+- [x] Record the Node version used, in the fixtures README (Phase C) — Node 16.20.2
 
 > **STOP condition R1.** If the build fails — Node too new, `react-scripts@4`
 > incompatible, dependency resolution broken — **stop and report**, with the exact error.
