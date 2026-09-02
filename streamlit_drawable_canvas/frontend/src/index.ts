@@ -1,29 +1,55 @@
-// R2 SPIKE — temporary minimal probe for Fabric 7 pointer behaviour inside a
-// shadow root (isolate_styles=True). Replaced by the real renderer once the
-// spike is verified.
-import { Canvas, PencilBrush } from "fabric";
 import type { FrontendRenderer } from "@streamlit/component-v2-lib";
 
-const SpikeRenderer: FrontendRenderer = (args) => {
-  const { parentElement } = args;
-  const canvasEl = (parentElement as ShadowRoot | HTMLElement).querySelector(
-    "canvas"
-  ) as HTMLCanvasElement;
+import "./styles.css";
+import {
+  applyData,
+  createInstance,
+  disposeInstance,
+  DrawableCanvasData,
+  DrawableCanvasState,
+} from "./instance";
 
-  const canvas = new Canvas(canvasEl, { enableRetinaScaling: false });
-  canvas.freeDrawingBrush = new PencilBrush(canvas);
-  canvas.freeDrawingBrush.width = 5;
-  canvas.freeDrawingBrush.color = "#ff0000";
-  canvas.isDrawingMode = true;
+// Module-scoped instance registry (F3). The renderer is re-invoked on every
+// data change without its previous cleanup running first, so state that must
+// survive reruns -- the Fabric canvas, undo/redo history, the active tool --
+// lives here, keyed by the stable `parentElement`, not in local variables.
+const instances = new WeakMap<
+  HTMLElement | ShadowRoot,
+  ReturnType<typeof createInstance>
+>();
 
-  // Expose for the spike test harness to read back object geometry.
-  const w = window as unknown as { __spikeCanvases: unknown[] };
-  w.__spikeCanvases ??= [];
-  w.__spikeCanvases.push({ host: parentElement, canvas, canvasEl });
+const DrawableCanvasRenderer: FrontendRenderer<
+  DrawableCanvasState,
+  DrawableCanvasData
+> = (args) => {
+  const { data, parentElement, setStateValue } = args;
+
+  // Never cache the mount point across invocations -- re-query every time.
+  const mountPoint = parentElement.querySelector<HTMLElement>(".canvas-root");
+  if (!mountPoint) {
+    throw new Error("Unexpected: .canvas-root element not found");
+  }
+
+  let instance = instances.get(parentElement);
+  if (!instance) {
+    instance = createInstance(mountPoint);
+    instances.set(parentElement, instance);
+  } else if (!mountPoint.contains(instance.container)) {
+    // Defensive: our static html/css never change, so this shouldn't
+    // happen, but re-attach rather than silently drawing into a detached
+    // canvas if it ever does.
+    mountPoint.appendChild(instance.container);
+  }
+
+  applyData(instance, data, setStateValue);
 
   return () => {
-    canvas.dispose();
+    const current = instances.get(parentElement);
+    if (current) {
+      disposeInstance(current);
+      instances.delete(parentElement);
+    }
   };
 };
 
-export default SpikeRenderer;
+export default DrawableCanvasRenderer;
