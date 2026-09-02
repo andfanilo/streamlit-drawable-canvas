@@ -584,8 +584,7 @@ The reason stage 1 existed.
         cap it — swap to an `OrderedDict` with a small `maxsize` (e.g. 32),
         `move_to_end` on hit, `popitem(last=False)` when over budget.
 
-  **Deliberately not fixing now — documented as known behavioural differences
-  from v1 instead (final report, not a fix-it item):**
+  **Deferred pending a design call, then resolved — see "Send debounce" below:**
   - No debounce on `setComponentValue`/`sendToStreamlit`. v1's `UpdateStreamlit.tsx`
     debounced by 200ms; the v2 rewrite sends immediately on every qualifying
     `mouse:up`. A burst of quick shapes now triggers one Streamlit rerun per shape
@@ -648,6 +647,46 @@ breaking, not shimmed.
 
 - [x] `just lint && just test && just build && just e2e` all green after the fixes
       (5 pytest + 27 vitest, 23/23 Playwright)
+
+### Send debounce
+
+Reinstated, closing the one item Phase G deferred for a design call.
+
+**Interval: 200ms, trailing-only — v1 parity** (maintainer decision). Leading+trailing
+was the alternative: better feel on an isolated stroke, but two reruns per burst and a
+deviation from v1. 200ms is imperceptible against a Streamlit rerun round-trip.
+
+**Not a library.** `lodash.debounce` is ~4KB into a bundle that ships inside the wheel,
+plus a runtime dep, for ~15 lines. v1 didn't use it either — it hand-rolled `useDebounce`
+and pulled lodash in only for `isEqual`, which v2 already replaced with a JSON-string key.
+
+**v1's stated rationale was wrong and does not carry over.** `UpdateStreamlit.tsx` claimed
+it debounced because lines and circles "continuously render while drawing"; `saveState`
+only ever fired on `mouse:up`/`mouse:dblclick`, same as v2. What actually made it
+necessary was that v1 did `loadFromJSON` into a hidden second canvas plus `toDataURL()`
+on *every* send. v2 has no shadow canvas and the PNG encode is behind `return_image_data`,
+off by default. The surviving cost is one Streamlit rerun per `mouse:up` — a full
+re-execution of the user's script — which is what this coalesces.
+
+- [x] `debounce.ts`: trailing `debounce` + `createSender` (`schedule`/`now`/`cancel`).
+      Pure, no Fabric or DOM, so Vitest drives it directly (T2)
+- [x] Only the realtime path debounces. Right-click force-send, toolbar send, undo, redo
+      and reset all go through `sender.now()`, which **cancels the pending send first** —
+      otherwise a snapshot scheduled before a polygon right-click-close lands 200ms on top
+      of it and Python's last value is the stale drawing. Same ordering-bug class as the
+      `mouse:up` finding above
+- [x] `applyData` cancels on `initialDrawing` change, so a pre-load snapshot can't clobber
+      the drawing Python just pushed; `disposeInstance` cancels, so no timer fires
+      `toObject()` against a disposed canvas after a `key=` remount
+- [x] Payload is built at delivery time, so the PNG encode is skipped entirely for
+      snapshots a later one coalesced away
+- [x] `mouse:up` no longer branches on "did the realtime send already happen" — right-click
+      simply always sends immediately, and the cancel makes the count identical
+- [x] 11 unit tests, including the cancel-on-immediate ordering and the dispose contract.
+      The instance.ts wiring itself is covered by e2e and inspection, not a unit test —
+      instantiating a Fabric `Canvas` under jsdom isn't worth it
+- [x] `just lint && just test && just build && just e2e` all green
+      (5 pytest + 38 vitest, 23/23 Playwright)
 
 **Do not push, do not open a PR, do not bump the version.** Wait for maintainer sign-off.
 

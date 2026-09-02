@@ -5,11 +5,15 @@ import type {
 } from "@streamlit/component-v2-lib";
 
 import { applyBackgroundImage, rescaleBackgroundImage } from "./background";
+import { createSender, Sender } from "./debounce";
 import { HistoryStore } from "./history";
 import { buildToolbar, setToolbarState, ToolbarHandles } from "./toolbar";
 import { tools } from "./tools";
 
 const TOOLBAR_HEIGHT = 32;
+
+// Matches v1's UpdateStreamlit.tsx.
+const SEND_DEBOUNCE_MS = 200;
 
 export interface DrawableCanvasData {
   fillColor: string;
@@ -50,6 +54,7 @@ export interface CanvasInstance {
   toolbarEl: HTMLDivElement;
   toolbarHandles: ToolbarHandles;
   history: HistoryStore<Record<string, unknown>>;
+  sender: Sender<Record<string, unknown>>;
   activeToolCleanup: (() => void) | null;
   lastToolKey: string | null;
   lastInitialDrawingKey: string | null;
@@ -66,19 +71,22 @@ export interface CanvasInstance {
   };
 }
 
-/** Saves canvas state to history, sending it if it changed. Returns whether
- *  it sent, so a caller that force-sends on top can avoid sending twice. */
-const saveAndMaybeSend = (instance: CanvasInstance): boolean => {
+/** Saves canvas state to history, scheduling a debounced realtime send if it
+ *  changed. Returns the snapshot it saved. */
+const saveAndMaybeSend = (
+  instance: CanvasInstance
+): Record<string, unknown> => {
   const state = instance.canvas.toObject();
   const changed = instance.history.save(state);
-  const shouldSend = changed && instance.latest.realtimeUpdateStreamlit;
-  if (shouldSend) {
-    sendToStreamlit(instance, state);
+  if (changed && instance.latest.realtimeUpdateStreamlit) {
+    instance.sender.schedule(state);
   }
-  return shouldSend;
+  return state;
 };
 
-const sendToStreamlit = (
+/** Builds and delivers the payload. Runs at delivery time, so the PNG encode
+ *  is skipped for snapshots a later one coalesced away. */
+const emit = (
   instance: CanvasInstance,
   state: Record<string, unknown>
 ): void => {
@@ -86,6 +94,14 @@ const sendToStreamlit = (
     ? instance.canvas.toDataURL({ format: "png", multiplier: 1 })
     : null;
   instance.latest.setStateValue("drawing", { raw: state, data });
+};
+
+/** Sends immediately, dropping any scheduled send. */
+const sendToStreamlit = (
+  instance: CanvasInstance,
+  state: Record<string, unknown>
+): void => {
+  instance.sender.now(state);
 };
 
 /** Reloads the canvas from `history.current`. Returns false if a newer load
@@ -163,6 +179,7 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
     toolbarEl,
     toolbarHandles: null as unknown as ToolbarHandles,
     history: new HistoryStore(),
+    sender: null as unknown as Sender<Record<string, unknown>>,
     activeToolCleanup: null,
     lastToolKey: null,
     lastInitialDrawingKey: null,
@@ -178,6 +195,11 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
       data: null,
     },
   };
+
+  instance.sender = createSender(
+    (state: Record<string, unknown>) => emit(instance, state),
+    SEND_DEBOUNCE_MS
+  );
 
   instance.toolbarHandles = buildToolbar(toolbarEl, {
     onSend: () => {
@@ -234,9 +256,9 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
     const domEvent = opt.e as MouseEvent;
     const isRightClick = domEvent != null && domEvent.button === 2;
     queueMicrotask(() => {
-      const sent = saveAndMaybeSend(instance);
-      if (isRightClick && !sent) {
-        sendToStreamlit(instance, canvas.toObject());
+      const state = saveAndMaybeSend(instance);
+      if (isRightClick) {
+        sendToStreamlit(instance, state);
       }
       setToolbarState(
         instance.toolbarHandles,
@@ -324,6 +346,9 @@ export const applyData = (
 
   if (initialDrawingChanged) {
     instance.lastInitialDrawingKey = initialDrawingKey;
+    // A pre-load snapshot must not land on top of the drawing Python just
+    // pushed.
+    instance.sender.cancel();
     const generation = ++instance.loadGeneration;
     void instance.canvas.loadFromJSON(data.initialDrawing).then(() => {
       if (generation !== instance.loadGeneration) {
@@ -358,6 +383,7 @@ export const applyData = (
 };
 
 export const disposeInstance = (instance: CanvasInstance): void => {
+  instance.sender.cancel();
   instance.activeToolCleanup?.();
   instance.canvas.dispose();
   instance.backgroundCanvas.dispose();
