@@ -5,8 +5,8 @@ import { FabricImage, StaticCanvas } from "fabric";
  * the last-applied URL so an unrelated rerun doesn't reload the image.
  *
  * The frontend receives a plain URL string -- either an ordinary http(s) URL
- * or a data: URI -- and doesn't care which. Python has already resized the
- * source image to canvas dimensions, so no scaling is applied here.
+ * or a data: URI -- and doesn't care which. The image is scaled to fill the
+ * canvas dimensions, matching the documented `background_image` behaviour.
  *
  * Uses Fabric's own `backgroundImage` + `renderAll()`, not raw
  * `ctx.drawImage`: `StaticCanvas` owns and re-renders this canvas element
@@ -30,7 +30,16 @@ export const applyBackgroundImage = async (
     // A newer background_image arrived while this one was loading.
     return;
   }
-  img.set({ left: 0, top: 0, originX: "left", originY: "top" });
+  const canvasWidth = backgroundCanvas.width ?? img.width;
+  const canvasHeight = backgroundCanvas.height ?? img.height;
+  img.set({
+    left: 0,
+    top: 0,
+    originX: "left",
+    originY: "top",
+    scaleX: canvasWidth / img.width,
+    scaleY: canvasHeight / img.height,
+  });
   backgroundCanvas.backgroundImage = img;
   backgroundCanvas.renderAll();
 };

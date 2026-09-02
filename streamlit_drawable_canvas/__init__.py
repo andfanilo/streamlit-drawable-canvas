@@ -4,6 +4,7 @@ import base64
 import hashlib
 import importlib.metadata
 import io
+from collections import OrderedDict
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -75,8 +76,19 @@ class CanvasResult:
 # background_image across reruns is re-encoded (and re-base64'd) at most
 # once. Deliberately a plain module-level dict, not st.cache_data -- the
 # encoded value has no session-specific content, so sharing it across
-# sessions is correct and simplest.
-_bg_image_cache: dict[str, str] = {}
+# sessions is correct and simplest. Bounded LRU (via OrderedDict) so a long
+# session cycling through many distinct background images can't grow this
+# unboundedly.
+_BG_IMAGE_CACHE_MAXSIZE = 32
+_bg_image_cache: OrderedDict[str, str] = OrderedDict()
+
+
+# Kept in sync with the `tools` registry in
+# frontend/src/tools/index.ts -- an unrecognized drawing_mode there silently
+# falls back to freedraw, which would otherwise mask a caller's typo.
+_VALID_DRAWING_MODES = frozenset(
+    {"circle", "freedraw", "line", "point", "polygon", "rect", "transform"}
+)
 
 
 def _looks_like_url(value: str) -> bool:
@@ -102,9 +114,12 @@ def _encode_bytes_to_data_url(raw: bytes) -> str:
     digest = hashlib.md5(raw).hexdigest()
     cached = _bg_image_cache.get(digest)
     if cached is not None:
+        _bg_image_cache.move_to_end(digest)
         return cached
     data_url = f"data:{_sniff_mime(raw)};base64,{base64.b64encode(raw).decode('ascii')}"
     _bg_image_cache[digest] = data_url
+    if len(_bg_image_cache) > _BG_IMAGE_CACHE_MAXSIZE:
+        _bg_image_cache.popitem(last=False)
     return data_url
 
 
@@ -192,7 +207,9 @@ def st_canvas(
         Streamlit on mouse event.
     update_streamlit: bool
         Whenever True, send canvas data to Streamlit when an object or
-        selection is updated, or on mouse up.
+        selection is updated, or on mouse up. Ignored when
+        drawing_mode="polygon": a polygon is only ever sent once closed
+        (double-click, or right-click to close), regardless of this flag.
     height: int
         Height of canvas in pixels. Defaults to 400.
     width: int
@@ -231,6 +248,12 @@ def st_canvas(
         which you can manipulate, store, and reinject into another canvas
         through the `initial_drawing` argument.
     """
+    if drawing_mode not in _VALID_DRAWING_MODES:
+        raise ValueError(
+            f"drawing_mode must be one of {sorted(_VALID_DRAWING_MODES)}, "
+            f"got {drawing_mode!r}"
+        )
+
     background_image_url = _resolve_background_image_url(background_image)
     if background_image_url is not None:
         # An image takes precedence over a flat background color.
