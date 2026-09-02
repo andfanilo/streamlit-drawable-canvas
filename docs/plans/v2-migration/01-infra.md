@@ -123,10 +123,10 @@ the point of T1 is that the two repos look the same.
 
 ### B5 — CI workflows
 
-- [ ] `.github/workflows/enforce-pre-commit.yml` from echarts
-- [ ] `.github/workflows/python-tests.yml` from echarts
-- [ ] **Delete** `.github/workflows/publish_new_release.yml` (decision T6)
-- [ ] Do **not** add `ts-tests.yml` or `playwright.yml` yet — there is no Vitest and no v2
+- [x] `.github/workflows/enforce-pre-commit.yml` from echarts
+- [x] `.github/workflows/python-tests.yml` from echarts
+- [x] **Delete** `.github/workflows/publish_new_release.yml` (decision T6)
+- [x] Do **not** add `ts-tests.yml` or `playwright.yml` yet — there is no Vitest and no v2
       frontend to test. They land in stage 2
 
 ### B6 — Agent and contributor docs
