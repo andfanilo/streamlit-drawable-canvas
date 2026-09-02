@@ -1,0 +1,75 @@
+name: Playwright E2E Tests
+
+on:
+  push:
+    branches: ["develop", "main"]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-playwright
+  cancel-in-progress: true
+
+jobs:
+  playwright-e2e-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        streamlit: ["1.53.0", "latest"]
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: "streamlit_drawable_canvas/frontend/package-lock.json"
+
+      - name: Build frontend
+        run: |
+          cd streamlit_drawable_canvas/frontend
+          npm ci
+          npm run build
+
+      - name: Install the package and e2e test dependencies
+        run: |
+          uv sync --group e2e
+          if [[ "${{ matrix.streamlit }}" == "latest" ]]; then
+            uv pip install --upgrade streamlit
+          else
+            uv pip install "streamlit==${{ matrix.streamlit }}"
+          fi
+          uv run playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: uv run pytest e2e_playwright -n auto --browser chromium --video retain-on-failure --screenshot only-on-failure
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-results-${{ matrix.streamlit }}
+          path: e2e_playwright/test-results

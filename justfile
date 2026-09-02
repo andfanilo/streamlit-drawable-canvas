@@ -4,7 +4,7 @@
 set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
 
 frontend := "streamlit_drawable_canvas/frontend"
-demo_app := "e2e/app_to_test.py"
+demo_app := "demo_app.py"
 
 # Default: show available recipes
 default:
@@ -21,58 +21,42 @@ setup-py:
     uv sync
 
 # Install frontend deps from the lockfile
-# DELETE IN STAGE 2: --legacy-peer-deps only exists because react-scripts 4 / React 16
-# pin peer deps that npm 7+ now enforces strictly; Vite 8 + Fabric 7 need no such override
 setup-frontend:
-    cd {{frontend}} && npm ci --legacy-peer-deps
+    cd {{frontend}} && npm ci
 
 # Wipe everything and reinstall from scratch
 reinstall: clean setup
 
 # --- Run ---
 
-# Serve the component from frontend/build (run `just build` first, needs _RELEASE = True)
+# Serve the component from frontend/build (run `just build-frontend` first)
 run:
     uv run streamlit run {{demo_app}}
 
-# DELETE IN STAGE 2: v1's dev loop is a separate :3001 CRA dev server toggled via the
-# _RELEASE flag. Stage 2 replaces this with Vite watch-rebuild (`npm run dev`, no
-# separate server) run alongside `just run`, matching ../streamlit-echarts.
-# Frontend dev server on :3001 — run alongside `just run` (flips _RELEASE to False first)
-dev: dev-mode
-    cd {{frontend}} && npm run start
-
-# DELETE IN STAGE 2: goes with `dev` above — the _RELEASE toggle disappears once there is
-# only one frontend build to point at.
-# Point the component at the :3001 dev server
-dev-mode:
-    @(Get-Content streamlit_drawable_canvas/__init__.py -Raw) -replace '(?m)^_RELEASE = [^\r\n]*', '_RELEASE = False  # on packaging, pass this to True' | Set-Content streamlit_drawable_canvas/__init__.py -NoNewline
-
-# DELETE IN STAGE 2: goes with `dev-mode` above.
-# Point the component back at frontend/build (do this before building/publishing)
-release-mode:
-    @(Get-Content streamlit_drawable_canvas/__init__.py -Raw) -replace '(?m)^_RELEASE = [^\r\n]*', '_RELEASE = True  # on packaging, pass this to True' | Set-Content streamlit_drawable_canvas/__init__.py -NoNewline
+# Frontend watch-rebuild — run alongside `just run`; Vite rebuilds frontend/build on
+# every save, `just run`'s already-running Streamlit process picks it up on refresh
+dev:
+    cd {{frontend}} && npm run dev
 
 # --- Lint & format ---
 
 # Lint everything (Python + frontend)
-lint: lint-py
+lint: lint-py lint-frontend
 
 lint-py:
     uv run ruff check --fix .
 
-# STAGE 2: v1 frontend/src was never prettier-formatted; enable once it's rewritten.
 lint-frontend:
-    @echo "lint-frontend: deferred to stage 2"
+    cd {{frontend}} && npm run typecheck && npx prettier --check "src/**/*.ts"
 
 # Format everything (Python + frontend)
-format: format-py
+format: format-py format-frontend
 
 format-py:
     uv run ruff format .
 
 format-frontend:
-    cd {{frontend}} && npx prettier --write "src/**/*.{ts,tsx,css}"
+    cd {{frontend}} && npx prettier --write "src/**/*.ts"
 
 # Run all pre-commit hooks
 pre-commit:
@@ -87,25 +71,11 @@ test: test-py test-frontend
 test-py:
     uv run pytest tests/ -v
 
-# DELETE IN STAGE 2: becomes Vitest (`npm test` via vitest) once the frontend is rewritten.
-# Frontend unit tests (react-scripts / jest, watch mode by default)
+# Frontend unit tests (Vitest, pure logic only — see docs/plans/v2-migration/02-frontend.md F1)
 test-frontend:
     cd {{frontend}} && npm test
 
 # --- E2E ---
-
-# DELETE IN STAGE 2: e2e/ Cypress suite goes away, not ported to v2.
-# Install Cypress (one-time)
-cypress-setup:
-    cd e2e && npm i
-
-# DELETE IN STAGE 2 (T7). Needs `just run` (or `just dev`) serving on :8501.
-cypress-open:
-    cd e2e && npm run cypress:open
-
-# DELETE IN STAGE 2 (T7). Needs `just run` (or `just dev`) serving on :8501.
-cypress-run:
-    cd e2e && npm run cypress:run
 
 # Install Playwright deps + browsers (one-time)
 e2e-setup:
@@ -122,9 +92,8 @@ e2e-clean:
 
 # --- Build & publish ---
 
-# DELETE IN STAGE 2: `release-mode` step goes away with the _RELEASE flag.
 # Build frontend assets + Python wheel into dist/
-build: release-mode build-frontend build-wheel
+build: build-frontend build-wheel
 
 build-frontend:
     cd {{frontend}} && npm run build
@@ -143,7 +112,6 @@ build-clean: clean setup-frontend build
 clean:
     -Remove-Item -Recurse -Force dist, build, *.egg-info -ErrorAction Ignore
     -Remove-Item -Recurse -Force {{frontend}}/node_modules, {{frontend}}/build -ErrorAction Ignore
-    -Remove-Item -Recurse -Force e2e/node_modules -ErrorAction Ignore
 
 # Publish to Test PyPI (reads token from UV_PUBLISH_TOKEN_TEST; real PyPI uses UV_PUBLISH_TOKEN)
 publish-test: _verify-release-state build
@@ -161,8 +129,6 @@ bump version:
     @if (git status --porcelain) { Write-Host -ForegroundColor Red "Working tree not clean. Commit or stash first."; exit 1 }
     (Get-Content pyproject.toml -Raw) -replace '(?m)^version = "[^"]*"', 'version = "{{version}}"' | Set-Content pyproject.toml -NoNewline
     uv lock
-    # STAGE 2: streamlit_drawable_canvas/pyproject.toml (the inner v2 manifest) doesn't
-    # exist until stage 2. Sync its version too, once it does.
     @if (Test-Path streamlit_drawable_canvas/pyproject.toml) { (Get-Content streamlit_drawable_canvas/pyproject.toml -Raw) -replace '(?m)^version = "[^"]*"', 'version = "{{version}}"' | Set-Content streamlit_drawable_canvas/pyproject.toml -NoNewline }
     cd {{frontend}} && npm version {{version}} --no-git-tag-version --allow-same-version
     git add pyproject.toml uv.lock {{frontend}}/package.json {{frontend}}/package-lock.json

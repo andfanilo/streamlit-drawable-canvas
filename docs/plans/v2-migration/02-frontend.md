@@ -378,20 +378,52 @@ recur; `CanvasResult(...)` is always constructed as a real instance.
 Model on `../streamlit-echarts/e2e_playwright/`. Assert on **`json_data` structure**, not
 pixels.
 
-- [ ] One test app + test per drawing mode; drive synthetic mouse drags
-- [ ] Assert the resulting object: `type`, and geometry within a tolerance
+- [x] One test app + test per drawing mode; drive synthetic mouse drags —
+      `canvas_modes.py`/`canvas_modes_test.py`, one canvas per `drawing_mode`, results
+      read back via a `st.code(json.dumps(...))` block. **Non-obvious finding while
+      building this:** Fabric 7's own `toObject()` capitalizes `type` (`"Rect"`, not
+      v4's `"rect"`) for objects it creates fresh — but an object *loaded* from JSON
+      keeps the source's original casing (see F3 below). Also: real
+      `page.mouse.*` events, unlike hand-rolled `dispatchEvent`, cross the shadow
+      boundary fine without `composed: true` — that only bit an ad hoc debug script,
+      not the actual suite
+- [x] Assert the resulting object: `type`, and geometry within a tolerance
       (e.g. a `rect` drag from (100,100) to (200,180) yields
-      `type: "rect", left: 100, top: 100, width: 100, height: 80`)
-- [ ] `update_streamlit=False` sends nothing until forced; right-click forces a send
-- [ ] Toolbar: undo, redo, clear
-- [ ] `initial_drawing` round-trip: output of one canvas loads into another
-- [ ] `return_image_data=True` populates `image_data`; the default raises on access
-- [ ] Component inside `st.form` still returns the drawing (this is *why* P8 chose state
-      over triggers — test it)
-- [ ] Two canvases on one page do not interfere (the WeakMap instance model, F3)
-- [ ] Undo history survives an unrelated widget rerun (also F3 — the regression that would
-      otherwise ship silently)
-- [ ] Add `.github/workflows/playwright.yml` and `ts-tests.yml` from echarts
+      `type: "rect", left: 100, top: 100, width: 100, height: 80`) — done, with small
+      `stroke_width` in the test app so `minLength`/`minRadius` clamping doesn't
+      interfere at these drag sizes. Polygon note: a right-click *closes* the path
+      from the last left-clicked vertex, it does not add its own position as a
+      vertex — two non-collinear left-clicks are needed before closing or the path
+      is degenerate (zero height) and the tool's own `width/height !== 0` guard drops
+      it silently
+- [x] `update_streamlit=False` sends nothing until forced; right-click forces a send —
+      `canvas_behavior_test.py::test_update_streamlit_false_gates_sends_until_right_click_forces_one`
+- [x] Toolbar: undo, redo, clear — `canvas_toolbar.py`/`canvas_toolbar_test.py`,
+      also asserts the undo/redo buttons' `disabled` state at each step
+- [x] `initial_drawing` round-trip: output of one canvas loads into another —
+      `canvas_behavior_test.py::test_initial_drawing_round_trips_into_another_canvas`.
+      **Non-obvious finding:** feeding a new `initial_drawing` prop is not itself
+      echoed back as the *other* canvas's returned widget state — state only updates
+      on user interaction with that canvas. The toolbar's "Send to Streamlit" button
+      exists for exactly this gap; the test (and `fabric_v4_compat_test.py`, F3) uses
+      it to force a report after a programmatic load
+- [x] `return_image_data=True` populates `image_data`; the default raises on access —
+      the populated case is `canvas_behavior_test.py::test_return_image_data_populates_ndarray_shape`
+      (end-to-end through the real `image_to_url`/numpy path); the default-raises case
+      is exercised directly in `tests/test_init.py` (pure Python, no browser needed)
+- [x] Component inside `st.form` still returns the drawing (this is *why* P8 chose state
+      over triggers — test it) — `canvas_behavior_test.py::test_canvas_inside_form_only_returns_drawing_on_submit`.
+      Confirmed empirically: drawing inside the form does not itself trigger a rerun,
+      but the state was already recorded and shows up once `Submit` does trigger one
+- [x] Two canvases on one page do not interfere (the WeakMap instance model, F3) —
+      `canvas_isolation.py`/`canvas_isolation_test.py::test_two_canvases_do_not_interfere`
+- [x] Undo history survives an unrelated widget rerun (also F3 — the regression that would
+      otherwise ship silently) — `canvas_isolation_test.py::test_undo_history_survives_an_unrelated_rerun`,
+      an unrelated `st.button` triggers a full script rerun and both the drawn objects
+      and undo capability are confirmed intact afterward
+- [x] Add `.github/workflows/playwright.yml` and `ts-tests.yml` from echarts — adapted
+      to this repo's actual tooling (`uv sync --group e2e` instead of pip+venv, Node 24
+      per the plan's open-items decision, package dir `streamlit_drawable_canvas`)
 
 ### F3 — Fabric v4 JSON compatibility (T5, risk R3)
 
@@ -439,19 +471,47 @@ The reason stage 1 existed.
 
 ## Phase G — Cleanup and verification
 
-- [ ] Delete `e2e/` entirely — Cypress spec, `cypress.json`, `package.json`, `plugins/`,
-      `app_to_test.py` (T7)
-- [ ] Delete `src/DrawableCanvas.tsx`, `src/DrawableCanvasState.tsx`,
-      `src/components/`, `src/lib/`, `src/index.tsx`
-- [ ] Update the stage-1 justfile: `test-frontend` → Vitest, drop the v1-only recipes
-- [ ] `just lint` exits 0
-- [ ] `just test` (Python + Vitest) exits 0
-- [ ] `just build` produces a wheel containing `frontend/build/index-*.js`
-- [ ] `just e2e` passes
-- [ ] Install the wheel into a clean venv **without** the `[image]` extra; confirm import
-      and basic drawing work, and that `image_data` access raises the intended message
-- [ ] Install with `[image]`; confirm `return_image_data=True` yields a numpy array
-- [ ] `uv run pre-commit run --all-files` clean
+- [x] Delete `e2e/` entirely — Cypress spec, `cypress.json`, `package.json`, `plugins/`,
+      `app_to_test.py` (T7). Replaced `just run`'s target with a new root-level
+      `demo_app.py` (small, single-page — mirrors the old fixture app, not
+      echarts' multi-page showcase; fixed for the new API: needs
+      `return_image_data=True` to read `image_data`)
+- [x] Delete `src/DrawableCanvas.tsx`, `src/DrawableCanvasState.tsx`,
+      `src/components/`, `src/lib/`, `src/index.tsx` — done earlier in the stage
+      (ahead of this checklist item, see Phase B note)
+- [x] Update the stage-1 justfile: `test-frontend` → Vitest, drop the v1-only recipes
+      (`dev-mode`/`release-mode`/`:3001 dev`/Cypress recipes/`--legacy-peer-deps`).
+      Also un-deferred `lint-frontend`/`format-frontend` (stage 1 left them as a
+      no-op/prettier-only stub since `frontend/src` didn't exist yet); they now run
+      `tsc --noEmit` + prettier. Re-added the `format-ts-js` pre-commit hook stage 1
+      explicitly deferred here, matching echarts' pattern
+- [x] `just lint` exits 0
+- [x] `just test` (Python + Vitest) exits 0 — **found and fixed a real regression
+      along the way**: `tests/test_init.py` was broken at collection, unrelated to
+      anything in this stage's own diff. `st.components.v2.component(...)`
+      (called at module import time in `__init__.py`) needs an active Streamlit
+      runtime to resolve its own manifest; `get_bidi_component_manager()` hands
+      back a fresh, undiscovered `BidiComponentManager` on every call when no
+      runtime is running, so a bare `import streamlit_drawable_canvas` outside a
+      running script always raised `StreamlitAPIException`. This predates F1/F2
+      (introduced whenever `__init__.py` was rewritten for the v2 API earlier in
+      this stage) and wasn't caught until `just test` was actually run here.
+      `tests/conftest.py` already carried a one-line breadcrumb pointing at the
+      fix (`../streamlit-echarts/tests/conftest.py`'s pattern) but it was never
+      applied. Fixed by mocking `st.components.v2.component` at
+      `pytest_configure`, mirroring echarts exactly; also fixed the two
+      `CanvasResult` tests that still used the old (pre-stage-2) constructor
+      signature, and added the "default raises on access" / "populated when
+      `return_image_data=True`" cases
+- [x] `just build` produces a wheel containing `frontend/build/index-*.js`
+- [x] `just e2e` passes — 23/23, including the new F2/F3 suites
+- [x] Install the wheel into a clean venv **without** the `[image]` extra; confirm import
+      and basic drawing work, and that `image_data` access raises the intended message —
+      verified live (import succeeds, canvas renders and draws, RuntimeError message
+      as expected)
+- [x] Install with `[image]`; confirm `return_image_data=True` yields a numpy array —
+      verified live, `(150, 200, 4)` array returned after drawing
+- [x] `uv run pre-commit run --all-files` clean
 - [ ] Run `/code-review`
 - [ ] Tick every box and commit
 - [ ] Report: R2 and R3 outcomes explicitly, plus any Fabric 7 behaviour that differs

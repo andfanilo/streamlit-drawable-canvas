@@ -1,5 +1,25 @@
-# Unlike ../streamlit-echarts, no fixture is needed here yet: v1's
-# components.v1.declare_component(path=...) doesn't validate that the path
-# exists at import time, so streamlit_drawable_canvas imports cleanly even
-# without a built frontend/. Stage 2 moves to st.components.v2.component,
-# which does require patching before import -- see streamlit-echarts/tests/conftest.py.
+from unittest.mock import MagicMock, patch
+
+
+def pytest_configure(config):
+    """Patch st.components.v2.component before streamlit_drawable_canvas is imported.
+
+    The module-level call in __init__.py requires an active Streamlit runtime
+    to resolve its own component manifest (asset_dir, etc.) -- it works when a
+    script actually runs under `streamlit run`, but a bare `import
+    streamlit_drawable_canvas` outside that context raises. Mocking it lets us
+    unit-test CanvasResult and the background-image helpers without a running
+    server or a built frontend/. Mirrors ../streamlit-echarts/tests/conftest.py.
+    """
+    patcher = patch(
+        "streamlit.components.v2.component",
+        return_value=MagicMock(),
+    )
+    patcher.start()
+    config._st_component_patcher = patcher
+
+
+def pytest_unconfigure(config):
+    patcher = getattr(config, "_st_component_patcher", None)
+    if patcher is not None:
+        patcher.stop()

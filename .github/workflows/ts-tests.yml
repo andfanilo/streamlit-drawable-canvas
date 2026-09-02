@@ -1,0 +1,37 @@
+name: TS Unit Tests
+
+on:
+  push:
+    branches: ["develop", "main"]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ts-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: "streamlit_drawable_canvas/frontend/package-lock.json"
+      - name: Install dependencies
+        run: |
+          cd streamlit_drawable_canvas/frontend
+          npm ci
+      - name: Type check
+        run: |
+          cd streamlit_drawable_canvas/frontend
+          npm run typecheck
+      - name: Run unit tests
+        run: |
+          cd streamlit_drawable_canvas/frontend
+          npm test

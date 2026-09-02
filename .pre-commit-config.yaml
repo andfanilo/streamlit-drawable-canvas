@@ -8,8 +8,14 @@ repos:
       - id: ruff-format
         files: \.py$|\.pyi$
 
-  # STAGE 2: re-add a format-ts-js (prettier --check) hook once frontend/src is
-  # rewritten -- the v1 source was never prettier-formatted.
+  - repo: local
+    hooks:
+      - id: format-ts-js
+        name: Format TS/JS files with prettier
+        entry: bash -c 'cd streamlit_drawable_canvas/frontend && npx prettier --check "src/**/*.ts"'
+        language: system
+        always_run: true
+        pass_filenames: false
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
