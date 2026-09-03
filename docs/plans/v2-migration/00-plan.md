@@ -16,6 +16,7 @@ bringing the repo up to parity with `../streamlit-echarts`.
 | `02-frontend.md` | Stage 2 — frontend rewrite + Python v2 API + modernization |
 | `03-release.md` | Stage 3 — docs, demo, release |
 | `04-issue-triage.md` | The 50 open GitHub issues, triaged against the rewrite: what it already fixed, what is cheap enough to fold in, what is out of scope |
+| `05-issue-responses.md` | The same 50 issues as a post-ready sweep sheet: per-issue disposition and draft reply text, gated on 0.10.0 actually shipping |
 
 ---
 
