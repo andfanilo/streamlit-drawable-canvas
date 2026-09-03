@@ -22,6 +22,10 @@ replacing the React 16 / CRA v1 frontend. See
   Streamlit >= ~1.5x because it called a private Streamlit API
   (`streamlit.elements.image.image_to_url`) that had moved and changed signature; the
   new implementation resolves images entirely on the Python side, with no private APIs.
+- **Object `type` in `json_data` is now capitalized.** Fabric 7 emits `"Rect"`,
+  `"Circle"`, `"Line"`, `"Path"`; Fabric 4 emitted `"rect"`, `"circle"`, `"line"`,
+  `"path"`. Code that branches on `obj["type"] == "rect"` does not error -- it silently
+  stops matching. Compare case-insensitively if you handle payloads from both versions.
 - **Saved drawings from 0.9.x with `circle` or `point` objects render as a thin sliver,
   not the original shape**, when fed back in via `initial_drawing`. Fabric 4 wrote
   `Circle.startAngle`/`endAngle` in radians; Fabric 7 reinterprets those same JSON keys

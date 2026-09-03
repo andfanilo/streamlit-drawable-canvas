@@ -11,8 +11,8 @@ by action so the sweep can be worked group by group.
 - [ ] **Wait until 0.10.0 is actually on PyPI.** Every draft below says "fixed in 0.10.0"
       in the present tense. Posting before `just publish` sends people to a version they
       cannot install.
-- [ ] Groups A, B and E close on posting. Group C closes only if F4 is resolved first.
-      Groups D and F stay open — post the comment, leave the issue.
+- [ ] Groups A, B and E close on posting. Groups C, D and F stay open — post the
+      comment, leave the issue.
 - [ ] `$LINK` in the drafts = the 0.10.0 release URL, once it exists. `$REPO` = the repo
       URL, for the FAQ link.
 
@@ -145,29 +145,24 @@ Answered by the new `FAQ.md`. Post the shared line plus the issue-specific answe
 
 ---
 
-## Group C — blocked on F4, do not post yet (2): #144, #105
+## Group C — keep open, post without claiming a fix (2): #144, #105
 
-**F4 was inconclusive.** Mobile touch is *likely* fixed for free (Fabric 7 uses Pointer
-Events and sets `touch-action: none` itself), but the verification test failed and it was
-never established whether that was the component or the test harness. Partial work is in
-`stash@{0}`.
+Mobile touch is *likely* fixed for free (Fabric 7 uses Pointer Events and sets
+`touch-action: none` itself), but the verification attempt was inconclusive — the test
+failed and it was never established whether that was the component or the test harness.
+Partial work is preserved in `git stash`; see `04-issue-triage.md` F4.
 
-Do **not** post a "fixed" claim on the current evidence. Two honest options:
+**Decided 2026-09-03: F4 is dropped for 0.10.0.** Mobile isn't a priority for this
+release, and it was already broken in 0.9.x, so shipping without it regresses nothing.
 
-**If F4 is finished and passes:**
-
-> Fixed in 0.10.0 ($LINK). The Fabric.js 4 frontend had separate mouse and touch paths;
-> Fabric 7 drives everything through Pointer Events. Verified under touch emulation for
-> point, rect and line.
-
-**If F4 stays unresolved** — recommended if you want to ship:
+Post this — do **not** claim a fix:
 
 > 0.10.0 ($LINK) replaces the entire frontend, including Fabric.js 4 → 7, which moves to
 > Pointer Events and should address the mouse/touch split behind this. I haven't been able
 > to verify it on real hardware, so I'd rather not claim it fixed. If you're still using
 > this, could you retest on 0.10.0 and report back? Leaving open until someone confirms.
 
-Either way, note on **#105**: **polygon mode still needs a right-click to close a shape**,
+Note on **#105**: **polygon mode still needs a right-click to close a shape**,
 so polygons remain unusable on touch regardless of the above. That's group D / #109.
 
 ---

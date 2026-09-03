@@ -185,7 +185,23 @@ Self-contained, no interaction with the tool registry beyond bypassing it.
 - [x] Playwright: 4 tests in `canvas_disabled_test.py`, including an enabled control so
       the "nothing happened" assertions can't pass for the wrong reason
 
-### F4 — Mobile: verify, do not implement (2 issues)
+### F4 — Mobile: verify, do not implement (2 issues) — DROPPED from 0.10.0
+
+**Maintainer decision, 2026-09-03: dropped.** Mobile is not a priority for this release,
+and mobile was already broken in 0.9.x, so shipping without it regresses nothing. #144
+and #105 stay open; `05-issue-responses.md` group C carries the honest "please retest and
+report back" reply rather than a fixed claim.
+
+The attempt is preserved in `git stash` ("F4 mobile touch verification (inconclusive)").
+It contains a working additive `touch_app` fixture for `conftest.py` and a
+`canvas_touch.py` app; the tests it left behind fail, and **it was never established
+whether that is the component or the test harness** — the CDP `Input.dispatchTouchEvent`
+drags were themselves unvalidated. Do not cite those failures as evidence of a component
+bug. Whoever picks this up should first answer one question: does `touchstart` reach
+`canvas.upper-canvas` at all?
+
+The original plan follows, unchanged, for whoever resumes it.
+
 
 **Cost:** one Playwright test. **Reward:** two 2023 issues closed at zero code cost.
 
@@ -288,7 +304,7 @@ should be attempted after `just bump 0.10.0`.
 - [x] F1 `FAQ.md`
 - [x] F2 `background_image_fit`
 - [x] F3 `disabled`
-- [ ] F4 mobile verification test
+- [x] F4 mobile verification test — **dropped**, see F4 above
 - [x] §1.2 lifecycle regression test — done, `canvas_isolation_test.py` (3 passed)
 - [ ] (optional) F5, F6, F7
 - [ ] Re-run `just lint && just test && just build && just e2e`
