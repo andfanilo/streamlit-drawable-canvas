@@ -1,0 +1,8 @@
+# Ship a minimal metadata file that can be picked up by Streamlit at runtime.
+[project]
+name = "streamlit-drawable-canvas"
+version = "0.10.0"
+
+[[tool.streamlit.component.components]]
+name = "streamlit_drawable_canvas"
+asset_dir = "frontend/build"

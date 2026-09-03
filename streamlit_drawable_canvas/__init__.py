@@ -1,56 +1,168 @@
+from __future__ import annotations
+
 import base64
+import hashlib
+import importlib.metadata
 import io
-import os
-from dataclasses import dataclass
-from hashlib import md5
+from collections import OrderedDict
+from collections.abc import Callable
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
 import streamlit as st
-import streamlit.components.v1 as components
-import streamlit.elements.image as st_image
-from PIL import Image
 
-_RELEASE = True  # on packaging, pass this to True
+if TYPE_CHECKING:
+    import numpy as np
+    from PIL.Image import Image as PILImage
 
-if not _RELEASE:
-    _component_func = components.declare_component(
-        "st_canvas",
-        url="http://localhost:3001",
-    )
-else:
-    parent_dir = os.path.dirname(os.path.abspath(__file__))
-    build_dir = os.path.join(parent_dir, "frontend/build")
-    _component_func = components.declare_component("st_canvas", path=build_dir)
+__version__ = importlib.metadata.version("streamlit-drawable-canvas")
+
+out = st.components.v2.component(
+    "streamlit-drawable-canvas.streamlit_drawable_canvas",
+    js="index-*.js",
+    css="index-*.css",
+    html='<div class="canvas-root"></div>',
+    isolate_styles=True,
+)
 
 
-@dataclass
 class CanvasResult:
-    """Dataclass to store output of React Component
+    """The result of an `st_canvas` call.
 
     Attributes
     ----------
-    image_data: np.array
-        RGBA Matrix of Image Data.
-    json_data: dict
-        JSON string of canvas and objects.
+    json_data: dict | None
+        The Fabric.js canvas JSON representation of the drawing. Feed it back
+        into another canvas's `initial_drawing` to restore or continue
+        editing it.
+    image_data: np.ndarray
+        RGBA image data as a 4D numpy array (r, g, b, alpha). Only available
+        when `return_image_data=True` was passed to `st_canvas`; accessing
+        this attribute otherwise raises.
     """
 
-    image_data: np.array = None
-    json_data: dict = None
+    __slots__ = ("_image_data_url", "_return_image_data", "json_data")
+
+    def __init__(
+        self,
+        json_data: dict[str, Any] | None,
+        image_data_url: str | None,
+        return_image_data: bool,
+    ) -> None:
+        self.json_data = json_data
+        self._image_data_url = image_data_url
+        self._return_image_data = return_image_data
+
+    @property
+    def image_data(self) -> np.ndarray | None:
+        if not self._return_image_data:
+            raise RuntimeError(
+                "image_data was not requested. Pass return_image_data=True to "
+                "st_canvas(), and install the image extra: "
+                "pip install streamlit-drawable-canvas[image]"
+            )
+        if self._image_data_url is None:
+            return None
+
+        import numpy as np
+        from PIL import Image
+
+        _, encoded = self._image_data_url.split(";base64,", 1)
+        img = Image.open(io.BytesIO(base64.b64decode(encoded)))
+        return np.asarray(img)
 
 
-def _data_url_to_image(data_url: str) -> Image:
-    """Convert DataURL string to the image."""
-    _, _data_url = data_url.split(";base64,")
-    return Image.open(io.BytesIO(base64.b64decode(_data_url)))
+# Content-addressed LRU cache for encoded background images: an unchanged
+# background_image across reruns is re-encoded at most once. Shared across
+# sessions -- the encoded value has no session-specific content.
+_BG_IMAGE_CACHE_MAXSIZE = 32
+_bg_image_cache: OrderedDict[str, str] = OrderedDict()
 
 
-def _resize_img(img: Image, new_height: int = 700, new_width: int = 700) -> Image:
-    """Resize the image to the provided resolution."""
-    h_ratio = new_height / img.height
-    w_ratio = new_width / img.width
-    img = img.resize((int(img.width * w_ratio), int(img.height * h_ratio)))
-    return img
+# Kept in sync with the `tools` registry in frontend/src/tools/index.ts, which
+# silently falls back to freedraw on an unrecognized mode.
+_VALID_DRAWING_MODES = frozenset(
+    {"circle", "freedraw", "line", "point", "polygon", "rect", "transform"}
+)
+
+# Kept in sync with BackgroundImageFit in frontend/src/background.ts.
+_VALID_BACKGROUND_IMAGE_FITS = frozenset({"contain", "stretch"})
+
+
+def _looks_like_url(value: str) -> bool:
+    return value.startswith(("http://", "https://", "data:"))
+
+
+def _sniff_mime(raw: bytes) -> str:
+    """Best-effort magic-byte sniff, without pulling in Pillow."""
+    if raw.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if raw.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if raw.startswith((b"GIF87a", b"GIF89a")):
+        return "image/gif"
+    if raw.startswith(b"RIFF") and raw[8:12] == b"WEBP":
+        return "image/webp"
+    if raw.startswith(b"BM"):
+        return "image/bmp"
+    return "application/octet-stream"
+
+
+def _encode_bytes_to_data_url(raw: bytes) -> str:
+    digest = hashlib.md5(raw).hexdigest()
+    cached = _bg_image_cache.get(digest)
+    if cached is not None:
+        _bg_image_cache.move_to_end(digest)
+        return cached
+    data_url = f"data:{_sniff_mime(raw)};base64,{base64.b64encode(raw).decode('ascii')}"
+    _bg_image_cache[digest] = data_url
+    if len(_bg_image_cache) > _BG_IMAGE_CACHE_MAXSIZE:
+        _bg_image_cache.popitem(last=False)
+    return data_url
+
+
+def _resolve_background_image_url(
+    background_image: str | Path | bytes | PILImage | None,
+) -> str | None:
+    """Resolve `background_image` to a URL the frontend can use directly.
+
+    Accepts what `st.image` accepts: an http(s) URL, a data: URI, a local
+    path, raw bytes, or a PIL Image. Only the PIL.Image branch imports Pillow,
+    so the base (non-`[image]`) install stays functional for every other one.
+    """
+    if background_image is None:
+        return None
+
+    if isinstance(background_image, str):
+        if _looks_like_url(background_image):
+            return background_image
+        return _encode_bytes_to_data_url(Path(background_image).read_bytes())
+
+    if isinstance(background_image, Path):
+        return _encode_bytes_to_data_url(background_image.read_bytes())
+
+    if isinstance(background_image, (bytes, bytearray)):
+        return _encode_bytes_to_data_url(bytes(background_image))
+
+    try:
+        from PIL.Image import Image as PILImageType
+    except ImportError:
+        raise TypeError(
+            "background_image must be a URL string, a file path, bytes, or a "
+            "PIL.Image.Image (a PIL image requires the 'image' extra: "
+            f"pip install streamlit-drawable-canvas[image]), got "
+            f"{type(background_image).__name__}"
+        ) from None
+
+    if not isinstance(background_image, PILImageType):
+        raise TypeError(
+            "background_image must be a URL string, a file path, bytes, or a "
+            f"PIL.Image.Image, got {type(background_image).__name__}"
+        )
+
+    buf = io.BytesIO()
+    background_image.convert("RGBA").save(buf, format="PNG")
+    return _encode_bytes_to_data_url(buf.getvalue())
 
 
 def st_canvas(
@@ -58,102 +170,152 @@ def st_canvas(
     stroke_width: int = 20,
     stroke_color: str = "black",
     background_color: str = "",
-    background_image: Image = None,
+    background_image: str | Path | bytes | PILImage | None = None,
     update_streamlit: bool = True,
     height: int = 400,
     width: int = 600,
     drawing_mode: str = "freedraw",
-    initial_drawing: dict = None,
+    initial_drawing: dict | None = None,
     display_toolbar: bool = True,
     point_display_radius: int = 3,
-    key=None,
+    return_image_data: bool = False,
+    key: str | None = None,
+    on_change: Callable[[], None] | None = None,
+    disabled: bool = False,
+    background_image_fit: str = "stretch",
 ) -> CanvasResult:
-    """Create a drawing canvas in Streamlit app. Retrieve the RGBA image data into a 4D numpy array (r, g, b, alpha)
-    on mouse up event.
+    """Create a drawing canvas in a Streamlit app.
 
     Parameters
     ----------
     fill_color: str
-        Color of fill for Rect in CSS color property. Defaults to "#eee".
-    stroke_width: str
+        Color of fill for Rect/Circle/Polygon in CSS color property. Defaults
+        to "#eee".
+    stroke_width: int
         Width of drawing brush in CSS color property. Defaults to 20.
     stroke_color: str
         Color of drawing brush in hex. Defaults to "black".
     background_color: str
-        Color of canvas background in CSS color property. Defaults to "" which is transparent.
-        Overriden by background_image.
-        Note: Changing background_color will reset the drawing.
-    background_image: Image
-        Pillow Image to display behind canvas.
-        Automatically resized to canvas dimensions.
-        Being behind the canvas, it is not sent back to Streamlit on mouse event.
+        Color of canvas background in CSS color property. Defaults to "",
+        which is transparent. Overridden by background_image. Note: changing
+        background_color resets the drawing.
+    background_image: str | Path | bytes | PIL.Image.Image
+        Image to display behind the canvas: an http(s) URL, a data: URI, a
+        local file path, raw image bytes, or a PIL Image. Scaled to canvas
+        dimensions. Being behind the canvas, it is not sent back to
+        Streamlit on mouse event.
     update_streamlit: bool
-        Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up.
+        Whenever True, send canvas data to Streamlit when an object or
+        selection is updated, or on mouse up. Ignored when
+        drawing_mode="polygon": a polygon is only ever sent once closed with
+        a right-click, regardless of this flag.
     height: int
         Height of canvas in pixels. Defaults to 400.
     width: int
         Width of canvas in pixels. Defaults to 600.
     drawing_mode: {'freedraw', 'transform', 'line', 'rect', 'circle', 'point', 'polygon'}
-        Enable free drawing when "freedraw", object manipulation when "transform", "line", "rect", "circle", "point", "polygon".
-        Defaults to "freedraw".
+        Enable free drawing when "freedraw", object manipulation when
+        "transform", or shape drawing for the rest. Defaults to "freedraw".
     initial_drawing: dict
-        Redraw canvas with given initial_drawing. If changed to None then empties canvas.
-        Should generally be the `json_data` output from other canvas, which you can manipulate.
-        Beware: if importing from a bigger/smaller canvas, no rescaling is done in the canvas,
-        it should be ran on user's side.
+        Redraw canvas with the given initial_drawing. If changed to None,
+        empties the canvas. Should generally be the `json_data` output from
+        another canvas, which you can manipulate. Beware: if importing from a
+        bigger/smaller canvas, no rescaling is done in the canvas -- do it on
+        your side.
     display_toolbar: bool
-        Display the undo/redo/reset toolbar.
+        Display the undo/redo/reset toolbar. It appears on hover as a floating
+        card above the canvas's top-right corner, like Streamlit's own element
+        toolbars, and takes up no layout space.
     point_display_radius: int
         The radius to use when displaying point objects. Defaults to 3.
+    return_image_data: bool
+        Whenever True, populate `image_data` on the result with the canvas's
+        RGBA pixels. Off by default -- it PNG-encodes the whole canvas on
+        every send, which is wasted work for callers who only read
+        `json_data`. Requires the `image` extra:
+        `pip install streamlit-drawable-canvas[image]`.
     key: str
-        An optional string to use as the unique key for the widget.
-        Assign a key so the component is not remount every time the script is rerun.
+        An optional string to use as the unique key for the widget. Assign a
+        key so the component is not remounted every time the script reruns.
+    on_change: callable
+        Optional callback invoked when the component sends a new drawing.
+    disabled: bool
+        Render the canvas read-only: drawing, selection and transforms are
+        all inert, and the toolbar is hidden regardless of `display_toolbar`
+        (undo, redo and reset would otherwise let a viewer mutate a canvas
+        that is supposed to be read-only). `initial_drawing` still renders,
+        so this is the way to display a drawing back to someone without
+        letting them change it. Defaults to False.
+    background_image_fit: {'stretch', 'contain'}
+        How `background_image` is scaled onto the canvas. "stretch" (the
+        default, and the historical behaviour) scales each axis
+        independently to fill the canvas exactly, distorting the image if
+        its aspect ratio differs. "contain" preserves the aspect ratio,
+        scaling the image to fit inside the canvas and centring it, so a
+        canvas larger than the image gets margins instead of a stretched
+        image. Ignored when no `background_image` is set.
 
     Returns
     -------
     result: CanvasResult
-        `image_data` contains reshaped RGBA image 4D numpy array (r, g, b, alpha),
-        `json_data` stores the canvas/objects JSON representation which you can manipulate, store
-        load and then reinject into another canvas through the `initial_drawing` argument.
+        `image_data` contains the reshaped RGBA image 4D numpy array (r, g,
+        b, alpha) -- only if `return_image_data=True`, otherwise accessing it
+        raises. `json_data` stores the canvas/objects JSON representation,
+        which you can manipulate, store, and reinject into another canvas
+        through the `initial_drawing` argument.
     """
-    # Resize background_image to canvas dimensions by default
-    # Then override background_color
-    background_image_url = None
-    if background_image:
-        background_image = _resize_img(background_image, height, width)
-        # Reduce network traffic and cache when switch another configure, use streamlit in-mem filemanager to convert image to URL
-        background_image_url = st_image.image_to_url(
-            background_image, width, True, "RGB", "PNG", f"drawable-canvas-bg-{md5(background_image.tobytes()).hexdigest()}-{key}" 
+    if drawing_mode not in _VALID_DRAWING_MODES:
+        raise ValueError(
+            f"drawing_mode must be one of {sorted(_VALID_DRAWING_MODES)}, "
+            f"got {drawing_mode!r}"
         )
-        background_image_url = st._config.get_option("server.baseUrlPath") + background_image_url
+
+    if background_image_fit not in _VALID_BACKGROUND_IMAGE_FITS:
+        raise ValueError(
+            "background_image_fit must be one of "
+            f"{sorted(_VALID_BACKGROUND_IMAGE_FITS)}, got {background_image_fit!r}"
+        )
+
+    background_image_url = _resolve_background_image_url(background_image)
+    if background_image_url is not None:
+        # An image takes precedence over a flat background color.
         background_color = ""
 
-    # Clean initial drawing, override its background color
-    initial_drawing = (
-        {"version": "4.4.0"} if initial_drawing is None else initial_drawing
+    base_drawing: dict[str, Any] = (
+        {"objects": []} if initial_drawing is None else dict(initial_drawing)
     )
-    initial_drawing["background"] = background_color
+    base_drawing["background"] = background_color
 
-    component_value = _component_func(
-        fillColor=fill_color,
-        strokeWidth=stroke_width,
-        strokeColor=stroke_color,
-        backgroundColor=background_color,
-        backgroundImageURL=background_image_url,
-        realtimeUpdateStreamlit=update_streamlit and (drawing_mode != "polygon"),
-        canvasHeight=height,
-        canvasWidth=width,
-        drawingMode=drawing_mode,
-        initialDrawing=initial_drawing,
-        displayToolbar=display_toolbar,
-        displayRadius=point_display_radius,
+    data = {
+        "fillColor": fill_color,
+        "strokeWidth": stroke_width,
+        "strokeColor": stroke_color,
+        "backgroundColor": background_color,
+        "backgroundImageURL": background_image_url,
+        "realtimeUpdateStreamlit": update_streamlit and (drawing_mode != "polygon"),
+        "canvasWidth": width,
+        "canvasHeight": height,
+        "drawingMode": drawing_mode,
+        "initialDrawing": base_drawing,
+        "displayToolbar": display_toolbar,
+        "displayRadius": point_display_radius,
+        "returnImageData": return_image_data,
+        "disabled": disabled,
+        "backgroundImageFit": background_image_fit,
+    }
+
+    result = out(
+        data=data,
         key=key,
-        default=None,
+        default={"drawing": {"raw": base_drawing, "data": None}},
+        on_drawing_change=on_change or (lambda: None),
+        width="content",
+        height="content",
     )
-    if component_value is None:
-        return CanvasResult
 
+    drawing = result.get("drawing") or {"raw": base_drawing, "data": None}
     return CanvasResult(
-        np.asarray(_data_url_to_image(component_value["data"])),
-        component_value["raw"],
+        json_data=drawing.get("raw"),
+        image_data_url=drawing.get("data"),
+        return_image_data=return_image_data,
     )

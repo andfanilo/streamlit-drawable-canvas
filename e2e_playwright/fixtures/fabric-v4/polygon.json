@@ -1,0 +1,64 @@
+{
+  "version": "4.4.0",
+  "objects": [
+    {
+      "type": "path",
+      "version": "4.4.0",
+      "originX": "center",
+      "originY": "center",
+      "left": 149,
+      "top": 99,
+      "width": 200,
+      "height": 140,
+      "fill": "rgba(255, 140, 0, 0.3)",
+      "stroke": "#ff8c00",
+      "strokeWidth": 3,
+      "strokeDashArray": null,
+      "strokeLineCap": "butt",
+      "strokeDashOffset": 0,
+      "strokeLineJoin": "miter",
+      "strokeUniform": false,
+      "strokeMiterLimit": 4,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "flipX": false,
+      "flipY": false,
+      "opacity": 1,
+      "shadow": null,
+      "visible": true,
+      "backgroundColor": "",
+      "fillRule": "nonzero",
+      "paintFirst": "fill",
+      "globalCompositeOperation": "source-over",
+      "skewX": 0,
+      "skewY": 0,
+      "path": [
+        [
+          "M",
+          49,
+          29
+        ],
+        [
+          "L",
+          249,
+          29
+        ],
+        [
+          "L",
+          249,
+          169
+        ],
+        [
+          "L",
+          49,
+          169
+        ],
+        [
+          "z"
+        ]
+      ]
+    }
+  ],
+  "background": "#eeeeee"
+}

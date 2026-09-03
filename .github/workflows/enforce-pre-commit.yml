@@ -1,0 +1,45 @@
+name: Enforce Pre-Commit
+
+on:
+  push:
+    branches: ["develop", "main"]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache pre-commit hooks
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Install pre-commit hooks
+        run: pre-commit install-hooks
+
+      - name: Install Node dependencies (for prettier)
+        run: |
+          cd streamlit_drawable_canvas/frontend
+          npm ci --legacy-peer-deps
+
+      - name: Run pre-commit on all files
+        run: pre-commit run --show-diff-on-failure --color=always --all-files

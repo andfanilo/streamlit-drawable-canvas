@@ -1,0 +1,102 @@
+.dc-container {
+  position: relative;
+  box-sizing: content-box;
+}
+
+.dc-background-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+.dc-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  border: 1px solid var(--st-border-color, lightgrey);
+}
+
+/* Geometry only; the visible card is `.dc-toolbar-card`. The padding bridges
+   the gap to the canvas so hover survives crossing it. */
+.dc-toolbar {
+  position: absolute;
+  right: 0;
+  top: -1rem;
+  padding: 0.5rem 0 0.5rem 0.5rem;
+  display: flex;
+  opacity: 0;
+  transition: none;
+  z-index: 20;
+}
+
+.dc-container:hover > .dc-toolbar,
+.dc-toolbar:hover,
+.dc-toolbar:focus-within {
+  opacity: 1;
+  top: -2.65rem;
+  transition:
+    opacity 150ms 100ms,
+    top 100ms 100ms;
+}
+
+/* Set when nothing sends automatically: the send button is then the only way
+   to commit a drawing, so it must not be hover-hidden. */
+.dc-toolbar[data-pinned="true"] {
+  opacity: 1;
+  top: -2.65rem;
+}
+
+.dc-toolbar-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  width: fit-content;
+  padding: 0.25rem;
+  border-radius: var(--st-base-radius, 0.5rem);
+  /* Streamlit's `lightenedBg05`; first declaration is the fallback. */
+  background: var(--st-background-color, #fff);
+  background: color-mix(in srgb, var(--st-background-color, #fff) 96%, white);
+  box-shadow: 1px 2px 8px rgba(0, 0, 0, 0.15);
+  color: color-mix(in srgb, var(--st-text-color, #31333f) 70%, transparent);
+}
+
+.dc-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  min-height: unset;
+  border: none;
+  border-radius: var(--st-button-radius, 0.5rem);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.dc-icon-button svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.dc-icon-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--st-text-color, #31333f) 15%, transparent);
+}
+
+.dc-icon-button:active:not(:disabled),
+.dc-icon-button:focus-visible:not(:disabled) {
+  background: color-mix(in srgb, var(--st-text-color, #31333f) 25%, transparent);
+}
+
+.dc-icon-button:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.dc-icon-button:disabled {
+  cursor: not-allowed;
+  background: none;
+  color: color-mix(in srgb, var(--st-text-color, #31333f) 25%, transparent);
+}

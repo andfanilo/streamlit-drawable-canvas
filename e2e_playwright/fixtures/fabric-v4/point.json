@@ -1,0 +1,42 @@
+{
+  "version": "4.4.0",
+  "objects": [
+    {
+      "type": "circle",
+      "version": "4.4.0",
+      "originX": "left",
+      "originY": "center",
+      "left": 138.5,
+      "top": 99,
+      "width": 16,
+      "height": 16,
+      "fill": "#eee",
+      "stroke": "#800080",
+      "strokeWidth": 5,
+      "strokeDashArray": null,
+      "strokeLineCap": "butt",
+      "strokeDashOffset": 0,
+      "strokeLineJoin": "miter",
+      "strokeUniform": false,
+      "strokeMiterLimit": 4,
+      "scaleX": 1,
+      "scaleY": 1,
+      "angle": 0,
+      "flipX": false,
+      "flipY": false,
+      "opacity": 1,
+      "shadow": null,
+      "visible": true,
+      "backgroundColor": "",
+      "fillRule": "nonzero",
+      "paintFirst": "fill",
+      "globalCompositeOperation": "source-over",
+      "skewX": 0,
+      "skewY": 0,
+      "radius": 8,
+      "startAngle": 0,
+      "endAngle": 6.283185307179586
+    }
+  ],
+  "background": "#eeeeee"
+}

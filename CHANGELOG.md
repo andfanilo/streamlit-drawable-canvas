@@ -5,6 +5,82 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-09-03
+
+Rebuilt on **Streamlit Components v2** and **Fabric.js 7** (from Fabric.js 4.4.0),
+replacing the React 16 / CRA v1 frontend.
+
+### Breaking
+
+- **`image_data` is now opt-in.** Pass `return_image_data=True` to `st_canvas()`;
+  accessing `image_data` without it raises `RuntimeError`. `Pillow` and `numpy` moved
+  out of the base install into the `[image]` extra: `pip install streamlit-drawable-canvas[image]`.
+- **Minimum Streamlit is now 1.53; minimum Python is now 3.10.**
+- **`background_image` works again**, and is widened to accept a URL, `data:` URI, local
+  path, raw bytes, or a PIL Image -- the same inputs `st.image` accepts. It was broken on
+  Streamlit >= ~1.5x because it called a private Streamlit API
+  (`streamlit.elements.image.image_to_url`) that had moved and changed signature; the
+  new implementation resolves images entirely on the Python side, with no private APIs.
+- **Object `type` in `json_data` is now capitalized.** Fabric 7 emits `"Rect"`,
+  `"Circle"`, `"Line"`, `"Path"`; Fabric 4 emitted `"rect"`, `"circle"`, `"line"`,
+  `"path"`. Code that branches on `obj["type"] == "rect"` does not error -- it silently
+  stops matching. Compare case-insensitively if you handle payloads from both versions.
+- **Saved drawings from 0.9.x with `circle` or `point` objects render as a thin sliver,
+  not the original shape**, when fed back in via `initial_drawing`. Fabric 4 wrote
+  `Circle.startAngle`/`endAngle` in radians; Fabric 7 reinterprets those same JSON keys
+  as degrees, and `loadFromJSON` doesn't consult the JSON's `version` field to tell the
+  difference. Declared breaking, with no migration shim. Line, Rect, freedraw, Polygon,
+  and Transform objects are unaffected.
+- An unrecognized `drawing_mode` now raises `ValueError` instead of silently falling
+  back to `"freedraw"`.
+
+### Added
+
+- `on_change`: an optional callback invoked when the component sends a new drawing.
+- `background_image_fit`: `"stretch"` (default, the historical behaviour) or `"contain"`,
+  which preserves the background image's aspect ratio and centres it inside the canvas
+  rather than distorting it to fill. Makes a canvas larger than its background image
+  usable, and lets an image keep its proportions.
+- `disabled`: renders the canvas read-only. Drawing, selection and transforms are inert,
+  nothing is sent back to Streamlit, and the toolbar is hidden regardless of
+  `display_toolbar` -- undo/redo/reset would otherwise let a viewer mutate a canvas that
+  is meant to be read-only. `initial_drawing` still renders.
+- The component renders without an iframe (Streamlit Components v2), and undo/redo
+  history now survives an unrelated widget rerun.
+- `FAQ.md`: a reference for the `json_data` structure and the behaviours that most
+  often trip people up -- `scaleX`/`scaleY` after a transform, centre-relative `Line`
+  coordinates, the smoothed `freedraw` path, canvas-versus-source-image coordinates,
+  and how to clear the canvas from Python.
+
+### Changed
+
+- **The toolbar now looks and behaves like a native Streamlit element toolbar.** It was a
+  row of bare icons pinned below the canvas's bottom-left corner, always visible; it is
+  now a floating, shadowed card at the canvas's top-right, above the canvas rather than
+  beside it, fading in on hover the way the `st.dataframe` and chart toolbars do.
+  Geometry, radii, hover and active tints all come from the Streamlit theme
+  (`--st-base-radius`, `--st-button-radius`, `--st-text-color`,
+  `--st-background-color`), so it tracks light, dark and custom themes -- including the
+  two values Streamlit itself varies by theme base, shadow depth and icon opacity. Icons
+  are inline SVG on `currentColor`, replacing the old recolored PNGs. The canvas border
+  follows `--st-border-color` instead of a hardcoded `lightgrey`.
+- **The toolbar no longer occupies layout space.** The component's height is now exactly
+  the `height` you pass, not `height + 32`. Incidentally fixes the bin icon sitting close
+  enough to the canvas to be hit by accident.
+- **The send button is renamed "Update the app with this drawing"** (was "Send to
+  Streamlit") and its icon is now an upload arrow. The old label named the framework
+  rather than the effect, on a surface the app's *users* see; the old glyph was the one
+  Streamlit's own toolbars use for "Download as CSV", so it read as "save the image".
+  If you drive the button in a test, it is addressed by that new accessible name.
+- **The toolbar stays pinned open when nothing sends automatically** -- that is, when
+  `update_streamlit=False` or `drawing_mode="polygon"`. Hiding it behind a hover would
+  hide the only discoverable way to commit a drawing. It is hover-revealed otherwise.
+
+### Fixed
+
+- `CanvasResult` was returned as the class itself rather than an instance when the
+  component had no value yet.
+
 ## [0.9.2] - 2022-09-08
 
 - Fix background image on Streamlit Cloud and remote servers (thanks @andreaferretti)

@@ -62,3 +62,19 @@ coverage/
 # VSCode
 ########################################################################
 .vscode/
+
+########################################################################
+# uv / ruff
+# uv.lock is intentionally NOT ignored -- it is tracked for reproducibility.
+########################################################################
+.venv/
+.ruff_cache/
+
+########################################################################
+# Playwright
+########################################################################
+e2e_playwright/test-results
+e2e_playwright/__snapshots__/win32
+
+# Local migration planning notes -- kept on disk, not shipped
+docs/plans/
