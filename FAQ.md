@@ -121,6 +121,20 @@ y = obj["top"]  * scale_y
 The same applies in reverse when feeding `initial_drawing` from a differently-sized
 canvas — the component will not rescale it for you.
 
+If you set `background_image_fit="contain"`, the image no longer fills the canvas, so
+the mapping gains an offset. With a canvas of `cw`×`ch` and an image of `iw`×`ih`:
+
+```python
+scale = min(cw / iw, ch / ih)
+offset_x = (cw - iw * scale) / 2
+offset_y = (ch - ih * scale) / 2
+
+image_x = (obj["left"] - offset_x) / scale
+image_y = (obj["top"] - offset_y) / scale
+```
+
+Coordinates outside the image land outside `0..iw` / `0..ih` — clamp if that matters.
+
 ## Bounding boxes exclude the stroke
 
 `left`/`top`/`width`/`height` describe the shape's *path*, not its painted extent. A

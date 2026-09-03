@@ -34,6 +34,10 @@ replacing the React 16 / CRA v1 frontend. See
 ### Added
 
 - `on_change`: an optional callback invoked when the component sends a new drawing.
+- `background_image_fit`: `"stretch"` (default, the historical behaviour) or `"contain"`,
+  which preserves the background image's aspect ratio and centres it inside the canvas
+  rather than distorting it to fill. Makes a canvas larger than its background image
+  usable, and lets an image keep its proportions.
 - `disabled`: renders the canvas read-only. Drawing, selection and transforms are inert,
   nothing is sent back to Streamlit, and the toolbar is hidden regardless of
   `display_toolbar` -- undo/redo/reset would otherwise let a viewer mutate a canvas that

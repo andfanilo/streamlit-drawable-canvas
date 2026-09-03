@@ -123,6 +123,7 @@ st_canvas(
     key: str
     on_change: callable
     disabled: bool
+    background_image_fit: str
 )
 ```
 
@@ -142,6 +143,7 @@ st_canvas(
 - **return_image_data** : If `True`, populate `image_data` on the result with the canvas's RGBA pixels. `False` by default -- it PNG-encodes the whole canvas on every send. Requires the `image` extra; accessing `image_data` without both raises.
 - **key** : An optional string to use as the unique key for the widget. Assign a key so the component is not remounted on every rerun.
 - **on_change** : Optional callback invoked when the component sends a new drawing.
+- **background_image_fit** : One of `"stretch"` (default) or `"contain"`. `"stretch"` scales each axis independently to fill the canvas exactly, distorting the image when the aspect ratios differ -- this is the historical behaviour. `"contain"` preserves the aspect ratio, fitting the image inside the canvas and centring it, so a canvas larger than its background image gets margins instead of a stretched image. Ignored when no `background_image` is set. Any other value raises `ValueError`.
 - **disabled** : If `True`, render the canvas read-only -- drawing, selection and transforms are all inert, nothing is sent back to Streamlit, and the toolbar is hidden regardless of `display_toolbar`. `initial_drawing` still renders, so this is how you show a drawing back to someone without letting them change it. Defaults to `False`.
 
 Example:

@@ -90,6 +90,9 @@ _VALID_DRAWING_MODES = frozenset(
     {"circle", "freedraw", "line", "point", "polygon", "rect", "transform"}
 )
 
+# Kept in sync with BackgroundImageFit in frontend/src/background.ts.
+_VALID_BACKGROUND_IMAGE_FITS = frozenset({"contain", "stretch"})
+
 
 def _looks_like_url(value: str) -> bool:
     return value.startswith(("http://", "https://", "data:"))
@@ -185,6 +188,7 @@ def st_canvas(
     key: str | None = None,
     on_change: Callable[[], None] | None = None,
     disabled: bool = False,
+    background_image_fit: str = "stretch",
 ) -> CanvasResult:
     """Create a drawing canvas in a Streamlit app.
 
@@ -246,6 +250,14 @@ def st_canvas(
         that is supposed to be read-only). `initial_drawing` still renders,
         so this is the way to display a drawing back to someone without
         letting them change it. Defaults to False.
+    background_image_fit: {'stretch', 'contain'}
+        How `background_image` is scaled onto the canvas. "stretch" (the
+        default, and the historical behaviour) scales each axis
+        independently to fill the canvas exactly, distorting the image if
+        its aspect ratio differs. "contain" preserves the aspect ratio,
+        scaling the image to fit inside the canvas and centring it, so a
+        canvas larger than the image gets margins instead of a stretched
+        image. Ignored when no `background_image` is set.
 
     Returns
     -------
@@ -260,6 +272,12 @@ def st_canvas(
         raise ValueError(
             f"drawing_mode must be one of {sorted(_VALID_DRAWING_MODES)}, "
             f"got {drawing_mode!r}"
+        )
+
+    if background_image_fit not in _VALID_BACKGROUND_IMAGE_FITS:
+        raise ValueError(
+            "background_image_fit must be one of "
+            f"{sorted(_VALID_BACKGROUND_IMAGE_FITS)}, got {background_image_fit!r}"
         )
 
     background_image_url = _resolve_background_image_url(background_image)
@@ -287,6 +305,7 @@ def st_canvas(
         "displayRadius": point_display_radius,
         "returnImageData": return_image_data,
         "disabled": disabled,
+        "backgroundImageFit": background_image_fit,
     }
 
     result = out(

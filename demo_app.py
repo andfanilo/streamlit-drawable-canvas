@@ -60,6 +60,7 @@ with st.sidebar:
     realtime_update = st.checkbox("Update in realtime", True)
     display_toolbar = st.checkbox("Display toolbar", True)
     disabled = st.checkbox("Disabled (read-only)", False)
+    background_image_fit = st.selectbox("Background image fit", ("stretch", "contain"))
     return_image_data = st.checkbox("Return image data", True)
     bg_source = st.selectbox(
         "background_image source",
@@ -101,6 +102,7 @@ canvas_result = st_canvas(
     drawing_mode=drawing_mode,
     display_toolbar=display_toolbar,
     disabled=disabled,
+    background_image_fit=background_image_fit,
     point_display_radius=point_display_radius,
     return_image_data=return_image_data,
     key="canvas",

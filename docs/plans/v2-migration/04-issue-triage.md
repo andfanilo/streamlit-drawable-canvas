@@ -151,10 +151,16 @@ and #120 are the same request from opposite ends:
 One knob (`"stretch"` — current behaviour, default — versus `"contain"`) closes both.
 Keep the default as-is so this is additive, not breaking.
 
-- [ ] `background_image_fit: str = "stretch"` on `st_canvas`, validated like `drawing_mode`
-- [ ] `contain` branch in `fitToCanvas`, honoured by `rescaleBackgroundImage` too
-- [ ] Demo app coverage + a Playwright screenshot fixture (T4 territory — rendering *is*
-      the thing under test here)
+- [x] `background_image_fit: str = "stretch"` on `st_canvas`, validated like
+      `drawing_mode`. Appended last in the signature so nothing shifts positionally
+- [x] `contain` branch in `fitToCanvas` (uniform scale, centred), honoured by
+      `rescaleBackgroundImage` too. `applyData`'s background memoization now keys on fit
+      as well as URL, so a fit change re-fits the loaded image without re-fetching it
+- [x] Demo app coverage (a sidebar selectbox)
+- [x] Playwright: 3 tests. **No screenshot snapshot after all** — a solid-colour image on
+      a mismatched aspect ratio makes the two modes separable by sampling single pixels
+      via `getImageData`, which is immune to the antialiasing sensitivity T3 warns about.
+      One test toggles fit at runtime to cover the re-fit-without-re-fetch branch
 
 ### F3 — `disabled`: read-only canvas (1 issue)
 
@@ -280,7 +286,7 @@ surface. Drop them if the branch needs to land sooner; they carry cleanly to 0.1
 should be attempted after `just bump 0.10.0`.
 
 - [x] F1 `FAQ.md`
-- [ ] F2 `background_image_fit`
+- [x] F2 `background_image_fit`
 - [x] F3 `disabled`
 - [ ] F4 mobile verification test
 - [x] §1.2 lifecycle regression test — done, `canvas_isolation_test.py` (3 passed)

@@ -4,7 +4,11 @@ import type {
   FrontendState,
 } from "@streamlit/component-v2-lib";
 
-import { applyBackgroundImage, rescaleBackgroundImage } from "./background";
+import {
+  applyBackgroundImage,
+  BackgroundImageFit,
+  rescaleBackgroundImage,
+} from "./background";
 import { createSender, Sender } from "./debounce";
 import { HistoryStore } from "./history";
 import { buildToolbar, setToolbarState, ToolbarHandles } from "./toolbar";
@@ -30,6 +34,7 @@ export interface DrawableCanvasData {
   displayRadius: number;
   returnImageData: boolean;
   disabled: boolean;
+  backgroundImageFit: BackgroundImageFit;
 }
 
 export interface DrawableCanvasDrawing {
@@ -60,6 +65,7 @@ export interface CanvasInstance {
   lastToolKey: string | null;
   lastInitialDrawingKey: string | null;
   lastBackgroundImageURL: string | null;
+  lastBackgroundImageFit: BackgroundImageFit | null;
   width: number;
   height: number;
   loadGeneration: number;
@@ -204,6 +210,7 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
     lastToolKey: null,
     lastInitialDrawingKey: null,
     lastBackgroundImageURL: null,
+    lastBackgroundImageFit: null,
     width: 0,
     height: 0,
     loadGeneration: 0,
@@ -344,14 +351,19 @@ export const applyData = (
   instance.toolbarEl.style.top = `${data.canvasHeight + 4}px`;
   instance.toolbarEl.style.display = showToolbar ? "flex" : "none";
 
-  // 2. Background image (memoized)
+  // 2. Background image (memoized on URL; a fit or size change re-fits the
+  //    image already loaded rather than re-fetching it)
+  const fitChanged =
+    data.backgroundImageFit !== instance.lastBackgroundImageFit;
+  instance.lastBackgroundImageFit = data.backgroundImageFit;
   if (data.backgroundImageURL !== instance.lastBackgroundImageURL) {
     instance.lastBackgroundImageURL = data.backgroundImageURL;
     const generation = ++instance.backgroundGeneration;
     void applyBackgroundImage(
       instance.backgroundCanvas,
       data.backgroundImageURL,
-      () => generation === instance.backgroundGeneration
+      () => generation === instance.backgroundGeneration,
+      data.backgroundImageFit
     ).catch((error) => {
       console.error(
         "streamlit-drawable-canvas: failed to load background image",
@@ -362,8 +374,8 @@ export const applyData = (
         instance.lastBackgroundImageURL = null;
       }
     });
-  } else if (resized) {
-    rescaleBackgroundImage(instance.backgroundCanvas);
+  } else if (resized || fitChanged) {
+    rescaleBackgroundImage(instance.backgroundCanvas, data.backgroundImageFit);
   }
 
   // 3. Initial drawing (memoized) -- reloading on every rerun would wipe the

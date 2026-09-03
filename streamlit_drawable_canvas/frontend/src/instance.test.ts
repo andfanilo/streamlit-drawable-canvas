@@ -16,6 +16,7 @@ const baseData: DrawableCanvasData = {
   displayRadius: 3,
   returnImageData: false,
   disabled: false,
+  backgroundImageFit: "stretch",
 };
 
 describe("toolKeyFor", () => {
@@ -58,6 +59,7 @@ describe("toolKeyFor", () => {
         initialDrawing: { objects: [{ type: "rect" }] },
         displayToolbar: false,
         returnImageData: true,
+        backgroundImageFit: "contain",
       })
     ).toBe(base);
   });
