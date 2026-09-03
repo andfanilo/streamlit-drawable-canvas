@@ -15,6 +15,7 @@ bringing the repo up to parity with `../streamlit-echarts`.
 | `01-infra.md` | Stage 1 — packaging, infra, test harness, **v4 JSON fixture capture** |
 | `02-frontend.md` | Stage 2 — frontend rewrite + Python v2 API + modernization |
 | `03-release.md` | Stage 3 — docs, demo, release |
+| `04-issue-triage.md` | The 50 open GitHub issues, triaged against the rewrite: what it already fixed, what is cheap enough to fold in, what is out of scope |
 
 ---
 
