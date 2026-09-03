@@ -18,10 +18,11 @@ Make 0.10.0 explicable to the people it breaks, give the repo a demo app matchin
 surface could be verified by hand before sign-off (commit `9697da9`). What remains is
 the `background_image` / `initial_drawing` / form coverage and the `just demo` recipe.
 
-- [x] `demo_app.py` exists at the repo root; added `alias demo := run` to the justfile (T8)
-      rather than renaming `run` — `CONTRIBUTING.md` and other docs already reference
-      `just run` and this repo's frontend is CRA-free, so nothing was lost by keeping both
-      names live
+- [x] `demo_app.py` exists at the repo root; added `alias demo := app-run` to the justfile
+      (T8). Initially added the alias onto the existing `run` recipe rather than renaming
+      it; maintainer preference was to rename it to `app-run` (prefix-style), which
+      required updating the doc references that had accumulated in the meantime
+      (`AGENTS.md`, `CONTRIBUTING.md`)
 - [x] Exercise every `drawing_mode`: freedraw, transform, line, rect, circle, point, polygon
 - [x] Exercise the changed surface specifically:
   - [x] `background_image` with each accepted input type (URL, path, bytes, PIL) — this is

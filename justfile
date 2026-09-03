@@ -30,14 +30,14 @@ reinstall: clean setup
 # --- Run ---
 
 # Serve the component from frontend/build (run `just build-frontend` first)
-run:
+app-run:
     uv run streamlit run {{demo_app}}
 
 # Alias matching ../streamlit-echarts's `just demo`
-alias demo := run
+alias demo := app-run
 
-# Frontend watch-rebuild — run alongside `just run`; Vite rebuilds frontend/build on
-# every save, `just run`'s already-running Streamlit process picks it up on refresh
+# Frontend watch-rebuild — run alongside `just app-run`; Vite rebuilds frontend/build on
+# every save, `just app-run`'s already-running Streamlit process picks it up on refresh
 dev:
     cd {{frontend}} && npm run dev
 

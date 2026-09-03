@@ -105,7 +105,7 @@ just e2e          # uv run pytest e2e_playwright -n auto
 |---|---|
 | `setup` / `setup-py` / `setup-frontend` | Install deps (full / Python only / frontend only) |
 | `dev` | Vite watch-rebuild frontend on save — run alongside `just demo` |
-| `run` (alias: `demo`) | `uv run streamlit run demo_app.py` |
+| `app-run` (alias: `demo`) | `uv run streamlit run demo_app.py` |
 | `lint` / `lint-py` / `lint-frontend` | ruff check + `tsc --noEmit` + prettier check (combined / split) |
 | `format` / `format-py` / `format-frontend` | ruff format + prettier write |
 | `pre-commit` | `uv run pre-commit run --all-files` |
