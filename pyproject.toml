@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "streamlit-drawable-canvas"
-version = "0.9.3"
+version = "0.10.0"
 description = "A Streamlit custom component for a free drawing canvas using Fabric.js."
 readme = "README.md"
 license = "MIT"
