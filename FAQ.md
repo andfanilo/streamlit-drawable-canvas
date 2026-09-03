@@ -149,8 +149,18 @@ that difference is why the crop can look slightly too small — expand by
 
 ### How do I delete one shape without pressing undo repeatedly?
 
-Switch to `drawing_mode="transform"` and **double-click** the shape. This is currently
-the only in-canvas delete for a single object; the toolbar's bin icon clears everything.
+Switch to `drawing_mode="transform"`, select the shape, and click the toolbar's delete
+button. It's shown only in transform mode, next to bring-forward/send-backward; the
+toolbar's bin icon is separate and clears everything.
+
+### Can I let an object move but not resize, or lock it entirely?
+
+Yes, through Fabric's own `lock*` properties on an object in `initial_drawing`:
+`lockMovementX`/`Y`, `lockScalingX`/`Y`, `lockRotation`, `lockSkewingX`/`Y`,
+`lockScalingFlip`. Set the ones you want on an object before passing it in, and
+transform mode respects them — a `lockScalingX: True, lockScalingY: True` rectangle can
+be dragged but not resized. They round-trip through `json_data` too, so a canvas fed its
+own previous output keeps the locks.
 
 ### How do I clear the canvas from Python?
 
@@ -191,19 +201,15 @@ if submitted:
 
 The canvas keeps `update_streamlit=True`, so it records every stroke as you draw — but
 the form holds the rerun back until Submit, and then you read the finished drawing. Your
-app's users never have to find a button inside the canvas toolbar, and it still works
-with `display_toolbar=False`. The canvas is not a trigger widget, so it never submits the
-form on its own.
+app's users never have to find a button inside the canvas toolbar. The canvas is not a
+trigger widget, so it never submits the form on its own.
 
 `update_streamlit=False` is the lower-level tool: it stops the sends themselves. Nothing
-reaches Python until something forces a send — the toolbar's first button, a right-click
-on the canvas, or the reset button. Use it when you want to suppress traffic (an
-expensive rerun, a large `return_image_data` payload) rather than to batch a form. Two
-things to know:
-
-- The toolbar stays **pinned open** rather than appearing on hover, since its send button
-  is then the only discoverable way to commit a drawing.
-- Right-click is not available on touch devices, so don't make it the only path.
+reaches Python until something forces a send — the toolbar's send button, or reset. Use
+it when you want to suppress traffic (an expensive rerun, a large `return_image_data`
+payload) rather than to batch a form. The toolbar stays **pinned open** rather than
+appearing on hover in this case, since its send button is then the only discoverable way
+to commit a drawing.
 
 ### Why doesn't my polygon appear in `json_data`?
 
@@ -215,18 +221,26 @@ to send. (This makes polygons impractical on touch devices, which have no right-
 ### Can I tell a left-click from a right-click?
 
 Not from `json_data`. In `point` mode only a left-click places a point; a right-click
-forces a send of whatever is already on the canvas. The distinction is not recorded.
+does nothing (the browser's own context menu opens instead), except in `polygon` mode,
+where it closes the shape. The distinction is not recorded.
 
-### `image_data` raises `RuntimeError`
+### `image_data` or `image_bytes` raises `RuntimeError`
 
-It is opt-in as of 0.10.0. Pass `return_image_data=True` and install the extra:
+Both are opt-in as of 0.10.0. Pass `return_image_data=True`:
 
-```sh
-pip install streamlit-drawable-canvas[image]
+```python
+st_canvas(return_image_data=True)
 ```
 
 It PNG-encodes the whole canvas on every send, which is wasted work for the majority of
 callers who only read `json_data` — hence the default.
+
+### `image_data` vs `image_bytes`
+
+`image_data` decodes the canvas's PNG into an RGBA numpy array — reach for it when you
+want to manipulate pixels or hand it to `st.image`. `image_bytes` is the raw PNG bytes
+with no numpy/Pillow involved — reach for it for `st.download_button` or writing straight
+to a file. Both require `return_image_data=True`.
 
 ### My saved 0.9.x drawing renders as a thin sliver
 
@@ -240,4 +254,19 @@ migration shim — see the `[0.10.0]` entry in `CHANGELOG.md`. Every other shape
 No. `width`/`height` are fixed canvas pixel dimensions, deliberately: Fabric's coordinates
 live in canvas pixel space, so a responsive canvas would make every saved drawing
 depend on the viewport it was drawn in. This was considered for 0.10.0 and deliberately
-rejected.
+rejected. The same reasoning rules out zoom and pan.
+
+### My canvas is bigger than the screen
+
+Set `max_display_height`. It caps the canvas's *displayed* height and makes it scroll
+vertically inside that box, the way `st.container(height=...)` does — `width`, `height`,
+and every coordinate in `json_data` are untouched, since nothing about Fabric changes.
+Horizontal scrolling is always on, independent of this parameter, for a canvas wider than
+the space Streamlit gives it.
+
+```python
+st_canvas(height=2000, width=1200, max_display_height=600)
+```
+
+This is not zoom: the canvas still renders at full resolution, just clipped and
+scrollable. See the previous entry for why an actual zoom isn't planned.

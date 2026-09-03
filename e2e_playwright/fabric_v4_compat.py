@@ -31,7 +31,6 @@ for name in FIXTURE_NAMES:
         width=300,
         drawing_mode="transform",
         initial_drawing=fixture_data,
-        display_toolbar=True,
         key=f"fixture_{name}",
     )
     st.code(json.dumps(result.json_data), language="json")

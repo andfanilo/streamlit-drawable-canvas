@@ -29,7 +29,8 @@ Homepage = "https://github.com/andfanilo/streamlit-drawable-canvas"
 "Bug Tracker" = "https://github.com/andfanilo/streamlit-drawable-canvas/issues"
 
 [project.optional-dependencies]
-image = ["Pillow", "numpy"]
+# Intentionally empty; see CHANGELOG.md.
+image = []
 
 [dependency-groups]
 dev = [

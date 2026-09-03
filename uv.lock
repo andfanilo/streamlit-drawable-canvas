@@ -1787,14 +1787,6 @@ dependencies = [
     { name = "streamlit" },
 ]
 
-[package.optional-dependencies]
-image = [
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "pillow" },
-]
-
 [package.dev-dependencies]
 dev = [
     { name = "pre-commit" },
@@ -1811,11 +1803,7 @@ e2e = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "numpy", marker = "extra == 'image'" },
-    { name = "pillow", marker = "extra == 'image'" },
-    { name = "streamlit", specifier = ">=1.53" },
-]
+requires-dist = [{ name = "streamlit", specifier = ">=1.53" }]
 provides-extras = ["image"]
 
 [package.metadata.requires-dev]

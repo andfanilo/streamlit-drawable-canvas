@@ -41,7 +41,7 @@ def test_disabled_canvas_ignores_transform(app: Page):
     assert read_json(app, DISABLED) == before
 
 
-def test_disabled_hides_the_toolbar_despite_display_toolbar(app: Page):
+def test_disabled_hides_the_toolbar(app: Page):
     disabled_root = component(app, DISABLED)
     enabled_root = component(app, ENABLED)
 

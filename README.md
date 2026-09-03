@@ -39,12 +39,6 @@ Streamlit).
 pip install streamlit-drawable-canvas
 ```
 
-`return_image_data=True` additionally requires Pillow and numpy:
-
-```shell
-pip install streamlit-drawable-canvas[image]
-```
-
 ## Example Usage
 
 Copy this code snippet:
@@ -117,13 +111,13 @@ st_canvas(
     width: int
     drawing_mode: str
     initial_drawing: dict
-    display_toolbar: bool
     point_display_radius: int
     return_image_data: bool
     key: str
     on_change: callable
     disabled: bool
     background_image_fit: str
+    max_display_height: int
 )
 ```
 
@@ -139,12 +133,12 @@ st_canvas(
   - On "polygon" mode, double-clicking will remove the latest point and right-clicking will close the polygon.
 - **initial_drawing** : Initialize canvas with drawings from here. Should be the `json_data` output from another canvas. Beware: if you try to import a drawing from a bigger/smaller canvas, no rescaling is done in the canvas and the import could fail.
 - **point_display_radius** : To make points visible on the canvas, they are drawn as circles. This parameter modifies the radius of the displayed circle.
-- **display_toolbar** : If `False`, don't display the undo/redo/reset toolbar. When shown, it appears on hover as a floating card above the canvas's top-right corner, matching Streamlit's own element toolbars, and takes up no layout space.
-- **return_image_data** : If `True`, populate `image_data` on the result with the canvas's RGBA pixels. `False` by default -- it PNG-encodes the whole canvas on every send. Requires the `image` extra; accessing `image_data` without both raises.
+- **return_image_data** : If `True`, populate `image_data` (RGBA numpy array) and `image_bytes` (raw PNG bytes, for `st.download_button`) on the result. `False` by default -- it PNG-encodes the whole canvas on every send. Accessing either without it raises `RuntimeError`.
 - **key** : An optional string to use as the unique key for the widget. Assign a key so the component is not remounted on every rerun.
 - **on_change** : Optional callback invoked when the component sends a new drawing.
 - **background_image_fit** : One of `"stretch"` (default) or `"contain"`. `"stretch"` scales each axis independently to fill the canvas exactly, distorting the image when the aspect ratios differ -- this is the historical behaviour. `"contain"` preserves the aspect ratio, fitting the image inside the canvas and centring it, so a canvas larger than its background image gets margins instead of a stretched image. Ignored when no `background_image` is set. Any other value raises `ValueError`.
-- **disabled** : If `True`, render the canvas read-only -- drawing, selection and transforms are all inert, nothing is sent back to Streamlit, and the toolbar is hidden regardless of `display_toolbar`. `initial_drawing` still renders, so this is how you show a drawing back to someone without letting them change it. Defaults to `False`.
+- **disabled** : If `True`, render the canvas read-only -- drawing, selection and transforms are all inert, nothing is sent back to Streamlit, and the toolbar is hidden. `initial_drawing` still renders, so this is how you show a drawing back to someone without letting them change it. Defaults to `False`.
+- **max_display_height** : Caps the canvas's displayed height in pixels and makes it scroll vertically inside that box. `height`, canvas pixel dimensions, and `json_data` coordinates are unaffected. `None` (the default) displays the canvas at its full height. Horizontal scrolling is always available, independent of this parameter.
 
 Example:
 
@@ -162,7 +156,7 @@ st_canvas(initial_drawing=canvas_result.json_data)
 upgrading:
 
 - **`image_data` raises `RuntimeError`** -- it's now opt-in. Pass `return_image_data=True`
-  to `st_canvas()`, and install the extra: `pip install streamlit-drawable-canvas[image]`.
+  to `st_canvas()`.
 - **Old Streamlit or Python** -- 0.10.0 needs Streamlit >= 1.53 and Python >= 3.10. If
   you can't upgrade, pin `streamlit-drawable-canvas==0.9.3`.
 - **Saved drawings from 0.9.x with Circle or Point objects render as a thin sliver, not

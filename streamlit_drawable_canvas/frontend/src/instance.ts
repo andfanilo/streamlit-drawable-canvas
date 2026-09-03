@@ -16,6 +16,19 @@ import { tools } from "./tools";
 
 const SEND_DEBOUNCE_MS = 200;
 
+// Not part of Fabric's default toObject() output; listed so these round-trip
+// through json_data. selectable/evented deliberately excluded.
+const LOCK_PROPERTIES = [
+  "lockMovementX",
+  "lockMovementY",
+  "lockRotation",
+  "lockScalingX",
+  "lockScalingY",
+  "lockSkewingX",
+  "lockSkewingY",
+  "lockScalingFlip",
+];
+
 export interface DrawableCanvasData {
   fillColor: string;
   strokeWidth: number;
@@ -27,11 +40,11 @@ export interface DrawableCanvasData {
   canvasHeight: number;
   drawingMode: string;
   initialDrawing: Record<string, unknown>;
-  displayToolbar: boolean;
   displayRadius: number;
   returnImageData: boolean;
   disabled: boolean;
   backgroundImageFit: BackgroundImageFit;
+  maxDisplayHeight: number | null;
 }
 
 export interface DrawableCanvasDrawing {
@@ -50,6 +63,8 @@ type SetStateValue = FrontendRendererArgs<
 
 export interface CanvasInstance {
   container: HTMLDivElement;
+  scrollEl: HTMLDivElement;
+  canvasBox: HTMLDivElement;
   canvas: Canvas;
   backgroundCanvas: StaticCanvas;
   toolbarEl: HTMLDivElement;
@@ -78,7 +93,7 @@ export interface CanvasInstance {
 const saveAndMaybeSend = (
   instance: CanvasInstance
 ): Record<string, unknown> => {
-  const state = instance.canvas.toObject();
+  const state = instance.canvas.toObject(LOCK_PROPERTIES);
   const changed = instance.history.save(state);
   if (changed && instance.latest.realtimeUpdateStreamlit) {
     instance.sender.schedule(state);
@@ -148,14 +163,27 @@ const reconfigureTool = (
   });
 };
 
-/** Reflects history depth onto the undo/redo buttons. */
+/** Reflects history depth, drawing mode and selection onto the toolbar. */
 const syncToolbar = (instance: CanvasInstance): void => {
   setToolbarState(
     instance.toolbarHandles,
     instance.history.canUndo(),
-    instance.history.canRedo()
+    instance.history.canRedo(),
+    instance.latest.data?.drawingMode === "transform",
+    instance.canvas.getActiveObject() != null
   );
 };
+
+const commitToolbarMutation = (instance: CanvasInstance): void => {
+  const state = saveAndMaybeSend(instance);
+  if (instance.latest.realtimeUpdateStreamlit) {
+    instance.sender.now(state);
+  }
+  syncToolbar(instance);
+};
+
+export const isToolbarVisible = (data: DrawableCanvasData): boolean =>
+  !data.disabled;
 
 /** Diffing key: changes iff a tool-affecting param changes. */
 export const toolKeyFor = (data: DrawableCanvasData): string =>
@@ -170,7 +198,13 @@ export const toolKeyFor = (data: DrawableCanvasData): string =>
 
 export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
   const container = document.createElement("div");
-  container.className = "dc-container";
+  container.className = "dc-root";
+
+  const scrollEl = document.createElement("div");
+  scrollEl.className = "dc-scroll";
+
+  const canvasBox = document.createElement("div");
+  canvasBox.className = "dc-container";
 
   const backgroundCanvasEl = document.createElement("canvas");
   backgroundCanvasEl.className = "dc-background-canvas";
@@ -181,11 +215,14 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
   const toolbarEl = document.createElement("div");
   toolbarEl.className = "dc-toolbar";
 
-  container.append(backgroundCanvasEl, canvasEl, toolbarEl);
+  canvasBox.append(backgroundCanvasEl, canvasEl);
+  scrollEl.appendChild(canvasBox);
+  container.append(scrollEl, toolbarEl);
   mountPoint.appendChild(container);
 
   const canvas = new Canvas(canvasEl, { enableRetinaScaling: false });
-  canvas.stopContextMenu = true;
+  // Polygon still needs right-click to close.
+  canvas.stopContextMenu = false;
   canvas.fireRightClick = true;
 
   const backgroundCanvas = new StaticCanvas(backgroundCanvasEl, {
@@ -194,6 +231,8 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
 
   const instance: CanvasInstance = {
     container,
+    scrollEl,
+    canvasBox,
     canvas,
     backgroundCanvas,
     toolbarEl,
@@ -224,13 +263,13 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
 
   instance.toolbarHandles = buildToolbar(toolbarEl, {
     onSend: () => {
-      instance.sender.now(canvas.toObject());
+      instance.sender.now(canvas.toObject(LOCK_PROPERTIES));
     },
     onUndo: () => {
       if (instance.history.undo()) {
         void reloadCanvasFromHistory(instance).then((applied) => {
           if (applied && instance.latest.realtimeUpdateStreamlit) {
-            instance.sender.now(canvas.toObject());
+            instance.sender.now(canvas.toObject(LOCK_PROPERTIES));
           }
         });
         syncToolbar(instance);
@@ -240,11 +279,33 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
       if (instance.history.redo()) {
         void reloadCanvasFromHistory(instance).then((applied) => {
           if (applied && instance.latest.realtimeUpdateStreamlit) {
-            instance.sender.now(canvas.toObject());
+            instance.sender.now(canvas.toObject(LOCK_PROPERTIES));
           }
         });
         syncToolbar(instance);
       }
+    },
+    onBringForward: () => {
+      const active = canvas.getActiveObject();
+      if (!active) return;
+      canvas.bringObjectForward(active);
+      canvas.renderAll();
+      commitToolbarMutation(instance);
+    },
+    onSendBackward: () => {
+      const active = canvas.getActiveObject();
+      if (!active) return;
+      canvas.sendObjectBackwards(active);
+      canvas.renderAll();
+      commitToolbarMutation(instance);
+    },
+    onDeleteSelected: () => {
+      const active = canvas.getActiveObject();
+      if (!active) return;
+      canvas.discardActiveObject();
+      canvas.remove(active);
+      canvas.renderAll();
+      commitToolbarMutation(instance);
     },
     onReset: () => {
       const resetTo = instance.history.initial ?? {};
@@ -252,7 +313,7 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
       // Always sent, even when update_streamlit=False.
       void reloadCanvasFromHistory(instance).then((applied) => {
         if (applied) {
-          instance.sender.now(canvas.toObject());
+          instance.sender.now(canvas.toObject(LOCK_PROPERTIES));
         }
       });
       syncToolbar(instance);
@@ -265,10 +326,13 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
   canvas.on("mouse:up", (opt) => {
     if (instance.latest.data?.disabled) return;
     const domEvent = opt.e as MouseEvent;
-    const isRightClick = domEvent != null && domEvent.button === 2;
+    const isPolygonClose =
+      instance.latest.data?.drawingMode === "polygon" &&
+      domEvent != null &&
+      domEvent.button === 2;
     queueMicrotask(() => {
       const state = saveAndMaybeSend(instance);
-      if (isRightClick) {
+      if (isPolygonClose) {
         instance.sender.now(state);
       }
       syncToolbar(instance);
@@ -283,6 +347,10 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
       syncToolbar(instance);
     });
   });
+
+  canvas.on("selection:created", () => syncToolbar(instance));
+  canvas.on("selection:updated", () => syncToolbar(instance));
+  canvas.on("selection:cleared", () => syncToolbar(instance));
 
   return instance;
 };
@@ -313,10 +381,16 @@ export const applyData = (
       height: data.canvasHeight,
     });
   }
-  const showToolbar = data.displayToolbar && !data.disabled;
-  instance.container.style.width = `${data.canvasWidth}px`;
-  instance.container.style.height = `${data.canvasHeight}px`;
-  instance.toolbarEl.style.display = showToolbar ? "flex" : "none";
+  instance.canvasBox.style.width = `${data.canvasWidth}px`;
+  instance.canvasBox.style.height = `${data.canvasHeight}px`;
+  if (data.maxDisplayHeight != null) {
+    instance.scrollEl.style.maxHeight = `${data.maxDisplayHeight}px`;
+    instance.scrollEl.style.overflowY = "auto";
+  } else {
+    instance.scrollEl.style.maxHeight = "";
+    instance.scrollEl.style.overflowY = "hidden";
+  }
+  instance.toolbarEl.style.display = isToolbarVisible(data) ? "flex" : "none";
   // Also covers polygon mode, where `realtimeUpdateStreamlit` is always false.
   instance.toolbarEl.dataset.pinned = String(!data.realtimeUpdateStreamlit);
 
@@ -350,6 +424,7 @@ export const applyData = (
   // 3. Initial drawing (memoized) -- reloading on every rerun would wipe the
   //    user's in-progress drawing.
   const initialDrawingKey = JSON.stringify(data.initialDrawing);
+  const isFirstLoad = instance.lastInitialDrawingKey === null;
   const initialDrawingChanged =
     initialDrawingKey !== instance.lastInitialDrawingKey;
 
@@ -369,6 +444,12 @@ export const applyData = (
       reconfigureTool(instance, latestData);
       instance.lastToolKey = toolKeyFor(latestData);
       syncToolbar(instance);
+      // Propagate the reload immediately (not just on the next user
+      // mutation), so a canvas fed by this one's json_data round-trips it
+      // without lagging a rerun behind.
+      if (!isFirstLoad && instance.latest.realtimeUpdateStreamlit) {
+        instance.sender.now(instance.canvas.toObject(LOCK_PROPERTIES));
+      }
     });
   } else {
     // 4. Tool (memoized) -- only reconfigure when drawing-mode/style params

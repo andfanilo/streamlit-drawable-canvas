@@ -7,7 +7,7 @@ from conftest import canvas, component, drag, read_json, wait_for_app_run
 from playwright.sync_api import Page, expect
 
 
-def test_update_streamlit_false_gates_sends_until_right_click_forces_one(
+def test_update_streamlit_false_gates_sends_until_toolbar_forces_one(
     app: Page,
 ):
     target = canvas(app, 0)
@@ -16,9 +16,20 @@ def test_update_streamlit_false_gates_sends_until_right_click_forces_one(
     app.wait_for_timeout(1500)
     assert read_json(app, 0)["objects"] == []
 
-    drag(app, target, 150, 150, 150, 150, button="right")
+    component(app, 0).get_by_label("Update the app with this drawing").click()
     wait_for_app_run(app)
     assert len(read_json(app, 0)["objects"]) == 1
+
+
+def test_right_click_no_longer_forces_a_send(app: Page):
+    target = canvas(app, 0)
+    drag(app, target, 20, 20, 80, 80)
+    app.wait_for_timeout(1500)
+    assert read_json(app, 0)["objects"] == []
+
+    drag(app, target, 150, 150, 150, 150, button="right")
+    app.wait_for_timeout(1500)
+    assert read_json(app, 0)["objects"] == []
 
 
 def test_initial_drawing_round_trips_into_another_canvas(app: Page):

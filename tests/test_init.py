@@ -9,6 +9,13 @@ def test_st_canvas_is_callable():
     assert callable(st_canvas)
 
 
+def test_st_canvas_rejects_non_positive_max_display_height():
+    with pytest.raises(ValueError, match="max_display_height"):
+        st_canvas(max_display_height=0)
+    with pytest.raises(ValueError, match="max_display_height"):
+        st_canvas(max_display_height=-10)
+
+
 def test_canvas_result_json_data():
     result = CanvasResult(
         json_data={"objects": []}, image_data_url=None, return_image_data=False
@@ -45,3 +52,28 @@ def test_canvas_result_image_data_decodes_data_url():
     arr = result.image_data
     assert isinstance(arr, numpy.ndarray)
     assert arr.shape == (3, 2, 4)  # numpy shape is (height, width, channels)
+
+
+def test_canvas_result_image_bytes_raises_when_not_requested():
+    result = CanvasResult(
+        json_data={"objects": []}, image_data_url=None, return_image_data=False
+    )
+    with pytest.raises(RuntimeError, match="return_image_data"):
+        _ = result.image_bytes
+
+
+def test_canvas_result_image_bytes_none_when_requested_but_no_data_url():
+    result = CanvasResult(json_data=None, image_data_url=None, return_image_data=True)
+    assert result.image_bytes is None
+
+
+def test_canvas_result_image_bytes_decodes_data_url():
+    import base64
+
+    raw = b"\x89PNG\r\n\x1a\nnot a real png but bytes are bytes"
+    data_url = f"data:image/png;base64,{base64.b64encode(raw).decode()}"
+
+    result = CanvasResult(
+        json_data=None, image_data_url=data_url, return_image_data=True
+    )
+    assert result.image_bytes == raw

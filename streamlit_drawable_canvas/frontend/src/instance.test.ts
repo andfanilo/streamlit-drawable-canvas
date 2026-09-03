@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DrawableCanvasData, toolKeyFor } from "./instance";
+import { DrawableCanvasData, isToolbarVisible, toolKeyFor } from "./instance";
 
 const baseData: DrawableCanvasData = {
   fillColor: "#eee",
@@ -12,12 +12,22 @@ const baseData: DrawableCanvasData = {
   canvasHeight: 400,
   drawingMode: "freedraw",
   initialDrawing: { objects: [] },
-  displayToolbar: true,
   displayRadius: 3,
   returnImageData: false,
   disabled: false,
   backgroundImageFit: "stretch",
+  maxDisplayHeight: null,
 };
+
+describe("isToolbarVisible", () => {
+  it("is visible by default", () => {
+    expect(isToolbarVisible(baseData)).toBe(true);
+  });
+
+  it("is hidden when disabled, with no other flag involved", () => {
+    expect(isToolbarVisible({ ...baseData, disabled: true })).toBe(false);
+  });
+});
 
 describe("toolKeyFor", () => {
   it("is stable across calls with equivalent tool-affecting fields", () => {
@@ -57,9 +67,9 @@ describe("toolKeyFor", () => {
         backgroundImageURL: "https://example.com/x.png",
         realtimeUpdateStreamlit: false,
         initialDrawing: { objects: [{ type: "rect" }] },
-        displayToolbar: false,
         returnImageData: true,
         backgroundImageFit: "contain",
+        maxDisplayHeight: 300,
       })
     ).toBe(base);
   });
