@@ -15,7 +15,6 @@ result = st_canvas(
     height=200,
     width=300,
     drawing_mode="rect",
-    display_toolbar=True,
     key="toolbar",
 )
 st.code(json.dumps(result.json_data), language="json")
@@ -27,6 +26,43 @@ st_canvas(
     width=300,
     drawing_mode="rect",
     update_streamlit=False,
-    display_toolbar=True,
     key="toolbar_pinned",
 )
+
+st.subheader("transform mode: contextual buttons")
+TRANSFORM_SEED = {
+    "objects": [
+        {
+            "type": "rect",
+            "left": 20,
+            "top": 20,
+            "width": 60,
+            "height": 60,
+            "fill": "#ff0000",
+            "stroke": "#000000",
+            "strokeWidth": 1,
+            "originX": "left",
+            "originY": "top",
+        },
+        {
+            "type": "rect",
+            "left": 40,
+            "top": 40,
+            "width": 60,
+            "height": 60,
+            "fill": "#00ff00",
+            "stroke": "#000000",
+            "strokeWidth": 1,
+            "originX": "left",
+            "originY": "top",
+        },
+    ]
+}
+result_transform = st_canvas(
+    height=200,
+    width=300,
+    drawing_mode="transform",
+    initial_drawing=TRANSFORM_SEED,
+    key="toolbar_transform",
+)
+st.code(json.dumps(result_transform.json_data), language="json")

@@ -17,7 +17,6 @@ result_gated = st_canvas(
     width=300,
     drawing_mode="rect",
     update_streamlit=False,
-    display_toolbar=False,
     key="gated",
 )
 st.code(json.dumps(result_gated.json_data), language="json")
@@ -28,7 +27,6 @@ result_source = st_canvas(
     height=200,
     width=300,
     drawing_mode="rect",
-    display_toolbar=False,
     key="roundtrip_source",
 )
 if result_source.json_data and result_source.json_data.get("objects"):
@@ -39,7 +37,6 @@ result_target = st_canvas(
     width=300,
     drawing_mode="transform",
     initial_drawing=st.session_state.get("roundtrip_saved"),
-    display_toolbar=True,
     key="roundtrip_target",
 )
 st.code(json.dumps(result_target.json_data), language="json")
@@ -51,7 +48,6 @@ result_image = st_canvas(
     width=300,
     drawing_mode="freedraw",
     return_image_data=True,
-    display_toolbar=False,
     key="image_data",
 )
 if result_image.image_data is not None:
@@ -66,7 +62,6 @@ with st.form("canvas_form"):
         height=200,
         width=300,
         drawing_mode="rect",
-        display_toolbar=False,
         key="form_canvas",
     )
     submitted = st.form_submit_button("Submit")

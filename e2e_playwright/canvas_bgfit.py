@@ -23,7 +23,6 @@ for fit in ("stretch", "contain"):
         background_image=IMG,
         background_image_fit=fit,
         drawing_mode="freedraw",
-        display_toolbar=False,
         key=f"bgfit_{fit}",
     )
 
@@ -38,6 +37,5 @@ st_canvas(
     background_image=IMG,
     background_image_fit=switchable_fit,
     drawing_mode="freedraw",
-    display_toolbar=False,
     key="bgfit_switchable",
 )

@@ -25,7 +25,6 @@ result_a = st_canvas(
     height=200,
     width=300,
     drawing_mode="rect",
-    display_toolbar=True,
     key="iso_a",
 )
 st.code(json.dumps(result_a.json_data), language="json")
@@ -36,7 +35,6 @@ result_b = st_canvas(
     height=200,
     width=300,
     drawing_mode="rect",
-    display_toolbar=True,
     key="iso_b",
 )
 st.code(json.dumps(result_b.json_data), language="json")

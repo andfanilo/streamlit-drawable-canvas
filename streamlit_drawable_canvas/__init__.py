@@ -39,6 +39,9 @@ class CanvasResult:
         RGBA image data as a 4D numpy array (r, g, b, alpha). Only available
         when `return_image_data=True` was passed to `st_canvas`; accessing
         this attribute otherwise raises.
+    image_bytes: bytes
+        Raw PNG bytes of the canvas, for `st.download_button` or writing to a
+        file. Same availability rule as `image_data`.
     """
 
     __slots__ = ("_image_data_url", "_return_image_data", "json_data")
@@ -53,23 +56,35 @@ class CanvasResult:
         self._image_data_url = image_data_url
         self._return_image_data = return_image_data
 
-    @property
-    def image_data(self) -> np.ndarray | None:
+    def _require_image_data_url(self) -> str | None:
         if not self._return_image_data:
             raise RuntimeError(
                 "image_data was not requested. Pass return_image_data=True to "
-                "st_canvas(), and install the image extra: "
-                "pip install streamlit-drawable-canvas[image]"
+                "st_canvas()."
             )
-        if self._image_data_url is None:
+        return self._image_data_url
+
+    @property
+    def image_data(self) -> np.ndarray | None:
+        image_data_url = self._require_image_data_url()
+        if image_data_url is None:
             return None
 
         import numpy as np
         from PIL import Image
 
-        _, encoded = self._image_data_url.split(";base64,", 1)
+        _, encoded = image_data_url.split(";base64,", 1)
         img = Image.open(io.BytesIO(base64.b64decode(encoded)))
         return np.asarray(img)
+
+    @property
+    def image_bytes(self) -> bytes | None:
+        image_data_url = self._require_image_data_url()
+        if image_data_url is None:
+            return None
+
+        _, encoded = image_data_url.split(";base64,", 1)
+        return base64.b64decode(encoded)
 
 
 # Content-addressed LRU cache for encoded background images: an unchanged
@@ -176,13 +191,13 @@ def st_canvas(
     width: int = 600,
     drawing_mode: str = "freedraw",
     initial_drawing: dict | None = None,
-    display_toolbar: bool = True,
     point_display_radius: int = 3,
     return_image_data: bool = False,
     key: str | None = None,
     on_change: Callable[[], None] | None = None,
     disabled: bool = False,
     background_image_fit: str = "stretch",
+    max_display_height: int | None = None,
 ) -> CanvasResult:
     """Create a drawing canvas in a Streamlit app.
 
@@ -222,18 +237,13 @@ def st_canvas(
         another canvas, which you can manipulate. Beware: if importing from a
         bigger/smaller canvas, no rescaling is done in the canvas -- do it on
         your side.
-    display_toolbar: bool
-        Display the undo/redo/reset toolbar. It appears on hover as a floating
-        card above the canvas's top-right corner, like Streamlit's own element
-        toolbars, and takes up no layout space.
     point_display_radius: int
         The radius to use when displaying point objects. Defaults to 3.
     return_image_data: bool
-        Whenever True, populate `image_data` on the result with the canvas's
-        RGBA pixels. Off by default -- it PNG-encodes the whole canvas on
-        every send, which is wasted work for callers who only read
-        `json_data`. Requires the `image` extra:
-        `pip install streamlit-drawable-canvas[image]`.
+        Whenever True, populate `image_data` and `image_bytes` on the result
+        with the canvas's rendered PNG. Off by default -- it PNG-encodes the
+        whole canvas on every send, which is wasted work for callers who only
+        read `json_data`.
     key: str
         An optional string to use as the unique key for the widget. Assign a
         key so the component is not remounted every time the script reruns.
@@ -241,11 +251,11 @@ def st_canvas(
         Optional callback invoked when the component sends a new drawing.
     disabled: bool
         Render the canvas read-only: drawing, selection and transforms are
-        all inert, and the toolbar is hidden regardless of `display_toolbar`
-        (undo, redo and reset would otherwise let a viewer mutate a canvas
-        that is supposed to be read-only). `initial_drawing` still renders,
-        so this is the way to display a drawing back to someone without
-        letting them change it. Defaults to False.
+        all inert, and the toolbar is hidden (undo, redo and reset would
+        otherwise let a viewer mutate a canvas that is supposed to be
+        read-only). `initial_drawing` still renders, so this is the way to
+        display a drawing back to someone without letting them change it.
+        Defaults to False.
     background_image_fit: {'stretch', 'contain'}
         How `background_image` is scaled onto the canvas. "stretch" (the
         default, and the historical behaviour) scales each axis
@@ -254,6 +264,14 @@ def st_canvas(
         scaling the image to fit inside the canvas and centring it, so a
         canvas larger than the image gets margins instead of a stretched
         image. Ignored when no `background_image` is set.
+    max_display_height: int
+        Caps the canvas's displayed height in pixels and makes it scroll
+        vertically inside that box. `height`, canvas pixel dimensions and
+        `json_data` coordinates are unaffected -- this only clips and scrolls
+        what's on screen, the way a `st.container(height=...)` would. `None`
+        (the default) displays the canvas at its full height. Horizontal
+        scrolling is always available, independent of this parameter, for a
+        canvas wider than the space Streamlit gives it.
 
     Returns
     -------
@@ -274,6 +292,12 @@ def st_canvas(
         raise ValueError(
             "background_image_fit must be one of "
             f"{sorted(_VALID_BACKGROUND_IMAGE_FITS)}, got {background_image_fit!r}"
+        )
+
+    if max_display_height is not None and max_display_height <= 0:
+        raise ValueError(
+            f"max_display_height must be a positive int or None, "
+            f"got {max_display_height!r}"
         )
 
     background_image_url = _resolve_background_image_url(background_image)
@@ -297,11 +321,11 @@ def st_canvas(
         "canvasHeight": height,
         "drawingMode": drawing_mode,
         "initialDrawing": base_drawing,
-        "displayToolbar": display_toolbar,
         "displayRadius": point_display_radius,
         "returnImageData": return_image_data,
         "disabled": disabled,
         "backgroundImageFit": background_image_fit,
+        "maxDisplayHeight": max_display_height,
     }
 
     result = out(

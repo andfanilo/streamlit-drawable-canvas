@@ -5,6 +5,85 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - Unreleased
+
+Breaking cleanup plus a handful of cheap wins. No new drawing modes -- those (text,
+a reworked polygon) are next.
+
+### Breaking
+
+- **`display_toolbar` is removed.** Passing it now raises `TypeError`. It existed
+  because the toolbar used to be always-visible and sit on the canvas; 0.10.0 already
+  moved it to a hover-revealed floating card that takes up no layout space, so there was
+  nothing left to opt out of. Streamlit's own element toolbars (`st.dataframe`,
+  `st.altair_chart`) aren't disableable either. `disabled=True` still hides the toolbar --
+  that's unrelated and unchanged.
+
+  ```python
+  # 0.10.0
+  st_canvas(display_toolbar=False, ...)
+  # 0.11.0 -- delete the argument. The toolbar is always shown (unless disabled=True).
+  st_canvas(...)
+  ```
+
+- **Double-click no longer deletes the selected object in transform mode.** It was too
+  easy to trigger by accident on a mis-drag (#89). Deletion is now the toolbar's
+  delete-selected button, shown only in transform mode with an active selection.
+
+  ```python
+  # 0.10.0: double-click a shape in transform mode to delete it.
+  # 0.11.0: select it, then click the toolbar's delete button.
+  ```
+
+- **Right-click no longer force-sends the drawing**, and the browser's own context menu
+  returns on the canvas. The one exception: in `polygon` mode, right-click is still how
+  you close the shape -- that's unrelated to the force-send behaviour being removed here,
+  and stays until 0.12.0 replaces it with a click-the-first-vertex close.
+
+  ```python
+  # 0.10.0: right-click anywhere on the canvas to force a send, in any mode.
+  # 0.11.0: use the toolbar's send button. (Polygon's right-click-to-close is unchanged.)
+  ```
+
+- **`lock*` properties set via `initial_drawing` (`lockMovementX`, `lockScalingY`, etc.)
+  are now respected in transform mode**, and round-trip through `json_data`. Previously,
+  entering transform mode force-set every object to fully interactive, silently
+  overriding any lock the caller had set (#97). If you were relying on that clobber to
+  make every object interactive regardless of its `lock*` flags, this is a behaviour
+  change for you.
+
+### Added
+
+- `CanvasResult.image_bytes`: the raw PNG bytes of the canvas -- for
+  `st.download_button` or writing to a file -- decoded with no numpy/Pillow involved.
+  Same `return_image_data=True` gate as `image_data`.
+- `max_display_height`: caps the canvas's displayed height and makes it scroll vertically
+  inside that box, the way `st.container(height=...)` does. `height`, canvas pixel
+  dimensions and `json_data` coordinates are unaffected -- this only clips and scrolls
+  what's on screen. Horizontal scrolling is now always available too, independent of this
+  parameter, for a canvas wider than the space Streamlit gives it. This is not zoom or a
+  responsive canvas -- see FAQ.md for why those aren't planned.
+- Toolbar: **Bring forward**, **Send backward** and **Delete selected** buttons, shown
+  only in transform mode with an active selection.
+
+### Changed
+
+- **The `[image]` extra is now empty.** Streamlit already requires Pillow and numpy, so
+  it never installed anything beyond what you already had; it's kept only so
+  `pip install streamlit-drawable-canvas[image]` in existing requirements files and
+  Dockerfiles stays silent instead of erroring. The `RuntimeError` for accessing
+  `image_data`/`image_bytes` without `return_image_data=True` no longer mentions it.
+- The toolbar is now mode-contextual: transform mode shows ordering and delete buttons
+  in addition to send/undo/redo/reset; every other mode shows just the latter four.
+
+### Fixed
+
+- **A canvas fed by another one's `json_data` (the `initial_drawing` round-trip
+  pattern) no longer lags a rerun behind.** Changing `background_color` or
+  `background_image` resets the drawing (unchanged), but that reset now sends
+  itself back to Streamlit immediately instead of waiting for the next
+  user-driven mutation to propagate.
+
 ## [0.10.0] - 2026-09-03
 
 Rebuilt on **Streamlit Components v2** and **Fabric.js 7** (from Fabric.js 4.4.0),

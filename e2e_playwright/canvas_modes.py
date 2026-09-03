@@ -39,7 +39,6 @@ for mode in MODES:
         width=300,
         drawing_mode=mode,
         initial_drawing=TRANSFORM_SEED if mode == "transform" else None,
-        display_toolbar=False,
         key=f"mode_{mode}",
     )
     st.code(json.dumps(result.json_data), language="json")

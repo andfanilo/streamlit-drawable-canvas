@@ -35,7 +35,6 @@ disabled_result = st_canvas(
     width=300,
     drawing_mode="rect",
     initial_drawing=SEED,
-    display_toolbar=True,  # must still be hidden, because disabled wins
     key="dis_on",
     disabled=True,
 )
@@ -48,7 +47,6 @@ enabled_result = st_canvas(
     width=300,
     drawing_mode="rect",
     initial_drawing=SEED,
-    display_toolbar=True,
     key="dis_off",
     disabled=False,
 )

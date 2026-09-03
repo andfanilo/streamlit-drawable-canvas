@@ -14,8 +14,8 @@ MODES = ("freedraw", "line", "rect", "circle", "point", "polygon", "transform")
 MODE_HINTS = {
     "polygon": "Click to add points. Double-click removes the last ones; "
     "**right-click closes the polygon**.",
-    "transform": "Drag to move, handles to scale/rotate. Double-click deletes "
-    "the selected object.",
+    "transform": "Drag to move, handles to scale/rotate. Select an object and "
+    "use the toolbar's delete button to remove it.",
     "point": "Each click drops a point, drawn as a circle of the radius below.",
 }
 
@@ -58,7 +58,6 @@ with st.sidebar:
         "Point radius", 1, 25, 3, disabled=drawing_mode != "point"
     )
     realtime_update = st.checkbox("Update in realtime", True)
-    display_toolbar = st.checkbox("Display toolbar", True)
     disabled = st.checkbox("Disabled (read-only)", False)
     background_image_fit = st.selectbox("Background image fit", ("stretch", "contain"))
     return_image_data = st.checkbox("Return image data", True)
@@ -88,7 +87,7 @@ if not realtime_update:
     st.caption(
         "Realtime updates off -- nothing reaches Python until you force a "
         "send. The toolbar is pinned open for this reason; its first button "
-        "commits the drawing. Right-clicking the canvas does the same."
+        "commits the drawing."
     )
 
 canvas_result = st_canvas(
@@ -101,7 +100,6 @@ canvas_result = st_canvas(
     height=400,
     width=600,
     drawing_mode=drawing_mode,
-    display_toolbar=display_toolbar,
     disabled=disabled,
     background_image_fit=background_image_fit,
     point_display_radius=point_display_radius,

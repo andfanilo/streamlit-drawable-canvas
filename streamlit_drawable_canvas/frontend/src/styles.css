@@ -1,3 +1,13 @@
+.dc-root {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.dc-scroll {
+  overflow-x: auto;
+}
+
 .dc-container {
   position: relative;
   box-sizing: content-box;
@@ -15,7 +25,8 @@
   top: 0;
   left: 0;
   z-index: 10;
-  border: 1px solid var(--st-border-color, lightgrey);
+  outline: 1px solid var(--st-border-color, lightgrey);
+  outline-offset: -1px;
 }
 
 /* Geometry only; the visible card is `.dc-toolbar-card`. The padding bridges
@@ -31,7 +42,7 @@
   z-index: 20;
 }
 
-.dc-container:hover > .dc-toolbar,
+.dc-root:hover > .dc-toolbar,
 .dc-toolbar:hover,
 .dc-toolbar:focus-within {
   opacity: 1;
@@ -63,6 +74,23 @@
   color: color-mix(in srgb, var(--st-text-color, #31333f) 70%, transparent);
 }
 
+.dc-toolbar-contextual {
+  display: none;
+  flex-direction: row;
+  align-items: center;
+}
+
+.dc-toolbar-separator {
+  width: 1px;
+  align-self: stretch;
+  margin: 0.25rem 0.375rem;
+  background: color-mix(
+    in srgb,
+    var(--st-text-color, #31333f) 20%,
+    transparent
+  );
+}
+
 .dc-icon-button {
   display: inline-flex;
   align-items: center;
@@ -82,12 +110,20 @@
 }
 
 .dc-icon-button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--st-text-color, #31333f) 15%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--st-text-color, #31333f) 15%,
+    transparent
+  );
 }
 
 .dc-icon-button:active:not(:disabled),
 .dc-icon-button:focus-visible:not(:disabled) {
-  background: color-mix(in srgb, var(--st-text-color, #31333f) 25%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--st-text-color, #31333f) 25%,
+    transparent
+  );
 }
 
 .dc-icon-button:focus {
