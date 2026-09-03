@@ -175,6 +175,36 @@ canvas_result = st_canvas(
 )
 ```
 
+### I only want the finished drawing, not every stroke
+
+Reach for `st.form` before `update_streamlit=False`. They solve different problems, and
+the form is almost always the one you want:
+
+```python
+with st.form("drawing"):
+    result = st_canvas(height=400, width=600, key="canvas")
+    submitted = st.form_submit_button("Submit")
+
+if submitted:
+    st.write(result.json_data)
+```
+
+The canvas keeps `update_streamlit=True`, so it records every stroke as you draw — but
+the form holds the rerun back until Submit, and then you read the finished drawing. Your
+app's users never have to find a button inside the canvas toolbar, and it still works
+with `display_toolbar=False`. The canvas is not a trigger widget, so it never submits the
+form on its own.
+
+`update_streamlit=False` is the lower-level tool: it stops the sends themselves. Nothing
+reaches Python until something forces a send — the toolbar's first button, a right-click
+on the canvas, or the reset button. Use it when you want to suppress traffic (an
+expensive rerun, a large `return_image_data` payload) rather than to batch a form. Two
+things to know:
+
+- The toolbar stays **pinned open** rather than appearing on hover, since its send button
+  is then the only discoverable way to commit a drawing.
+- Right-click is not available on touch devices, so don't make it the only path.
+
 ### Why doesn't my polygon appear in `json_data`?
 
 A polygon is only sent once it is **closed with a right-click**. Left-click adds a vertex;

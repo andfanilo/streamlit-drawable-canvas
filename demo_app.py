@@ -86,8 +86,9 @@ if drawing_mode in MODE_HINTS:
     st.caption(MODE_HINTS[drawing_mode])
 if not realtime_update:
     st.caption(
-        "Realtime updates off -- right-click, or the toolbar's send button, "
-        "still forces a send."
+        "Realtime updates off -- nothing reaches Python until you force a "
+        "send. The toolbar is pinned open for this reason; its first button "
+        "commits the drawing. Right-clicking the canvas does the same."
     )
 
 canvas_result = st_canvas(
@@ -140,8 +141,10 @@ st_canvas(
 st.divider()
 st.subheader("Canvas inside st.form")
 st.caption(
-    "`update_streamlit` still applies inside a form -- drawings arrive via "
-    "`setStateValue`, not a trigger, so nothing about form-batching changes. "
+    "A form is the cleanest way to get only the finished drawing: the canvas "
+    "keeps `update_streamlit=True`, so it stores every stroke, but the form "
+    "holds the rerun back until Submit. No toolbar button needed. The canvas "
+    "is not a trigger widget, so it never submits the form by itself. "
     "Draw, then click Submit."
 )
 with st.form("canvas_form"):

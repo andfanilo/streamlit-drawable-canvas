@@ -34,7 +34,7 @@ describe("buildToolbar", () => {
       b.getAttribute("aria-label")
     );
     expect(labels).toEqual([
-      "Send to Streamlit",
+      "Update the app with this drawing",
       "Undo",
       "Redo",
       "Reset canvas & history",

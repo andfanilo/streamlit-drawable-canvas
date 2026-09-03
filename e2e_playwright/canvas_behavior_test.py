@@ -54,11 +54,10 @@ def test_initial_drawing_round_trips_into_another_canvas(app: Page):
 
     # The component's returned *state* only updates on user interaction with
     # that canvas -- feeding a new `initial_drawing` prop from Python loads
-    # it visually, but doesn't echo it back on its own. The toolbar's "Send
-    # to Streamlit" button exists for exactly this: force a report of what's
-    # now loaded.
+    # it visually, but doesn't echo it back on its own. The toolbar's send
+    # button exists for exactly this: force a report of what's now loaded.
     target_root = app.locator("[data-testid=stBidiComponentIsolated]").nth(2)
-    target_root.get_by_label("Send to Streamlit").click()
+    target_root.get_by_label("Update the app with this drawing").click()
     wait_for_app_run(app)
 
     target_data = _code(app, 1)

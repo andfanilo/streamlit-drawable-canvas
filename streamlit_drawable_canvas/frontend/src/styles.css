@@ -41,6 +41,13 @@
     top 100ms 100ms;
 }
 
+/* Set when nothing sends automatically, so the send button -- the only
+   discoverable way to commit a drawing -- is never hidden behind a hover. */
+.dc-toolbar[data-pinned="true"] {
+  opacity: 1;
+  top: -2.65rem;
+}
+
 .dc-toolbar-card {
   display: flex;
   flex-direction: row;

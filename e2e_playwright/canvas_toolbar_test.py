@@ -73,3 +73,37 @@ def test_undo_redo_and_reset(app: Page):
     assert len(_code(app)["objects"]) == 0
     expect(undo_button).to_be_disabled()
     expect(redo_button).to_be_disabled()
+
+
+def _toolbar_opacity(app: Page, index: int) -> float:
+    return float(
+        app.locator("[data-testid=stBidiComponentIsolated]")
+        .nth(index)
+        .locator(".dc-toolbar")
+        .evaluate("el => getComputedStyle(el).opacity")
+    )
+
+
+def test_toolbar_is_hover_revealed_when_updates_are_realtime(app: Page):
+    root = app.locator("[data-testid=stBidiComponentIsolated]").first
+    root.scroll_into_view_if_needed()
+
+    assert root.locator(".dc-toolbar").get_attribute("data-pinned") == "false"
+    assert _toolbar_opacity(app, 0) == 0
+
+    _canvas(app).hover()
+    expect(root.get_by_label("Undo")).to_be_visible()
+    # The reveal transition is 150ms with a 100ms delay.
+    app.wait_for_timeout(500)
+    assert _toolbar_opacity(app, 0) == 1
+
+
+def test_toolbar_is_pinned_when_update_streamlit_is_false(app: Page):
+    root = app.locator("[data-testid=stBidiComponentIsolated]").nth(1)
+    root.scroll_into_view_if_needed()
+
+    # Never hovered: the send button is the only way to commit a drawing
+    # here, so it must not be hidden behind a hover.
+    assert root.locator(".dc-toolbar").get_attribute("data-pinned") == "true"
+    assert _toolbar_opacity(app, 1) == 1
+    expect(root.get_by_label("Update the app with this drawing")).to_be_visible()

@@ -350,6 +350,9 @@ export const applyData = (
   instance.container.style.width = `${data.canvasWidth}px`;
   instance.container.style.height = `${data.canvasHeight}px`;
   instance.toolbarEl.style.display = showToolbar ? "flex" : "none";
+  // `realtimeUpdateStreamlit` is already false for polygon mode, which also
+  // sends only on demand.
+  instance.toolbarEl.dataset.pinned = String(!data.realtimeUpdateStreamlit);
   setToolbarTheme(instance.container);
 
   // 2. Background image (memoized on URL; a fit or size change re-fits the

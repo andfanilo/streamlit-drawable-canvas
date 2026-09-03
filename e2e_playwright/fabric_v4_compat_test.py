@@ -25,9 +25,9 @@ FIXTURE_NAMES = [
 
 def _send_and_read(app: Page, index: int) -> dict:
     # A loaded `initial_drawing` isn't echoed back as widget state on its
-    # own -- the toolbar's "Send to Streamlit" re-serializes the live canvas.
+    # own -- the toolbar's send button re-serializes the live canvas.
     root = app.locator("[data-testid=stBidiComponentIsolated]").nth(index)
-    root.get_by_label("Send to Streamlit").click()
+    root.get_by_label("Update the app with this drawing").click()
     wait_for_app_run(app)
     code = app.locator("[data-testid=stCode]").nth(index)
     return json.loads(code.inner_text())

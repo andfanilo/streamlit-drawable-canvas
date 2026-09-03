@@ -68,6 +68,15 @@ replacing the React 16 / CRA v1 frontend. See
 - **The toolbar no longer occupies layout space.** The component's height is now exactly
   the `height` you pass, not `height + 32`. Incidentally fixes the bin icon sitting close
   enough to the canvas to be hit by accident.
+- **The send button is renamed "Update the app with this drawing"** (was "Send to
+  Streamlit") and its icon is now an upload arrow. The old label named the framework
+  rather than the effect, on a surface the app's *users* see; the old glyph was the one
+  Streamlit's own toolbars use for "Download as CSV", so it read as "save the image".
+  If you drive the button in a test, it is addressed by that new accessible name.
+- **The toolbar stays pinned open when nothing sends automatically** -- that is, when
+  `update_streamlit=False` or `drawing_mode="polygon"`. Hiding it behind a hover would
+  hide the only discoverable way to commit a drawing. It is hover-revealed otherwise.
+
 ### Fixed
 
 - `CanvasResult` was returned as the class itself rather than an instance when the

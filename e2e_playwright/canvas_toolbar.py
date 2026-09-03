@@ -19,3 +19,14 @@ result = st_canvas(
     key="toolbar",
 )
 st.code(json.dumps(result.json_data), language="json")
+
+st.subheader("update_streamlit=False pins the toolbar")
+st_canvas(
+    stroke_width=1,
+    height=200,
+    width=300,
+    drawing_mode="rect",
+    update_streamlit=False,
+    display_toolbar=True,
+    key="toolbar_pinned",
+)
