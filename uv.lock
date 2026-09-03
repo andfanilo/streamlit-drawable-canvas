@@ -1079,15 +1079,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pixelmatch"
-version = "0.4.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b5/ef/d69a0c50f812326d3b54f8aea0536733d650cc2fb47c6510a2abe54df81d/pixelmatch-0.4.0.tar.gz", hash = "sha256:80a9ae1084941569f0e8cc7fe70b50c02312b4dbaf4b37b710e0f75f9667fa32", size = 7224, upload-time = "2026-03-07T08:55:54.81Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f2/7e/8958796e5077a2473780c9368a0d7f360d1de62c96608b84170c916e4b23/pixelmatch-0.4.0-py3-none-any.whl", hash = "sha256:d40e49e05eab0531bc7665f40309d90f5708c3edd121b3fd63385864005b81a8", size = 9728, upload-time = "2026-03-07T08:55:53.212Z" },
-]
-
-[[package]]
 name = "platformdirs"
 version = "4.11.7"
 source = { registry = "https://pypi.org/simple" }
@@ -1812,9 +1803,7 @@ dev = [
     { name = "wheel" },
 ]
 e2e = [
-    { name = "packaging" },
     { name = "pillow" },
-    { name = "pixelmatch" },
     { name = "playwright" },
     { name = "pytest-playwright" },
     { name = "pytest-xdist" },
@@ -1837,9 +1826,7 @@ dev = [
     { name = "wheel" },
 ]
 e2e = [
-    { name = "packaging" },
     { name = "pillow" },
-    { name = "pixelmatch", specifier = ">=0.3.0,<1" },
     { name = "playwright", specifier = ">=1.48,<2" },
     { name = "pytest-playwright", specifier = ">=0.3.3" },
     { name = "pytest-xdist" },

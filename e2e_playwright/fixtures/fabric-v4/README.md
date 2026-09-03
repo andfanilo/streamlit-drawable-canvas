@@ -2,8 +2,8 @@
 
 Ground-truth captures of what Fabric.js **4.4.0** (this component's pinned frontend
 version, as of `streamlit-drawable-canvas` 0.9.3) actually produces for each
-`drawing_mode`. Captured 2026-09-02, on Node 16.20.2, using
-`scripts/capture_v4_fixtures.py` against `e2e_playwright/fixtures/capture_app.py`.
+`drawing_mode`. Captured 2026-09-02, on Node 16.20.2, by driving the then-current Fabric 4
+frontend with synthetic Playwright mouse events at the coordinates documented below.
 
 ## Why these exist
 
@@ -36,13 +36,17 @@ never touched again after that one bless step.
 - Fabric.js: `4.4.0` (pinned in `streamlit_drawable_canvas/frontend/package.json`)
 - Component version at capture time: `0.9.3`
 - Node.js: `16.20.2` (required to build `react-scripts@4` — see `AGENTS.md`)
-- Capture app: `e2e_playwright/fixtures/capture_app.py`
-- Capture script: `scripts/capture_v4_fixtures.py` (Playwright, synthetic mouse events)
 - Capture date: 2026-09-02
+- Capture tooling: `scripts/capture_v4_fixtures.py` + `e2e_playwright/fixtures/capture_app.py`
 
-**`scripts/capture_v4_fixtures.py` will not run after stage 2** deletes the Fabric 4
-frontend it depends on. It is kept only as a record of exactly how these fixtures were
-produced — not as a script anyone should expect to re-run.
+**The capture tooling has been deleted.** It could only ever run against the Fabric 4
+frontend, which stage 2 removed, so it was unrunnable from that point on. Recover it from
+git history (`git log -- scripts/capture_v4_fixtures.py`) if the exact mechanics are ever
+needed; the coordinates it used are documented per fixture below, which is what actually
+matters for reading a fixture.
+
+The `.json` fixtures cannot be regenerated. Neither can the `.v4-reference.png` files —
+they are kept for that reason, even though their one-time visual bless step is done.
 
 All canvases are `300x200` px, `background_color="#eeeeee"` unless noted.
 Coordinates below are canvas-local (top-left origin), matching what the capture script

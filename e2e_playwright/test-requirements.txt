@@ -1,8 +1,0 @@
-playwright>=1.48.0,<2.0.0
-pytest<10.0.0
-pytest-playwright>=0.3.3
-pytest-xdist
-pixelmatch>=0.3.0,<1.0.0
-Pillow
-requests
-packaging

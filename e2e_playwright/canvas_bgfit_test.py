@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from conftest import wait_for_app_run
+from conftest import component, wait_for_app_run
 from playwright.sync_api import Page
 
 STRETCH, CONTAIN, SWITCHABLE = 0, 1, 2
@@ -19,11 +19,7 @@ _SAMPLE = """
 
 
 def _sample(app: Page, index: int, x: int, y: int) -> dict:
-    el = (
-        app.locator("[data-testid=stBidiComponentIsolated]")
-        .nth(index)
-        .locator("canvas.dc-background-canvas")
-    )
+    el = component(app, index).locator("canvas.dc-background-canvas")
     el.scroll_into_view_if_needed()
     el.wait_for(state="attached")
     return el.evaluate(_SAMPLE, {"x": x, "y": y})

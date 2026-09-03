@@ -1,5 +1,5 @@
 """E2E Playwright tests verifying each committed Fabric 4 JSON fixture still
-loads under Fabric 7 (T5, risk R3). This is the reason stage 1 existed."""
+loads under Fabric 7."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 import pytest
-from conftest import wait_for_app_run
+from conftest import component, read_json, wait_for_app_run
 from playwright.sync_api import Page
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures" / "fabric-v4"
@@ -26,11 +26,9 @@ FIXTURE_NAMES = [
 def _send_and_read(app: Page, index: int) -> dict:
     # A loaded `initial_drawing` isn't echoed back as widget state on its
     # own -- the toolbar's send button re-serializes the live canvas.
-    root = app.locator("[data-testid=stBidiComponentIsolated]").nth(index)
-    root.get_by_label("Update the app with this drawing").click()
+    component(app, index).get_by_label("Update the app with this drawing").click()
     wait_for_app_run(app)
-    code = app.locator("[data-testid=stCode]").nth(index)
-    return json.loads(code.inner_text())
+    return read_json(app, index)
 
 
 @pytest.mark.parametrize("name", FIXTURE_NAMES)

@@ -179,10 +179,12 @@ later session to get wrong.
 - [x] Build the Fabric 4 frontend (Phase A) and confirm `_RELEASE = True`
 - [x] Create `e2e_playwright/` with `conftest.py` adapted from
       `../streamlit-echarts/e2e_playwright/conftest.py` (which descends from
-      `../streamlit-bokeh`'s). Bring `shared/git_utils.py` too
-- [x] Write a capture app + script (suggested: `e2e_playwright/fixtures/capture_app.py`
-      and `scripts/capture_v4_fixtures.py`) that drives the v1 component with synthetic
-      Playwright mouse events and writes `json_data` to disk
+      `../streamlit-bokeh`'s). Bring `shared/git_utils.py` too — *later removed along
+      with the unused image-snapshot fixtures that were its only caller*
+- [x] Write a capture app + script (`e2e_playwright/fixtures/capture_app.py` and
+      `scripts/capture_v4_fixtures.py`) that drives the v1 component with synthetic
+      Playwright mouse events and writes `json_data` to disk — *both deleted after stage 2
+      made them unrunnable; see the fixtures README*
 - [x] Capture one fixture per drawing mode, using **fixed, documented coordinates** so
       the geometry is predictable and reviewable:
   - [x] `freedraw` — a multi-segment stroke (produces a `Path`)
@@ -205,7 +207,8 @@ later session to get wrong.
   - The exact coordinates used per fixture
   - The JSON-vs-PNG role distinction above, stated explicitly
   - That `scripts/capture_v4_fixtures.py` **will not run after stage 2** deletes the v1
-    frontend, and is kept only as a record of provenance
+    frontend (it was subsequently deleted; the README records the capture coordinates,
+    which is the part that matters)
 - [x] Sanity-check each JSON by eye: correct `version` field, expected object `type`,
       plausible coordinates. A fixture that is silently empty is worse than no fixture
       (this caught a real bug: the first `transform` capture attempt produced an empty

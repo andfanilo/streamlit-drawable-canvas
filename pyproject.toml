@@ -42,10 +42,8 @@ e2e = [
   "playwright>=1.48,<2",
   "pytest-playwright>=0.3.3",
   "pytest-xdist",
-  "pixelmatch>=0.3.0,<1",
   "Pillow",
   "requests",
-  "packaging",
 ]
 
 [[tool.uv.index]]

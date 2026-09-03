@@ -1,33 +1,22 @@
-"""
-Global pytest fixtures for streamlit-drawable-canvas E2E tests.
-Adapted from ../streamlit-echarts/e2e_playwright/conftest.py, which itself
-descends from the streamlit-bokeh conftest.py pattern.
-"""
+"""Global pytest fixtures for streamlit-drawable-canvas E2E tests."""
 
 from __future__ import annotations
 
 import hashlib
+import json
 import os
-import re
 import shlex
-import shutil
 import socket
 import subprocess
-import sys
 import time
 from collections.abc import Generator
-from io import BytesIO
-from pathlib import Path
 from random import randint
 from tempfile import TemporaryFile
-from typing import Any, Literal, Protocol
 
 import pytest
 import requests
-from PIL import Image
-from playwright.sync_api import ElementHandle, FrameLocator, Locator, Page
+from playwright.sync_api import FrameLocator, Locator, Page
 from pytest import FixtureRequest
-from shared.git_utils import get_git_root
 
 
 class AsyncSubprocess:
@@ -135,15 +124,9 @@ def app_port(worker_id: str) -> int:
     return find_available_port()
 
 
-@pytest.fixture(scope="module")
-def app_server_extra_args() -> list[str]:
-    return []
-
-
 @pytest.fixture(scope="module", autouse=True)
 def app_server(
     app_port: int,
-    app_server_extra_args: list[str],
     request: FixtureRequest,
 ) -> Generator[AsyncSubprocess, None, None]:
     """Start the Streamlit app server for the test module."""
@@ -166,7 +149,6 @@ def app_server(
             "none",
             "--server.enableStaticServing",
             "true",
-            *app_server_extra_args,
         ],
         cwd=".",
     )
@@ -187,145 +169,55 @@ def app(page: Page, app_port: int) -> Page:
     return page
 
 
-@pytest.fixture(scope="function", params=["light_theme", "dark_theme"])
-def app_theme(request) -> str:
-    return str(request.param)
+COMPONENT = "[data-testid=stBidiComponentIsolated]"
 
 
-@pytest.fixture(scope="function")
-def themed_app(page: Page, app_port: int, app_theme: str) -> Page:
-    page.goto(f"http://localhost:{app_port}/?embed_options={app_theme}")
-    wait_for_app_loaded(page)
-    return page
+def component(app: Page, index: int = 0) -> Locator:
+    """The nth canvas component's isolated root element."""
+    return app.locator(COMPONENT).nth(index)
 
 
-class ImageCompareFunction(Protocol):
-    def __call__(
-        self,
-        element: ElementHandle | Locator | Page,
-        *,
-        image_threshold: float = 0.002,
-        pixel_threshold: float = 0.05,
-        name: str | None = None,
-        fail_fast: bool = False,
-    ) -> None: ...
+def canvas(app: Page, index: int = 0) -> Locator:
+    """The nth canvas's Fabric interaction surface, scrolled into view."""
+    el = component(app, index).locator("canvas.upper-canvas")
+    el.scroll_into_view_if_needed()
+    return el
 
 
-@pytest.fixture(scope="session", autouse=True)
-def delete_output_dir(pytestconfig: Any) -> None:
-    output_dir = pytestconfig.getoption("--output")
-    if os.path.exists(output_dir):
-        try:
-            shutil.rmtree(output_dir)
-        except (FileNotFoundError, OSError):
-            pass
+def read_json(app: Page, index: int = 0) -> dict | None:
+    """Parse the nth `st.code` block; every test app uses one for readback."""
+    return json.loads(app.locator("[data-testid=stCode]").nth(index).inner_text())
 
 
-@pytest.fixture(scope="session")
-def output_folder(pytestconfig: Any) -> Path:
-    return Path(
-        get_git_root() / "e2e_playwright" / pytestconfig.getoption("--output")
-    ).resolve()
+def drag(
+    app: Page,
+    target: Locator,
+    x0: float,
+    y0: float,
+    x1: float,
+    y1: float,
+    steps: int = 5,
+    button: str = "left",
+) -> None:
+    """Drag across `target`, in its own top-left-origin coordinates.
+
+    Raw `page.mouse.*` events don't auto-scroll the way `Locator.click()` does,
+    so a below-the-fold canvas needs the explicit scroll first.
+    """
+    target.scroll_into_view_if_needed()
+    box = target.bounding_box()
+    assert box is not None
+    sx, sy = box["x"] + x0, box["y"] + y0
+    ex, ey = box["x"] + x1, box["y"] + y1
+    app.mouse.move(sx, sy)
+    app.mouse.down(button=button)
+    for i in range(1, steps + 1):
+        app.mouse.move(sx + (ex - sx) * i / steps, sy + (ey - sy) * i / steps)
+    app.mouse.up(button=button)
 
 
-@pytest.fixture(scope="function")
-def assert_snapshot(
-    request: FixtureRequest, output_folder: Path
-) -> Generator[ImageCompareFunction, None, None]:
-    root_path = get_git_root()
-    platform = str(sys.platform)
-    module_name = request.module.__name__.split(".")[-1]
-    test_function_name = request.node.originalname
-
-    snapshot_dir = (
-        root_path / "e2e_playwright" / "__snapshots__" / platform / module_name
-    )
-    snapshot_failures_dir = (
-        output_folder / "snapshot-tests-failures" / platform / module_name
-    )
-    snapshot_updates_dir = output_folder / "snapshot-updates" / platform / module_name
-
-    suffix = ""
-    match = re.search(r"\[(.*?)\]", request.node.name)
-    if match:
-        suffix = f"[{match.group(1)}]"
-
-    default_name = test_function_name + suffix
-    failure_messages: list[str] = []
-
-    def compare(
-        element: ElementHandle | Locator | Page,
-        *,
-        image_threshold: float = 0.002,
-        pixel_threshold: float = 0.05,
-        name: str | None = None,
-        fail_fast: bool = False,
-        file_type: Literal["png", "jpg"] = "png",
-    ) -> None:
-        file_ext = ".jpg" if file_type == "jpg" else ".png"
-        img_bytes = (
-            element.screenshot(type="jpeg", quality=90, animations="disabled")
-            if file_type == "jpg"
-            else element.screenshot(type="png", animations="disabled")
-        )
-        snapshot_name = name + suffix if name else default_name
-        snapshot_path = snapshot_dir / f"{snapshot_name}{file_ext}"
-        updates_path = snapshot_updates_dir / f"{snapshot_name}{file_ext}"
-        failures_dir = snapshot_failures_dir / snapshot_name
-
-        snapshot_path.parent.mkdir(parents=True, exist_ok=True)
-
-        if failures_dir.exists():
-            shutil.rmtree(failures_dir)
-
-        if not snapshot_path.exists():
-            snapshot_path.write_bytes(img_bytes)
-            updates_path.parent.mkdir(parents=True, exist_ok=True)
-            updates_path.write_bytes(img_bytes)
-            failure_messages.append(f"Missing snapshot for {snapshot_name}")
-            return
-
-        from pixelmatch.contrib.PIL import pixelmatch
-
-        img_a = Image.open(BytesIO(img_bytes))
-        img_b = Image.open(snapshot_path)
-        img_diff = Image.new("RGBA", img_a.size)
-        try:
-            mismatch = pixelmatch(
-                img_a,
-                img_b,
-                img_diff,
-                threshold=pixel_threshold,
-                fail_fast=fail_fast,
-                alpha=0,
-            )
-        except ValueError as ex:
-            updates_path.parent.mkdir(parents=True, exist_ok=True)
-            updates_path.write_bytes(img_bytes)
-            failure_messages.append(
-                f"Size mismatch for {snapshot_name}: expected {img_b.size}, got {img_a.size}. {ex}"
-            )
-            return
-
-        total_pixels = img_a.size[0] * img_a.size[1]
-        if mismatch < int(image_threshold * total_pixels):
-            return
-
-        updates_path.parent.mkdir(parents=True, exist_ok=True)
-        updates_path.write_bytes(img_bytes)
-        failures_dir.mkdir(parents=True, exist_ok=True)
-        img_diff.save(f"{failures_dir}/diff_{snapshot_name}{file_ext}")
-        img_a.save(f"{failures_dir}/actual_{snapshot_name}{file_ext}")
-        img_b.save(f"{failures_dir}/expected_{snapshot_name}{file_ext}")
-        failure_messages.append(
-            f"Snapshot mismatch for {snapshot_name} ({mismatch} pixels; "
-            f"{mismatch / total_pixels * 100:.2f}%)"
-        )
-
-    yield compare
-
-    if failure_messages:
-        pytest.fail("Missing or mismatched snapshots:\n" + "\n".join(failure_messages))
+def click(app: Page, target: Locator, x: float, y: float, button: str = "left") -> None:
+    drag(app, target, x, y, x, y, steps=1, button=button)
 
 
 def wait_for_app_run(
