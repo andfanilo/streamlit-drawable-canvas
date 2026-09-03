@@ -33,6 +33,9 @@ reinstall: clean setup
 run:
     uv run streamlit run {{demo_app}}
 
+# Alias matching ../streamlit-echarts's `just demo`
+alias demo := run
+
 # Frontend watch-rebuild — run alongside `just run`; Vite rebuilds frontend/build on
 # every save, `just run`'s already-running Streamlit process picks it up on refresh
 dev:

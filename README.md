@@ -31,6 +31,10 @@ Streamlit component which provides a sketching canvas using [Fabric.js](http://f
 
 ## Installation
 
+Requires **Streamlit >= 1.53** and **Python >= 3.10** (0.10.0 is built on Streamlit
+Components v2; see [Upgrading from 0.9.x](#upgrading-from-09x) if you're on an older
+Streamlit).
+
 ```shell script
 pip install streamlit-drawable-canvas
 ```
@@ -122,15 +126,15 @@ st_canvas(
 - **stroke_color** : Color of drawing brush in hex. Defaults to "black".
 - **background_color** : Color of canvas background in CSS color property. Defaults to "" which is transparent. Overriden by background_image. Changing background_color will reset the drawing.
 - **background_image** : Image to display behind canvas: an http(s) URL, a `data:` URI, a local file path, raw image bytes, or a Pillow Image. Automatically resized to canvas dimensions. Being behind the canvas, it is not sent back to Streamlit on mouse event. Overrides background_color. Changes to this will reset canvas contents.
-- **update_streamlit** : Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up. Ignored when `drawing_mode="polygon"`: a polygon is only ever sent once closed with a right-click.
+- **update_streamlit** : Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up. Forced off for `drawing_mode="polygon"` -- an in-progress multi-click polygon isn't a meaningful intermediate value; the completed polygon still sends once closed with a right-click.
 - **height** : Height of canvas in pixels. Defaults to 400.
 - **width** : Width of canvas in pixels. Defaults to 600.
-- **drawing_mode** : Enable free drawing when "freedraw", object manipulation when "transform", otherwise create new objects with "line", "rect", "circle" and "polygon". Defaults to "freedraw".
+- **drawing_mode** : One of `"freedraw"`, `"transform"`, `"line"`, `"rect"`, `"circle"`, `"point"`, `"polygon"`. Enable free drawing when "freedraw", object manipulation when "transform", otherwise create new objects with the rest. Defaults to "freedraw". Any other value raises `ValueError`.
   - On "polygon" mode, double-clicking will remove the latest point and right-clicking will close the polygon.
-- **initial_drawing** : Initialize canvas with drawings from here. Should be the `json_data` output from other canvas. Beware: if you try to import a drawing from a bigger/smaller canvas, no rescaling is done in the canvas and the import could fail.
+- **initial_drawing** : Initialize canvas with drawings from here. Should be the `json_data` output from another canvas. Beware: if you try to import a drawing from a bigger/smaller canvas, no rescaling is done in the canvas and the import could fail.
 - **point_display_radius** : To make points visible on the canvas, they are drawn as circles. This parameter modifies the radius of the displayed circle.
-- **display_toolbar** : If `False`, don't display the undo/redo/delete toolbar.
-- **return_image_data** : If `True`, populate `image_data` on the result with the canvas's RGBA pixels. `False` by default -- it PNG-encodes the whole canvas on every send. Requires the `image` extra.
+- **display_toolbar** : If `False`, don't display the undo/redo/reset toolbar.
+- **return_image_data** : If `True`, populate `image_data` on the result with the canvas's RGBA pixels. `False` by default -- it PNG-encodes the whole canvas on every send. Requires the `image` extra; accessing `image_data` without both raises.
 - **key** : An optional string to use as the unique key for the widget. Assign a key so the component is not remounted on every rerun.
 - **on_change** : Optional callback invoked when the component sends a new drawing.
 
@@ -144,56 +148,68 @@ canvas_result = st_canvas()
 st_canvas(initial_drawing=canvas_result.json_data)
 ```
 
-- **display_toolbar** : Display the undo/redo/reset toolbar.
-- **key** : An optional string to use as the unique key for the widget. Assign a key so the component is not remount every time the script is rerun.
+## Upgrading from 0.9.x
+
+0.10.0 is a breaking release (Streamlit Components v2, Fabric.js 7). If you're
+upgrading:
+
+- **`image_data` raises `RuntimeError`** -- it's now opt-in. Pass `return_image_data=True`
+  to `st_canvas()`, and install the extra: `pip install streamlit-drawable-canvas[image]`.
+- **Old Streamlit or Python** -- 0.10.0 needs Streamlit >= 1.53 and Python >= 3.10. If
+  you can't upgrade, pin `streamlit-drawable-canvas==0.9.3`.
+- **Saved drawings from 0.9.x with Circle or Point objects render as a thin sliver, not
+  the original shape**, when fed back in via `initial_drawing`. Fabric 4 wrote
+  `Circle.startAngle`/`endAngle` in radians; Fabric 7 reinterprets those same JSON keys
+  as degrees, and `loadFromJSON` doesn't consult the JSON's `version` field to tell the
+  difference. This is declared breaking, with no migration shim. Line, Rect, freedraw,
+  Polygon, and Transform objects are unaffected -- only objects from `circle`/`point`
+  drawing modes carry `startAngle`/`endAngle`.
 
 ## Development
 
-Tasks are automated with [just](https://github.com/casey/just) (see `justfile`) and [uv](https://docs.astral.sh/uv/).
+Tasks are automated with [just](https://github.com/casey/just) (see `justfile`) and [uv](https://docs.astral.sh/uv/). Run `just` (or `just --list`) to see every recipe.
 
 ### Install
 
 ```shell script
-just setup        # uv venv + editable install + npm ci in the frontend
+just setup        # uv sync + npm ci (frontend) + pre-commit install
 just reinstall    # same, but wipes .venv / node_modules / build outputs first
 ```
 
-### Run
-
-Both the frontend dev server and Streamlit should run at the same time.
+### Run the demo app
 
 ```shell script
-just dev   # flips _RELEASE to False, then serves the component on :3001
-just run   # streamlit run e2e/app_to_test.py
+just demo   # uv run streamlit run demo_app.py
 ```
 
-To run against the packaged frontend instead of the dev server: `just build` (which
-flips `_RELEASE` back to True and builds `frontend/build`), then `just run`.
-
-### Cypress integration tests
+For frontend changes, run the Vite watch-rebuild alongside it in another terminal --
+it rebuilds `frontend/build` on every save, which `just demo`'s Streamlit process picks
+up on the next rerun:
 
 ```shell script
-just e2e-setup   # one-time cypress install
-just dev         # in one shell (or `just build` if you want the packaged frontend)
-just run         # in another shell
-just e2e-open    # or `just e2e` for headless
+just dev
 ```
+
+### Lint, format, test
+
+```shell script
+just lint    # ruff check + tsc --noEmit + prettier check
+just format  # ruff format + prettier write
+just test    # pytest + Vitest
+```
+
+### End-to-end tests (Playwright)
+
+```shell script
+just e2e-setup   # one-time: install deps + browsers
+just build       # E2E needs the built frontend
+just e2e         # uv run pytest e2e_playwright -n auto
+```
+
+See the [`justfile`](./justfile) (`just --list`) for the full recipe reference, including
+version bumps and publishing.
 
 ## References
 
-- [react-sketch](https://github.com/tbolis/react-sketch)
-- [React hooks - fabric](https://github.com/fabricjs/fabric.js/issues/5951#issuecomment-563427231)
-- [Simulate Retina display](https://stackoverflow.com/questions/12243549/how-to-test-a-webpage-meant-for-retina-display)
-- [High DPI Canvas](https://www.html5rocks.com/en/tutorials/canvas/hidpi/)
-- [Drawing with FabricJS and TypeScript Part 2: Straight Lines](https://exceptionnotfound.net/drawing-with-fabricjs-and-typescript-part-2-straight-lines/)
-- [Drawing with FabricJS and TypeScript Part 7: Undo/Redo](https://exceptionnotfound.net/drawing-with-fabricjs-and-typescript-part-7-undo-redo/)
-- [Types for classes as values in TypeScript](https://2ality.com/2020/04/classes-as-values-typescript.html)
-- [Working with iframes in Cypress](https://www.cypress.io/blog/2020/02/12/working-with-iframes-in-cypress/)
-- [How to use useReducer in React Hooks for performance optimization](https://medium.com/crowdbotics/how-to-use-usereducer-in-react-hooks-for-performance-optimization-ecafca9e7bf5)
-- [Understanding React Default Props](https://blog.bitsrc.io/understanding-react-default-props-5c50401ed37d)
-- [How to avoid passing callbacks down?](https://reactjs.org/docs/hooks-faq.html#how-to-avoid-passing-callbacks-down)
-- [Examples of the useReducer Hook](https://daveceddia.com/usereducer-hook-examples/) The `useRef` hook allows you to create a persistent ref to a DOM node, or really to any value. React will persist this value between re-renders (between calls to your component function).
-- [CSS filter generator to convert from black to target hex color](https://codepen.io/sosuke/pen/Pjoqqp)
-- [When does React re-render components?](https://felixgerschau.com/react-rerender-components/#when-does-react-re-render)
-- [Immutable Update Patterns](https://redux.js.org/recipes/structuring-reducers/immutable-update-patterns)
-- Icons by [Freepik](https://www.flaticon.com/authors/freepik), [Google](https://www.flaticon.com/authors/google), [Mavadee](https://www.flaticon.com/authors/mavadee).
+- [Fabric.js](http://fabricjs.com/)
+- [Streamlit Components v2](https://docs.streamlit.io/develop/concepts/custom-components)

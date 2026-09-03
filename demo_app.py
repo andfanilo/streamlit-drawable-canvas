@@ -1,6 +1,11 @@
-"""Manual smoke-test app for the dev loop (`just dev` + `just run`)."""
+"""Manual smoke-test app for the dev loop (`just dev` + `just demo`)."""
+
+import io
+import tempfile
+from pathlib import Path
 
 import streamlit as st
+from PIL import Image, ImageDraw
 
 from streamlit_drawable_canvas import st_canvas
 
@@ -13,6 +18,33 @@ MODE_HINTS = {
     "the selected object.",
     "point": "Each click drops a point, drawn as a circle of the radius below.",
 }
+
+BG_SOURCES = ("None", "URL", "Local path", "Bytes", "PIL Image")
+
+
+@st.cache_resource
+def _sample_image() -> Image.Image:
+    """A generated-on-the-fly sample image."""
+    img = Image.new("RGB", (600, 400), "#4B8BBE")
+    draw = ImageDraw.Draw(img)
+    draw.ellipse((150, 100, 450, 300), fill="#FFD43B")
+    draw.text((220, 190), "sample bg", fill="#306998")
+    return img
+
+
+@st.cache_resource
+def _sample_image_path() -> str:
+    path = Path(tempfile.gettempdir()) / "streamlit_drawable_canvas_demo_bg.png"
+    _sample_image().save(path)
+    return str(path)
+
+
+@st.cache_resource
+def _sample_image_bytes() -> bytes:
+    buf = io.BytesIO()
+    _sample_image().save(buf, format="PNG")
+    return buf.getvalue()
+
 
 st.header("streamlit-drawable-canvas demo")
 
@@ -28,8 +60,25 @@ with st.sidebar:
     realtime_update = st.checkbox("Update in realtime", True)
     display_toolbar = st.checkbox("Display toolbar", True)
     return_image_data = st.checkbox("Return image data", True)
+    bg_source = st.selectbox(
+        "background_image source",
+        BG_SOURCES,
+        help="Exercises all four input types st_canvas accepts for "
+        "background_image: URL, local path, raw bytes, PIL Image.",
+    )
 
 red, green, blue = (int(fill_hex[i : i + 2], 16) for i in (1, 3, 5))
+
+if bg_source == "None":
+    background_image = None
+elif bg_source == "URL":
+    background_image = "https://static.streamlit.io/examples/cat.jpg"
+elif bg_source == "Local path":
+    background_image = _sample_image_path()
+elif bg_source == "Bytes":
+    background_image = _sample_image_bytes()
+else:
+    background_image = _sample_image()
 
 if drawing_mode in MODE_HINTS:
     st.caption(MODE_HINTS[drawing_mode])
@@ -44,6 +93,7 @@ canvas_result = st_canvas(
     stroke_width=stroke_width,
     stroke_color=stroke_color,
     background_color="#eee",
+    background_image=background_image,
     update_streamlit=realtime_update,
     height=400,
     width=600,
@@ -64,3 +114,42 @@ if canvas_result.json_data is not None:
             for obj in canvas_result.json_data["objects"]
         ]
     )
+
+st.divider()
+st.subheader("initial_drawing round-trip")
+st.caption(
+    "The canvas above's `json_data` fed back in as `initial_drawing` on a second, "
+    "independent canvas -- drag its objects around in transform mode."
+)
+st_canvas(
+    fill_color=f"rgba({red}, {green}, {blue}, {fill_opacity})",
+    stroke_width=stroke_width,
+    stroke_color=stroke_color,
+    background_color="#eee",
+    height=200,
+    width=300,
+    drawing_mode="transform",
+    initial_drawing=canvas_result.json_data,
+    key="canvas_round_trip",
+)
+
+st.divider()
+st.subheader("Canvas inside st.form")
+st.caption(
+    "`update_streamlit` still applies inside a form -- drawings arrive via "
+    "`setStateValue`, not a trigger, so nothing about form-batching changes. "
+    "Draw, then click Submit."
+)
+with st.form("canvas_form"):
+    form_canvas_result = st_canvas(
+        stroke_color=stroke_color,
+        background_color="#eee",
+        height=200,
+        width=300,
+        drawing_mode="freedraw",
+        key="canvas_form",
+    )
+    submitted = st.form_submit_button("Submit")
+if submitted:
+    object_count = len(form_canvas_result.json_data["objects"])
+    st.write(f"Submitted {object_count} object(s).")

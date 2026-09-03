@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-09-03
+
+Rebuilt on **Streamlit Components v2** and **Fabric.js 7** (from Fabric.js 4.4.0),
+replacing the React 16 / CRA v1 frontend. See
+`docs/plans/v2-migration/00-plan.md` for the full decision log.
+
+### Breaking
+
+- **`image_data` is now opt-in.** Pass `return_image_data=True` to `st_canvas()`;
+  accessing `image_data` without it raises `RuntimeError`. `Pillow` and `numpy` moved
+  out of the base install into the `[image]` extra: `pip install streamlit-drawable-canvas[image]`.
+- **Minimum Streamlit is now 1.53; minimum Python is now 3.10.**
+- **`background_image` works again**, and is widened to accept a URL, `data:` URI, local
+  path, raw bytes, or a PIL Image -- the same inputs `st.image` accepts. It was broken on
+  Streamlit >= ~1.5x because it called a private Streamlit API
+  (`streamlit.elements.image.image_to_url`) that had moved and changed signature; the
+  new implementation resolves images entirely on the Python side, with no private APIs.
+- **Saved drawings from 0.9.x with `circle` or `point` objects render as a thin sliver,
+  not the original shape**, when fed back in via `initial_drawing`. Fabric 4 wrote
+  `Circle.startAngle`/`endAngle` in radians; Fabric 7 reinterprets those same JSON keys
+  as degrees, and `loadFromJSON` doesn't consult the JSON's `version` field to tell the
+  difference. Declared breaking, with no migration shim. Line, Rect, freedraw, Polygon,
+  and Transform objects are unaffected.
+- An unrecognized `drawing_mode` now raises `ValueError` instead of silently falling
+  back to `"freedraw"`.
+
+### Added
+
+- `on_change`: an optional callback invoked when the component sends a new drawing.
+- The toolbar now supports dark mode -- icons are inline SVG on `currentColor`, replacing
+  the old recolored PNGs.
+- The component renders without an iframe (Streamlit Components v2), and undo/redo
+  history now survives an unrelated widget rerun.
+
+### Fixed
+
+- `CanvasResult` was returned as the class itself rather than an instance when the
+  component had no value yet.
+
 ## [0.9.2] - 2022-09-08
 
 - Fix background image on Streamlit Cloud and remote servers (thanks @andreaferretti)
