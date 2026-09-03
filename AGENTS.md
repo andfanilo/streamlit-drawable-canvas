@@ -16,9 +16,9 @@ Major-version intent below; exact pins live in `pyproject.toml` and
 - Lint: Ruff (Python), Prettier + `tsc --noEmit` (TypeScript)
 
 This is the **current** (v2) architecture, reached via a migration from Streamlit
-Components v1 / React 16 / Fabric.js 4. `docs/plans/v2-migration/` is the historical
-record of *why* — decision log, risks, and what was rejected — if you're wondering why
-something is shaped the way it is, look there before changing it.
+Components v1 / React 16 / Fabric.js 4. Much of it is shaped by decisions taken during
+that migration — read `CHANGELOG.md`'s `[0.10.0]` entry and the relevant commit messages
+before changing something that looks deliberate.
 
 ## Component
 

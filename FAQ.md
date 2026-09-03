@@ -239,5 +239,5 @@ migration shim — see the `[0.10.0]` entry in `CHANGELOG.md`. Every other shape
 
 No. `width`/`height` are fixed canvas pixel dimensions, deliberately: Fabric's coordinates
 live in canvas pixel space, so a responsive canvas would make every saved drawing
-depend on the viewport it was drawn in. See decision P9 in
-`docs/plans/v2-migration/00-plan.md`.
+depend on the viewport it was drawn in. This was considered for 0.10.0 and deliberately
+rejected.

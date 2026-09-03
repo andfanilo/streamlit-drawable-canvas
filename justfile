@@ -74,7 +74,7 @@ test: test-py test-frontend
 test-py:
     uv run pytest tests/ -v
 
-# Frontend unit tests (Vitest, pure logic only — see docs/plans/v2-migration/02-frontend.md F1)
+# Frontend unit tests (Vitest, pure logic only — Fabric needs a real canvas 2D context)
 test-frontend:
     cd {{frontend}} && npm test
 

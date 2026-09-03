@@ -21,9 +21,9 @@ This project includes configuration for AI coding agents in `.claude/`. Claude C
 
 `AGENTS.md` describes the current architecture: Streamlit Components v2, a reactless
 TypeScript frontend built with Vite, and Fabric.js 7. It moved there from Components v1
-/ React 16 / Fabric.js 4 in the `0.10.0` release; `docs/plans/v2-migration/` is the
-historical record of that migration — decision log, risks, and what was rejected. If
-you're wondering why something is shaped the way it is, look there before changing it.
+/ React 16 / Fabric.js 4 in the `0.10.0` release. If you're wondering why something is
+shaped the way it is, read the `CHANGELOG.md` entry for that release and the relevant
+commit messages before changing it.
 
 ## Development setup
 

@@ -15,9 +15,6 @@ You are a critical code reviewer examining **uncommitted changes only** (the cur
 
 - **Repository**: andfanilo/streamlit-drawable-canvas
 - **Main branch**: develop
-- **Migration in progress**: `docs/plans/v2-migration/` — check whether the diff belongs
-  to a specific migration stage and whether it respects that stage's do-not list before
-  flagging something as wrong.
 
 Gather the uncommitted diff:
 
@@ -46,9 +43,9 @@ git diff --name-only HEAD
 - **Bugs**: Logic errors, off-by-one, null/undefined access, wrong types
 - **Style**: Consistent with existing codebase patterns, Ruff (Python), Prettier (TypeScript)
 - **Fabric.js lifecycle**: canvas init/dispose, event listener cleanup handled correctly
-- **Migration plan compliance**: if the diff touches packaging, the frontend, or the
-  public API, check it against `docs/plans/v2-migration/00-plan.md`'s decision log and
-  do-not list, and against the current stage's spec
+- **Deliberate design**: if the diff touches packaging, the frontend, or the public API,
+  check it against the `CHANGELOG.md` `[0.10.0]` entry and the relevant commit messages
+  before calling something wrong
 - **Completeness**: Are there missing tests, error handling gaps, or incomplete implementations?
 
 ## Instructions

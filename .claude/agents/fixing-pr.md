@@ -16,9 +16,6 @@ Automates the PR maintenance loop: wait for CI, fix failures, address review com
 - **Repository**: andfanilo/streamlit-drawable-canvas
 - **Main branch**: develop
 - **Head branch**: !`git branch --show-current`
-- **Migration in progress**: `docs/plans/v2-migration/` — if fixes touch packaging, the
-  frontend, or the public API, check them against that plan's decision log and do-not
-  list before applying.
 
 ## Validation Commands
 

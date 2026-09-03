@@ -8,8 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.10.0] - 2026-09-03
 
 Rebuilt on **Streamlit Components v2** and **Fabric.js 7** (from Fabric.js 4.4.0),
-replacing the React 16 / CRA v1 frontend. See
-`docs/plans/v2-migration/00-plan.md` for the full decision log.
+replacing the React 16 / CRA v1 frontend.
 
 ### Breaking
 

@@ -16,9 +16,6 @@ You are performing a code review on the current branch's changes.
 - **Repository**: andfanilo/streamlit-drawable-canvas
 - **Main branch**: develop
 - **Head branch**: !`git branch --show-current`
-- **Migration in progress**: `docs/plans/v2-migration/` — if the branch is doing
-  migration work, its stage spec is the authoritative checklist; review against it in
-  addition to the general checklist below.
 
 Gather additional context as needed:
 
@@ -69,8 +66,8 @@ Review this branch's changes and ensure the changes are bug-free, backwards comp
 - TypeScript code follows Prettier formatting conventions.
 - No risky aspects that could cause security issues or regressions.
 - Fabric.js lifecycle (canvas init, tool switching, event listener cleanup) is handled correctly.
-- If the diff touches packaging, the frontend, or the public API: it respects
-  `docs/plans/v2-migration/00-plan.md`'s decision log and do-not list.
+- If the diff touches packaging, the frontend, or the public API: it respects the
+  decisions recorded in the `CHANGELOG.md` `[0.10.0]` entry.
 - The code follows existing patterns in the codebase.
 
 ## Instructions

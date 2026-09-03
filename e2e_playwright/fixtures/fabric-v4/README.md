@@ -11,8 +11,8 @@ Users have `initial_drawing` / `json_data` payloads persisted by Fabric 4.4.0 th
 cannot regenerate. Fabric publishes no cross-major JSON compatibility guarantee, and
 `loadFromJSON` does not consult the `version` field. Stage 2 (the move to Fabric 7) must
 prove real v4 output still loads correctly under v7 — that proof needs real v4 output as
-its input. See `docs/plans/v2-migration/00-plan.md` risk R3 and
-`docs/plans/v2-migration/01-infra.md` Phase C.
+its input. These fixtures are that input, and the compatibility outcome they established
+is recorded in `CHANGELOG.md`'s `[0.10.0]` entry.
 
 ## Two kinds of artifact — do not confuse them
 

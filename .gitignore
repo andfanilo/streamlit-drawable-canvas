@@ -75,3 +75,6 @@ coverage/
 ########################################################################
 e2e_playwright/test-results
 e2e_playwright/__snapshots__/win32
+
+# Local migration planning notes -- kept on disk, not shipped
+docs/plans/

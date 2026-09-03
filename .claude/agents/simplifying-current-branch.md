@@ -14,9 +14,6 @@ You are refining code for clarity, consistency, and maintainability. Focus on ch
 - **Repository**: andfanilo/streamlit-drawable-canvas
 - **Main branch**: develop
 - **Head branch**: !`git branch --show-current`
-- **Migration in progress**: `docs/plans/v2-migration/` — if the branch is doing
-  migration work, do not simplify past what its stage spec allows (e.g. do not touch
-  `streamlit_drawable_canvas/frontend/src/` during stage 1).
 
 ## Determining Changes
 
