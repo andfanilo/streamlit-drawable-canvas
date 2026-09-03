@@ -184,6 +184,7 @@ def st_canvas(
     return_image_data: bool = False,
     key: str | None = None,
     on_change: Callable[[], None] | None = None,
+    disabled: bool = False,
 ) -> CanvasResult:
     """Create a drawing canvas in a Streamlit app.
 
@@ -238,6 +239,13 @@ def st_canvas(
         key so the component is not remounted every time the script reruns.
     on_change: callable
         Optional callback invoked when the component sends a new drawing.
+    disabled: bool
+        Render the canvas read-only: drawing, selection and transforms are
+        all inert, and the toolbar is hidden regardless of `display_toolbar`
+        (undo, redo and reset would otherwise let a viewer mutate a canvas
+        that is supposed to be read-only). `initial_drawing` still renders,
+        so this is the way to display a drawing back to someone without
+        letting them change it. Defaults to False.
 
     Returns
     -------
@@ -278,6 +286,7 @@ def st_canvas(
         "displayToolbar": display_toolbar,
         "displayRadius": point_display_radius,
         "returnImageData": return_image_data,
+        "disabled": disabled,
     }
 
     result = out(

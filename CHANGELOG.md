@@ -34,6 +34,10 @@ replacing the React 16 / CRA v1 frontend. See
 ### Added
 
 - `on_change`: an optional callback invoked when the component sends a new drawing.
+- `disabled`: renders the canvas read-only. Drawing, selection and transforms are inert,
+  nothing is sent back to Streamlit, and the toolbar is hidden regardless of
+  `display_toolbar` -- undo/redo/reset would otherwise let a viewer mutate a canvas that
+  is meant to be read-only. `initial_drawing` still renders.
 - The toolbar now supports dark mode -- icons are inline SVG on `currentColor`, replacing
   the old recolored PNGs.
 - The component renders without an iframe (Streamlit Components v2), and undo/redo

@@ -15,6 +15,7 @@ const baseData: DrawableCanvasData = {
   displayToolbar: true,
   displayRadius: 3,
   returnImageData: false,
+  disabled: false,
 };
 
 describe("toolKeyFor", () => {
@@ -25,6 +26,14 @@ describe("toolKeyFor", () => {
   it("changes when drawingMode changes", () => {
     expect(toolKeyFor(baseData)).not.toBe(
       toolKeyFor({ ...baseData, drawingMode: "rect" })
+    );
+  });
+
+  it("changes when disabled is toggled", () => {
+    // Toggling `disabled` must re-run reconfigureTool: on -> off has to
+    // re-register a tool, off -> on has to tear one down.
+    expect(toolKeyFor({ ...baseData, disabled: true })).not.toBe(
+      toolKeyFor(baseData)
     );
   });
 

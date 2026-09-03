@@ -29,6 +29,7 @@ export interface DrawableCanvasData {
   displayToolbar: boolean;
   displayRadius: number;
   returnImageData: boolean;
+  disabled: boolean;
 }
 
 export interface DrawableCanvasDrawing {
@@ -121,11 +122,29 @@ const reloadCanvasFromHistory = async (
   return true;
 };
 
+/** Makes the canvas inert: no drawing, no selection, no object events. */
+const applyReadOnly = (canvas: Canvas): void => {
+  canvas.isDrawingMode = false;
+  canvas.selection = false;
+  canvas.discardActiveObject();
+  canvas.forEachObject((o) => {
+    o.selectable = false;
+    o.evented = false;
+  });
+  canvas.renderAll();
+};
+
 const reconfigureTool = (
   instance: CanvasInstance,
   data: DrawableCanvasData
 ): void => {
   instance.activeToolCleanup?.();
+  instance.activeToolCleanup = null;
+  if (data.disabled) {
+    // No tool is registered at all, so no handler can mutate the canvas.
+    applyReadOnly(instance.canvas);
+    return;
+  }
   const ToolConstructor = tools[data.drawingMode] ?? tools.freedraw;
   const tool = new ToolConstructor(instance.canvas);
   instance.activeToolCleanup = tool.configureCanvas({
@@ -144,6 +163,7 @@ export const toolKeyFor = (data: DrawableCanvasData): string =>
     data.strokeWidth,
     data.strokeColor,
     data.displayRadius,
+    data.disabled,
   ]);
 
 export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
@@ -252,7 +272,13 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
 
   // Both handlers defer via microtask: tool listeners are registered later
   // and so run after these within the same synchronous `fire()`.
+  //
+  // They are canvas-level, not tool-level, so a disabled canvas (which
+  // registers no tool) would otherwise still snapshot and send on the first
+  // click: harmless to the drawing, but it replaces the Python-supplied
+  // payload with Fabric's serialization of it and triggers a rerun.
   canvas.on("mouse:up", (opt) => {
+    if (instance.latest.data?.disabled) return;
     const domEvent = opt.e as MouseEvent;
     const isRightClick = domEvent != null && domEvent.button === 2;
     queueMicrotask(() => {
@@ -268,6 +294,7 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
     });
   });
   canvas.on("mouse:dblclick", () => {
+    if (instance.latest.data?.disabled) return;
     queueMicrotask(() => {
       // In polygon mode a double-click removes the last points; it does not
       // close the polygon, so it does not force a send.
@@ -309,12 +336,13 @@ export const applyData = (
       height: data.canvasHeight,
     });
   }
+  const showToolbar = data.displayToolbar && !data.disabled;
   instance.container.style.width = `${data.canvasWidth}px`;
   instance.container.style.height = `${
-    data.canvasHeight + (data.displayToolbar ? TOOLBAR_HEIGHT : 0)
+    data.canvasHeight + (showToolbar ? TOOLBAR_HEIGHT : 0)
   }px`;
   instance.toolbarEl.style.top = `${data.canvasHeight + 4}px`;
-  instance.toolbarEl.style.display = data.displayToolbar ? "flex" : "none";
+  instance.toolbarEl.style.display = showToolbar ? "flex" : "none";
 
   // 2. Background image (memoized)
   if (data.backgroundImageURL !== instance.lastBackgroundImageURL) {

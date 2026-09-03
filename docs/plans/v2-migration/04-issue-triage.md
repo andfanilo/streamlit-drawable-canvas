@@ -165,11 +165,19 @@ reporter shows marked-up student assignments). Implementation: skip tool handler
 registration entirely, force `canvas.selection = false` and every object non-`evented`.
 Self-contained, no interaction with the tool registry beyond bypassing it.
 
-- [ ] `disabled: bool = False` on `st_canvas`, threaded through `DrawableCanvasData`
-- [ ] Bypass `reconfigureTool` in `applyData` when set
-- [ ] Confirm the toolbar's own behaviour when disabled — undo/redo/reset should almost
-      certainly be hidden or disabled too; decide and document
-- [ ] Playwright: drag on a disabled canvas, assert `json_data` is unchanged
+- [x] `disabled: bool = False` on `st_canvas`, threaded through `DrawableCanvasData`.
+      Appended last in the signature so no existing positional argument shifts
+- [x] `reconfigureTool` registers no tool at all when set, and applies a read-only pass
+      (no drawing mode, no selection, every object non-`evented`)
+- [x] Toolbar **hidden** when disabled, overriding `display_toolbar` — undo/redo/reset
+      would otherwise mutate a read-only canvas. Documented in README/FAQ/CHANGELOG
+- [x] **Found and fixed while testing:** the `mouse:up`/`mouse:dblclick` handlers are
+      registered on the canvas, not by the tool, so a disabled canvas still snapshotted
+      and sent on the first click — replacing the Python-supplied payload with Fabric's
+      serialization of it and triggering a rerun. Both handlers now early-return when
+      disabled
+- [x] Playwright: 4 tests in `canvas_disabled_test.py`, including an enabled control so
+      the "nothing happened" assertions can't pass for the wrong reason
 
 ### F4 — Mobile: verify, do not implement (2 issues)
 
@@ -273,7 +281,7 @@ should be attempted after `just bump 0.10.0`.
 
 - [x] F1 `FAQ.md`
 - [ ] F2 `background_image_fit`
-- [ ] F3 `disabled`
+- [x] F3 `disabled`
 - [ ] F4 mobile verification test
 - [x] §1.2 lifecycle regression test — done, `canvas_isolation_test.py` (3 passed)
 - [ ] (optional) F5, F6, F7
