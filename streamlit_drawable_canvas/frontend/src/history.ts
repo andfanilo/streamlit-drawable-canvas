@@ -1,6 +1,6 @@
 // Pure undo/redo store for canvas JSON snapshots. No Fabric imports, no DOM
 // access -- operates on opaque JSON-serializable snapshots only, so Vitest
-// can exercise it directly (T2).
+// can exercise it directly.
 
 const HISTORY_MAX_COUNT = 100;
 
@@ -10,35 +10,14 @@ export const isEmptyValue = (value: unknown): boolean => {
   return Object.keys(value as Record<string, unknown>).length === 0;
 };
 
-export const deepEqual = (a: unknown, b: unknown): boolean => {
-  if (a === b) return true;
-  if (typeof a !== typeof b) return false;
-  if (a === null || b === null) return false;
-  if (typeof a !== "object") return false;
-
-  if (Array.isArray(a) || Array.isArray(b)) {
-    if (!Array.isArray(a) || !Array.isArray(b)) return false;
-    if (a.length !== b.length) return false;
-    return a.every((item, i) => deepEqual(item, b[i]));
-  }
-
-  const aObj = a as Record<string, unknown>;
-  const bObj = b as Record<string, unknown>;
-  const aKeys = Object.keys(aObj);
-  const bKeys = Object.keys(bObj);
-  if (aKeys.length !== bKeys.length) return false;
-  return aKeys.every(
-    (key) =>
-      Object.prototype.hasOwnProperty.call(bObj, key) &&
-      deepEqual(aObj[key], bObj[key])
-  );
-};
+// Snapshots come from Fabric's `toObject()`, whose key order is stable, so
+// this matches how `instance.ts` diffs `initialDrawing` and the tool config.
+export const sameSnapshot = (a: unknown, b: unknown): boolean =>
+  JSON.stringify(a) === JSON.stringify(b);
 
 /**
- * Undo/redo store for canvas snapshots. Ported from the v1
- * `DrawableCanvasState.tsx` reducer (save/undo/redo/reset), preserving its
- * exact semantics -- including the quirk where `undo()` on an empty undo
- * stack still pushes the current state onto the redo stack.
+ * Undo/redo store for canvas snapshots. `undo()` on an empty undo stack still
+ * pushes the current state onto the redo stack -- a quirk callers rely on.
  */
 export class HistoryStore<T = unknown> {
   private undoStack: T[] = [];
@@ -76,7 +55,7 @@ export class HistoryStore<T = unknown> {
       this.currentState = state;
       return false;
     }
-    if (deepEqual(state, this.currentState)) {
+    if (sameSnapshot(state, this.currentState)) {
       return false;
     }
 
@@ -97,7 +76,7 @@ export class HistoryStore<T = unknown> {
   undo(): boolean {
     if (
       isEmptyValue(this.currentState) ||
-      deepEqual(this.initialState, this.currentState)
+      sameSnapshot(this.initialState, this.currentState)
     ) {
       return false;
     }

@@ -11,8 +11,6 @@ const fitToCanvas = (
   const canvasHeight = backgroundCanvas.height ?? img.height;
 
   if (fit === "contain") {
-    // Uniform scale, centred -- a canvas with a different aspect ratio gets
-    // margins rather than a distorted image.
     const scale = Math.min(canvasWidth / img.width, canvasHeight / img.height);
     img.set({
       left: (canvasWidth - img.width * scale) / 2,

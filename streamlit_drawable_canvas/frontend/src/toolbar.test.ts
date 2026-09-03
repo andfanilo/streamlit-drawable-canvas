@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { buildToolbar, setToolbarState, setToolbarTheme } from "./toolbar";
+import { buildToolbar, setToolbarState } from "./toolbar";
 
 const noop = () => {};
 const callbacks = {
@@ -59,41 +59,5 @@ describe("buildToolbar", () => {
     setToolbarState(handles, true, false);
     expect(handles.undoButton.disabled).toBe(false);
     expect(handles.redoButton.disabled).toBe(true);
-  });
-});
-
-describe("setToolbarTheme", () => {
-  const themeFor = (backgroundColor: string): string | undefined => {
-    const container = document.createElement("div");
-    container.style.setProperty("--st-background-color", backgroundColor);
-    document.body.appendChild(container);
-    setToolbarTheme(container);
-    const theme = container.dataset.theme;
-    container.remove();
-    return theme;
-  };
-
-  it("reads Streamlit's default light and dark backgrounds", () => {
-    expect(themeFor("#ffffff")).toBe("light");
-    expect(themeFor("#0e1117")).toBe("dark");
-  });
-
-  it("accepts short hex and rgb()/rgba() notation", () => {
-    expect(themeFor("#fff")).toBe("light");
-    expect(themeFor("#123")).toBe("dark");
-    expect(themeFor("rgb(255, 255, 255)")).toBe("light");
-    expect(themeFor("rgba(14, 17, 23, 1)")).toBe("dark");
-  });
-
-  it("splits on luminance, not on the raw channel values", () => {
-    // Same channel value, opposite verdicts: green carries ~10x the
-    // luminance weight of blue.
-    expect(themeFor("#00ff00")).toBe("light");
-    expect(themeFor("#0000ff")).toBe("dark");
-  });
-
-  it("falls back to light when the variable is missing or unparseable", () => {
-    expect(themeFor("")).toBe("light");
-    expect(themeFor("not-a-color")).toBe("light");
   });
 });

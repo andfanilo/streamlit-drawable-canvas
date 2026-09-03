@@ -11,15 +11,9 @@ import {
 } from "./background";
 import { createSender, Sender } from "./debounce";
 import { HistoryStore } from "./history";
-import {
-  buildToolbar,
-  setToolbarState,
-  setToolbarTheme,
-  ToolbarHandles,
-} from "./toolbar";
+import { buildToolbar, setToolbarState, ToolbarHandles } from "./toolbar";
 import { tools } from "./tools";
 
-// Matches v1's UpdateStreamlit.tsx.
 const SEND_DEBOUNCE_MS = 200;
 
 export interface DrawableCanvasData {
@@ -56,8 +50,6 @@ type SetStateValue = FrontendRendererArgs<
 
 export interface CanvasInstance {
   container: HTMLDivElement;
-  backgroundCanvasEl: HTMLCanvasElement;
-  canvasEl: HTMLCanvasElement;
   canvas: Canvas;
   backgroundCanvas: StaticCanvas;
   toolbarEl: HTMLDivElement;
@@ -104,14 +96,6 @@ const emit = (
     ? instance.canvas.toDataURL({ format: "png", multiplier: 1 })
     : null;
   instance.latest.setStateValue("drawing", { raw: state, data });
-};
-
-/** Sends immediately, dropping any scheduled send. */
-const sendToStreamlit = (
-  instance: CanvasInstance,
-  state: Record<string, unknown>
-): void => {
-  instance.sender.now(state);
 };
 
 /** Reloads the canvas from `history.current`. Returns false if a newer load
@@ -164,7 +148,16 @@ const reconfigureTool = (
   });
 };
 
-/** Pure diffing key: changes iff a tool-affecting param changes (T2). */
+/** Reflects history depth onto the undo/redo buttons. */
+const syncToolbar = (instance: CanvasInstance): void => {
+  setToolbarState(
+    instance.toolbarHandles,
+    instance.history.canUndo(),
+    instance.history.canRedo()
+  );
+};
+
+/** Diffing key: changes iff a tool-affecting param changes. */
 export const toolKeyFor = (data: DrawableCanvasData): string =>
   JSON.stringify([
     data.drawingMode,
@@ -201,8 +194,6 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
 
   const instance: CanvasInstance = {
     container,
-    backgroundCanvasEl,
-    canvasEl,
     canvas,
     backgroundCanvas,
     toolbarEl,
@@ -233,34 +224,26 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
 
   instance.toolbarHandles = buildToolbar(toolbarEl, {
     onSend: () => {
-      sendToStreamlit(instance, canvas.toObject());
+      instance.sender.now(canvas.toObject());
     },
     onUndo: () => {
       if (instance.history.undo()) {
         void reloadCanvasFromHistory(instance).then((applied) => {
           if (applied && instance.latest.realtimeUpdateStreamlit) {
-            sendToStreamlit(instance, canvas.toObject());
+            instance.sender.now(canvas.toObject());
           }
         });
-        setToolbarState(
-          instance.toolbarHandles,
-          instance.history.canUndo(),
-          instance.history.canRedo()
-        );
+        syncToolbar(instance);
       }
     },
     onRedo: () => {
       if (instance.history.redo()) {
         void reloadCanvasFromHistory(instance).then((applied) => {
           if (applied && instance.latest.realtimeUpdateStreamlit) {
-            sendToStreamlit(instance, canvas.toObject());
+            instance.sender.now(canvas.toObject());
           }
         });
-        setToolbarState(
-          instance.toolbarHandles,
-          instance.history.canUndo(),
-          instance.history.canRedo()
-        );
+        syncToolbar(instance);
       }
     },
     onReset: () => {
@@ -269,24 +252,16 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
       // Always sent, even when update_streamlit=False.
       void reloadCanvasFromHistory(instance).then((applied) => {
         if (applied) {
-          sendToStreamlit(instance, canvas.toObject());
+          instance.sender.now(canvas.toObject());
         }
       });
-      setToolbarState(
-        instance.toolbarHandles,
-        instance.history.canUndo(),
-        instance.history.canRedo()
-      );
+      syncToolbar(instance);
     },
   });
 
-  // Both handlers defer via microtask: tool listeners are registered later
-  // and so run after these within the same synchronous `fire()`.
-  //
-  // They are canvas-level, not tool-level, so a disabled canvas (which
-  // registers no tool) would otherwise still snapshot and send on the first
-  // click: harmless to the drawing, but it replaces the Python-supplied
-  // payload with Fabric's serialization of it and triggers a rerun.
+  // Both handlers defer via microtask so tool listeners, registered later,
+  // run first within the same synchronous `fire()`. Both are canvas-level, so
+  // they must bail out explicitly on a disabled canvas.
   canvas.on("mouse:up", (opt) => {
     if (instance.latest.data?.disabled) return;
     const domEvent = opt.e as MouseEvent;
@@ -294,26 +269,18 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
     queueMicrotask(() => {
       const state = saveAndMaybeSend(instance);
       if (isRightClick) {
-        sendToStreamlit(instance, state);
+        instance.sender.now(state);
       }
-      setToolbarState(
-        instance.toolbarHandles,
-        instance.history.canUndo(),
-        instance.history.canRedo()
-      );
+      syncToolbar(instance);
     });
   });
   canvas.on("mouse:dblclick", () => {
     if (instance.latest.data?.disabled) return;
     queueMicrotask(() => {
-      // In polygon mode a double-click removes the last points; it does not
-      // close the polygon, so it does not force a send.
+      // A polygon double-click removes points; only a right-click closes it,
+      // so this never forces a send.
       saveAndMaybeSend(instance);
-      setToolbarState(
-        instance.toolbarHandles,
-        instance.history.canUndo(),
-        instance.history.canRedo()
-      );
+      syncToolbar(instance);
     });
   });
 
@@ -350,10 +317,8 @@ export const applyData = (
   instance.container.style.width = `${data.canvasWidth}px`;
   instance.container.style.height = `${data.canvasHeight}px`;
   instance.toolbarEl.style.display = showToolbar ? "flex" : "none";
-  // `realtimeUpdateStreamlit` is already false for polygon mode, which also
-  // sends only on demand.
+  // Also covers polygon mode, where `realtimeUpdateStreamlit` is always false.
   instance.toolbarEl.dataset.pinned = String(!data.realtimeUpdateStreamlit);
-  setToolbarTheme(instance.container);
 
   // 2. Background image (memoized on URL; a fit or size change re-fits the
   //    image already loaded rather than re-fetching it)
@@ -403,11 +368,7 @@ export const applyData = (
       const latestData = instance.latest.data ?? data;
       reconfigureTool(instance, latestData);
       instance.lastToolKey = toolKeyFor(latestData);
-      setToolbarState(
-        instance.toolbarHandles,
-        instance.history.canUndo(),
-        instance.history.canRedo()
-      );
+      syncToolbar(instance);
     });
   } else {
     // 4. Tool (memoized) -- only reconfigure when drawing-mode/style params
@@ -419,11 +380,7 @@ export const applyData = (
     }
   }
 
-  setToolbarState(
-    instance.toolbarHandles,
-    instance.history.canUndo(),
-    instance.history.canRedo()
-  );
+  syncToolbar(instance);
 };
 
 export const disposeInstance = (instance: CanvasInstance): void => {

@@ -1,5 +1,5 @@
 // Trailing-edge debounce plus the send-scheduling policy built on it. No
-// Fabric imports, no DOM access, so Vitest can exercise both directly (T2).
+// Fabric imports, no DOM access, so Vitest can exercise both directly.
 
 export interface Debounced<T> {
   (value: T): void;
@@ -50,11 +50,7 @@ export interface Sender<T> {
   cancel(): void;
 }
 
-/**
- * Wraps `send` so scheduled deliveries coalesce and an immediate delivery
- * always supersedes a scheduled one: a value scheduled before an immediate
- * send is dropped, never delivered on top of it.
- */
+/** Wraps `send` so an immediate delivery drops any scheduled one. */
 export const createSender = <T>(
   send: (value: T) => void,
   waitMs: number

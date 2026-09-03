@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deepEqual, HistoryStore, isEmptyValue } from "./history";
+import { HistoryStore, isEmptyValue } from "./history";
 
 // Mirrors the unexported HISTORY_MAX_COUNT in history.ts.
 const HISTORY_MAX_COUNT = 100;
@@ -24,42 +24,6 @@ describe("isEmptyValue", () => {
     expect(isEmptyValue(0)).toBe(false);
     expect(isEmptyValue("")).toBe(false);
     expect(isEmptyValue(false)).toBe(false);
-  });
-});
-
-describe("deepEqual", () => {
-  it("compares primitives by value", () => {
-    expect(deepEqual(1, 1)).toBe(true);
-    expect(deepEqual(1, 2)).toBe(false);
-    expect(deepEqual("a", "a")).toBe(true);
-  });
-
-  it("treats differing types as unequal, even with loosely-equal values", () => {
-    expect(deepEqual(1, "1")).toBe(false);
-    expect(deepEqual(null, undefined)).toBe(false);
-  });
-
-  it("compares objects structurally, independent of key order", () => {
-    expect(deepEqual({ a: 1, b: 2 }, { b: 2, a: 1 })).toBe(true);
-    expect(deepEqual({ a: 1 }, { a: 1, b: 2 })).toBe(false);
-  });
-
-  it("compares arrays element-wise, order-sensitive", () => {
-    expect(deepEqual([1, 2, 3], [1, 2, 3])).toBe(true);
-    expect(deepEqual([1, 2, 3], [3, 2, 1])).toBe(false);
-    expect(deepEqual([1, 2], [1, 2, 3])).toBe(false);
-  });
-
-  it("does not consider an array equal to an object", () => {
-    expect(deepEqual([], {})).toBe(false);
-  });
-
-  it("recurses into nested structures", () => {
-    const a = { objects: [{ type: "rect", left: 1 }] };
-    const b = { objects: [{ type: "rect", left: 1 }] };
-    const c = { objects: [{ type: "rect", left: 2 }] };
-    expect(deepEqual(a, b)).toBe(true);
-    expect(deepEqual(a, c)).toBe(false);
   });
 });
 

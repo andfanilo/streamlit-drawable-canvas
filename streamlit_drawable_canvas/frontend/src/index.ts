@@ -9,10 +9,10 @@ import {
   DrawableCanvasState,
 } from "./instance";
 
-// Module-scoped instance registry (F3). The renderer is re-invoked on every
-// data change without its previous cleanup running first, so state that must
-// survive reruns -- the Fabric canvas, undo/redo history, the active tool --
-// lives here, keyed by the stable `parentElement`, not in local variables.
+// The renderer is re-invoked on every data change without its previous
+// cleanup running first, so state that must survive reruns -- the Fabric
+// canvas, undo/redo history, the active tool -- lives here, keyed by the
+// stable `parentElement`, not in local variables.
 const instances = new WeakMap<
   HTMLElement | ShadowRoot,
   ReturnType<typeof createInstance>
@@ -35,9 +35,7 @@ const DrawableCanvasRenderer: FrontendRenderer<
     instance = createInstance(mountPoint);
     instances.set(parentElement, instance);
   } else if (!mountPoint.contains(instance.container)) {
-    // Defensive: our static html/css never change, so this shouldn't
-    // happen, but re-attach rather than silently drawing into a detached
-    // canvas if it ever does.
+    // Re-attach rather than draw into a detached canvas.
     mountPoint.appendChild(instance.container);
   }
 

@@ -18,8 +18,8 @@
   border: 1px solid var(--st-border-color, lightgrey);
 }
 
-/* Geometry only; the visible card is `.dc-toolbar-card`. Padding is the
-   hover bridge between canvas and card, and the shadow's bleed room. */
+/* Geometry only; the visible card is `.dc-toolbar-card`. The padding bridges
+   the gap to the canvas so hover survives crossing it. */
 .dc-toolbar {
   position: absolute;
   right: 0;
@@ -41,8 +41,8 @@
     top 100ms 100ms;
 }
 
-/* Set when nothing sends automatically, so the send button -- the only
-   discoverable way to commit a drawing -- is never hidden behind a hover. */
+/* Set when nothing sends automatically: the send button is then the only way
+   to commit a drawing, so it must not be hover-hidden. */
 .dc-toolbar[data-pinned="true"] {
   opacity: 1;
   top: -2.65rem;
@@ -56,17 +56,11 @@
   width: fit-content;
   padding: 0.25rem;
   border-radius: var(--st-base-radius, 0.5rem);
-  /* Streamlit's `lightenedBg05`. First declaration is the `color-mix`
-     fallback. */
+  /* Streamlit's `lightenedBg05`; first declaration is the fallback. */
   background: var(--st-background-color, #fff);
   background: color-mix(in srgb, var(--st-background-color, #fff) 96%, white);
-  box-shadow: 1px 2px 8px rgba(0, 0, 0, 0.08);
-  color: color-mix(in srgb, var(--st-text-color, #31333f) 60%, transparent);
-}
-
-.dc-container[data-theme="dark"] .dc-toolbar-card {
-  box-shadow: 1px 2px 8px rgba(0, 0, 0, 0.2);
-  color: var(--st-text-color, #fafafa);
+  box-shadow: 1px 2px 8px rgba(0, 0, 0, 0.15);
+  color: color-mix(in srgb, var(--st-text-color, #31333f) 70%, transparent);
 }
 
 .dc-icon-button {
@@ -101,8 +95,6 @@
   box-shadow: none;
 }
 
-/* Deliberately not Streamlit's disabled rule (a solid `gray30` fill), which
-   no native element toolbar exercises. */
 .dc-icon-button:disabled {
   cursor: not-allowed;
   background: none;

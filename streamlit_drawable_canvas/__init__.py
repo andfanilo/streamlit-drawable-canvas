@@ -72,20 +72,15 @@ class CanvasResult:
         return np.asarray(img)
 
 
-# Content-addressed cache for encoded background images, so an unchanged
-# background_image across reruns is re-encoded (and re-base64'd) at most
-# once. Deliberately a plain module-level dict, not st.cache_data -- the
-# encoded value has no session-specific content, so sharing it across
-# sessions is correct and simplest. Bounded LRU (via OrderedDict) so a long
-# session cycling through many distinct background images can't grow this
-# unboundedly.
+# Content-addressed LRU cache for encoded background images: an unchanged
+# background_image across reruns is re-encoded at most once. Shared across
+# sessions -- the encoded value has no session-specific content.
 _BG_IMAGE_CACHE_MAXSIZE = 32
 _bg_image_cache: OrderedDict[str, str] = OrderedDict()
 
 
-# Kept in sync with the `tools` registry in
-# frontend/src/tools/index.ts -- an unrecognized drawing_mode there silently
-# falls back to freedraw, which would otherwise mask a caller's typo.
+# Kept in sync with the `tools` registry in frontend/src/tools/index.ts, which
+# silently falls back to freedraw on an unrecognized mode.
 _VALID_DRAWING_MODES = frozenset(
     {"circle", "freedraw", "line", "point", "polygon", "rect", "transform"}
 )
@@ -132,9 +127,8 @@ def _resolve_background_image_url(
     """Resolve `background_image` to a URL the frontend can use directly.
 
     Accepts what `st.image` accepts: an http(s) URL, a data: URI, a local
-    path, raw bytes, or a PIL Image. Only the PIL.Image branch imports Pillow -- a caller passing
-    one demonstrably already has it installed, so the base (non-`[image]`)
-    install stays importable and functional for every other branch.
+    path, raw bytes, or a PIL Image. Only the PIL.Image branch imports Pillow,
+    so the base (non-`[image]`) install stays functional for every other one.
     """
     if background_image is None:
         return None
