@@ -197,16 +197,16 @@ Each cites the decision that rejected it, so the reply isn't just "no".
 
 ---
 
-## Group F — low-hanging, considered but not built (3)
+## Group F — low-hanging, considered but not built (2)
 
-These were on the 0.10.0 shortlist (`04-issue-triage.md`, F5–F7) and were dropped to land
-the release. Keep open.
+These were on the 0.10.0 shortlist (`04-issue-triage.md`, F5–F6) and were deferred to
+0.11.0 to land the release. Keep open. F7/#88 also sat here and is now fixed — it moves to
+the §1 sweep-close list.
 
 | Issue | Comment |
 |---|---|
 | #97 | Still open, and close to fixed. Transform mode currently promotes every object to selectable/evented, which clobbers `selectable: false` and the `lock*` flags you set in `initial_drawing` — Fabric supports exactly what you want, and this component overrides it. The fix is a few lines, but it changes existing behaviour, so it wants a changelog entry and a release of its own. |
 | #8 | Still open. Bring-forward / send-backward in transform mode is a contained change (Fabric has `bringObjectForward` / `sendObjectBackwards`); it just needs key bindings chosen and documented. |
-| #88 | Still open — a one-line spacing change. The toolbar sits 4px under the canvas, which is why the bin is easy to hit by accident. Will bump the gap. |
 
 ---
 

@@ -218,7 +218,7 @@ uses Pointer Events throughout and sets `touch-action: none` on its own canvas e
       with Fabric's `touch-action` styling — that would be an R2-adjacent finding and
       worth reporting rather than patching blind
 
-### F5 — Respect per-object lock flags in transform mode (1 issue)
+### F5 — Respect per-object lock flags in transform mode (1 issue) — DEFERRED to 0.11.0
 
 **Cost:** ~5 lines. **Reward:** medium. **Behaviour change — changelog it.**
 
@@ -235,7 +235,7 @@ family.
       and movement is not
 - [ ] CHANGELOG under a "Changed" heading — someone may be relying on the clobber
 
-### F6 — Object ordering in transform mode (1 issue)
+### F6 — Object ordering in transform mode (1 issue) — DEFERRED to 0.11.0
 
 **Cost:** ~25 lines, entirely inside `transform.ts`. **Reward:** low-medium.
 
@@ -299,9 +299,10 @@ says why".
 or a contained change with an obvious test. F1 alone is the best value on the page and is
 already promised by `00-plan.md` §4.
 
-**F5–F6 are optional.** Cheap, but each is a small behaviour change that widens the review
-surface. Drop them if the branch needs to land sooner; they carry cleanly to 0.11.0. F7
-is done, subsumed by the toolbar restyle.
+**F5–F6 were dropped.** Both are small behaviour changes, and each widens the review
+surface at the moment the branch is trying to land; they carry cleanly to 0.11.0. Both
+issues stay open — see `05-issue-responses.md` Group F. F7 is done, subsumed by the
+toolbar restyle.
 
 **Sequencing against `03-release.md`:** all of this lands *before* Phase C. Nothing here
 should be attempted after `just bump 0.10.0`.
@@ -311,10 +312,14 @@ should be attempted after `just bump 0.10.0`.
 - [x] F3 `disabled`
 - [x] F4 mobile verification test — **dropped**, see F4 above
 - [x] §1.2 lifecycle regression test — done, `canvas_isolation_test.py` (3 passed)
+- [x] F5, F6 — **deferred to 0.11.0**, both issues stay open
 - [x] F7 toolbar spacing — superseded by the toolbar restyle, see F7 above
-- [ ] (optional) F5, F6
-- [ ] Re-run `just lint && just test && just build && just e2e`
-- [ ] CHANGELOG: fold F2/F3 into the 0.10.0 "Added" section; the toolbar restyle and F5
-      into a "Changed" section
-- [ ] On release, sweep-close §1 (19 issues) referencing the 0.10.0 CHANGELOG entry
+- [x] CHANGELOG — F2/F3 under `### Added`; the toolbar restyle, the send-button rename
+      and toolbar pinning under `### Changed`. F5 was not built, so nothing to fold in
+
+Deliberately left open — these belong to Phase C in `03-release.md`, not here:
+
+- [ ] Re-run `just lint && just test && just build && just e2e` immediately before
+      `just bump 0.10.0` — a pass recorded now goes stale before the tag
+- [ ] Sweep-close §1 (19 issues) referencing the 0.10.0 CHANGELOG entry
 - [ ] Answer §4 (9 issues) citing the decision IDs, and close
