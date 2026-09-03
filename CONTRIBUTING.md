@@ -17,17 +17,17 @@ This project includes configuration for AI coding agents in `.claude/`. Claude C
 |---|---|
 | `developing-with-streamlit` | Router skill for Streamlit development — routes to sub-skills covering components, layouts, theming, performance, data display, and more |
 
-## Migration in progress
+## Architecture
 
-This repo is mid-migration from Streamlit Components v1 to v2 (see
-`docs/plans/v2-migration/00-plan.md`). If your change touches packaging, the frontend,
-or the public API, read that plan first — it is the authoritative spec, decision log,
-and do-not list. `AGENTS.md` describes the **current** (pre-migration) architecture.
+`AGENTS.md` describes the current architecture: Streamlit Components v2, a reactless
+TypeScript frontend built with Vite, and Fabric.js 7. It moved there from Components v1
+/ React 16 / Fabric.js 4 in the `0.10.0` release; `docs/plans/v2-migration/` is the
+historical record of that migration — decision log, risks, and what was rejected. If
+you're wondering why something is shaped the way it is, look there before changing it.
 
 ## Development setup
 
-**Prerequisites:** Node.js **16** (pinned — the frontend is React 16 + `react-scripts@4`,
-which requires this specific version; see `AGENTS.md`)
+**Prerequisites:** Node.js **24+**
 
 > Common workflows are wrapped in a [`justfile`](./justfile). Run `just` (or `just --list`) to see all recipes. Each section below shows both the `just` shortcut and the raw commands.
 
@@ -41,29 +41,29 @@ just setup     # uv sync + npm ci (frontend) + pre-commit install
 
 ```sh
 uv sync
+cd streamlit_drawable_canvas/frontend && npm ci
 uv run pre-commit install  # install git hook (one-time)
 ```
 
 </details>
 
-For **frontend** (TypeScript/React) changes, run the CRA dev server on `:3001` alongside
-the Streamlit app:
+For **frontend** (TypeScript) changes, run the Vite watch-rebuild alongside the demo app.
+There's no dev server or HMR — Vite rebuilds `frontend/build` on save, and Streamlit
+picks up the new bundle on the next rerun:
 
 ```sh
 just dev    # one terminal
-just run    # another terminal
+just demo   # another terminal
 ```
 
 <details><summary>Raw commands</summary>
 
 ```sh
-# flip _RELEASE to False in streamlit_drawable_canvas/__init__.py, then:
 cd streamlit_drawable_canvas/frontend
-npm ci --legacy-peer-deps
-npm run start
+npm run dev
 
 # in another terminal
-uv run streamlit run e2e/app_to_test.py
+uv run streamlit run demo_app.py
 ```
 
 </details>
@@ -81,8 +81,8 @@ just pre-commit    # run all pre-commit hooks
 ```sh
 uv run ruff check --fix .         # lint Python
 uv run ruff format .              # format Python
-cd streamlit_drawable_canvas/frontend && npx prettier --check "src/**/*.{ts,tsx}"   # lint frontend
-cd streamlit_drawable_canvas/frontend && npx prettier --write "src/**/*.{ts,tsx}"   # format frontend
+cd streamlit_drawable_canvas/frontend && npm run typecheck && npx prettier --check "src/**/*.ts"   # lint frontend
+cd streamlit_drawable_canvas/frontend && npx prettier --write "src/**/*.ts"   # format frontend
 uv run pre-commit run --all-files # run all pre-commit hooks
 ```
 
@@ -93,6 +93,9 @@ uv run pre-commit run --all-files # run all pre-commit hooks
 ## Testing
 
 ### Unit Tests (TypeScript)
+
+Vitest, pure logic only — jsdom's `<canvas>` has no real 2D context, so Fabric can't run
+there. Anything touching an actual canvas belongs in the Playwright suite below instead.
 
 ```sh
 just test-frontend
@@ -123,37 +126,27 @@ uv run pytest tests/ -v
 
 > `just test` runs both Python and frontend unit tests in sequence.
 
-### E2E Tests
+### E2E Tests (Playwright)
 
-Two suites currently coexist:
+Everything that touches an actual canvas — synthetic mouse drags asserting on
+`json_data` structure, plus the Fabric v4 JSON compatibility fixtures in
+`e2e_playwright/fixtures/fabric-v4/`.
 
-- **Cypress** (`e2e/`) — the original v1 smoke test. Being retired, not extended; see
-  `docs/plans/v2-migration/00-plan.md` decision T7.
+```sh
+just e2e-setup   # one-time: install deps + browsers
+just build       # E2E needs the built frontend
+just e2e         # run the tests
+```
 
-  ```sh
-  just cypress-setup   # one-time install
-  just build            # or `just dev`, in another shell
-  just run
-  just cypress-open     # or `just cypress-run` for headless
-  ```
+<details><summary>Raw commands</summary>
 
-- **Playwright** (`e2e_playwright/`) — added by the v2 migration for Fabric v4 JSON
-  fixture capture and, from stage 2 onward, full E2E coverage.
+```sh
+uv sync --group e2e
+uv run python -m playwright install --with-deps
+uv run pytest e2e_playwright -n auto
+```
 
-  ```sh
-  just e2e-setup   # one-time: install deps + browsers
-  just e2e         # run the tests
-  ```
-
-  <details><summary>Raw commands</summary>
-
-  ```sh
-  uv sync --group e2e
-  uv run python -m playwright install --with-deps
-  uv run pytest e2e_playwright -n auto
-  ```
-
-  </details>
+</details>
 
 To **clean up Playwright's browser binaries** (freeing up ~500MB+), run:
 
