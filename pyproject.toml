@@ -46,6 +46,11 @@ e2e = [
   "requests",
 ]
 
+[tool.ruff]
+# ruff formats Python code blocks inside Markdown. FAQ.md aligns its sample
+# code deliberately, so keep both the linter and the formatter out of docs.
+extend-exclude = ["*.md"]
+
 [[tool.uv.index]]
 name = "testpypi"
 url = "https://test.pypi.org/simple/"
