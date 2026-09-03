@@ -82,11 +82,18 @@ these has a repro on the branch. #141 in particular may always have been a Strea
 bug of that era rather than ours — closing it as "fixed by the rewrite" without evidence
 risks an embarrassing reopen.
 
-- [ ] **Gate for closing this group.** Add one Playwright test: mount a canvas with
-      `height=299` alongside an unrelated widget, draw, trigger a rerun from the other
-      widget, and assert (a) the drawing survives, (b) undo history survives, (c) an
-      unrelated `session_state` key survives, (d) no reload loop. That single test covers
-      #137, #95, #84, #138, #141 and #77 together.
+**Gate for closing this group.** Most of it already exists:
+`canvas_isolation_test.py::test_undo_history_survives_an_unrelated_rerun` draws on a
+canvas, reruns from an unrelated button, and asserts both the drawing and undo's reach
+survive. That covers #137, #95, #84, #138 and #77. Its canvas is already `height=200`,
+so #141's `< 300` trigger condition is exercised incidentally -- what is missing is the
+assertion #141 is actually about.
+
+- [ ] Add a `st.session_state` key to `canvas_isolation.py`, set before the canvas is
+      created and rendered after it, and assert in the existing rerun test that it
+      survives. That closes #141 and completes the gate
+- [ ] Optional, for #137 specifically: assert the app does not re-run on its own after
+      the drawing settles (no unprompted script runs within a fixed window)
 
 ---
 
