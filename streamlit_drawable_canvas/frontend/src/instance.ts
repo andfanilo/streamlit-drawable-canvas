@@ -11,10 +11,13 @@ import {
 } from "./background";
 import { createSender, Sender } from "./debounce";
 import { HistoryStore } from "./history";
-import { buildToolbar, setToolbarState, ToolbarHandles } from "./toolbar";
+import {
+  buildToolbar,
+  setToolbarState,
+  setToolbarTheme,
+  ToolbarHandles,
+} from "./toolbar";
 import { tools } from "./tools";
-
-const TOOLBAR_HEIGHT = 32;
 
 // Matches v1's UpdateStreamlit.tsx.
 const SEND_DEBOUNCE_MS = 200;
@@ -345,11 +348,9 @@ export const applyData = (
   }
   const showToolbar = data.displayToolbar && !data.disabled;
   instance.container.style.width = `${data.canvasWidth}px`;
-  instance.container.style.height = `${
-    data.canvasHeight + (showToolbar ? TOOLBAR_HEIGHT : 0)
-  }px`;
-  instance.toolbarEl.style.top = `${data.canvasHeight + 4}px`;
+  instance.container.style.height = `${data.canvasHeight}px`;
   instance.toolbarEl.style.display = showToolbar ? "flex" : "none";
+  setToolbarTheme(instance.container);
 
   // 2. Background image (memoized on URL; a fit or size change re-fits the
   //    image already loaded rather than re-fetching it)

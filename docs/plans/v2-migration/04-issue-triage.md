@@ -45,8 +45,9 @@ iframe, so there is no fetch left to fail.
 |---|---|---|
 | #157 | `AttributeError: module 'streamlit.elements.image' has no attribute 'image_to_url'` | Same root cause as the already-closed #156. P6 forbids private Streamlit APIs outright |
 
-**Toolbar theming (2).** F5 replaced the PNGs with inline SVG on `currentColor`, driven by
-`var(--st-text-color)`.
+**Toolbar theming (2).** F5 replaced the PNGs with inline SVG on `currentColor`. The
+later restyle took the whole toolbar onto Streamlit's theme tokens and Streamlit's own
+`stElementToolbar` design — see the F7 entry.
 
 | # | 👍 | Title | Note |
 |---|---|---|---|
@@ -245,15 +246,18 @@ selection.
 - [ ] Keyboard handlers registered and torn down by `configureCanvas`'s cleanup
 - [ ] Document the bindings in `FAQ.md` (F1) — an undocumented keybinding helps nobody
 
-### F7 — Toolbar spacing (1 issue)
-
-**Cost:** one line. **Reward:** low, but it is one line.
+### F7 — Toolbar spacing (1 issue) — SUPERSEDED, done
 
 #88: the bin icon sits close enough to the canvas that users hit it by accident.
-`instance.ts` positions the toolbar at `canvasHeight + 4`. Increase the gap and adjust
-`TOOLBAR_HEIGHT` so the container height stays correct.
 
-- [ ] Bump the offset; re-check `display_toolbar=False` still collapses cleanly
+The original plan here was to bump `instance.ts`'s `canvasHeight + 4` offset and adjust
+`TOOLBAR_HEIGHT` to match. That was overtaken by the toolbar restyle, which moved the
+toolbar off the canvas entirely -- it is now a floating card above the canvas's top-right
+corner, hidden until the canvas is hovered, modelled on Streamlit's own
+`stElementToolbar`. There is no longer an icon adjacent to the drawing surface to hit by
+accident, and `TOOLBAR_HEIGHT` is gone.
+
+- [x] #88 resolved by the restyle, not by an offset bump
 
 ---
 
@@ -295,8 +299,9 @@ says why".
 or a contained change with an obvious test. F1 alone is the best value on the page and is
 already promised by `00-plan.md` §4.
 
-**F5–F7 are optional.** Cheap, but each is a small behaviour change that widens the review
-surface. Drop them if the branch needs to land sooner; they carry cleanly to 0.11.0.
+**F5–F6 are optional.** Cheap, but each is a small behaviour change that widens the review
+surface. Drop them if the branch needs to land sooner; they carry cleanly to 0.11.0. F7
+is done, subsumed by the toolbar restyle.
 
 **Sequencing against `03-release.md`:** all of this lands *before* Phase C. Nothing here
 should be attempted after `just bump 0.10.0`.
@@ -306,8 +311,10 @@ should be attempted after `just bump 0.10.0`.
 - [x] F3 `disabled`
 - [x] F4 mobile verification test — **dropped**, see F4 above
 - [x] §1.2 lifecycle regression test — done, `canvas_isolation_test.py` (3 passed)
-- [ ] (optional) F5, F6, F7
+- [x] F7 toolbar spacing — superseded by the toolbar restyle, see F7 above
+- [ ] (optional) F5, F6
 - [ ] Re-run `just lint && just test && just build && just e2e`
-- [ ] CHANGELOG: fold F2/F3 into the 0.10.0 "Added" section; F5 into a "Changed" section
+- [ ] CHANGELOG: fold F2/F3 into the 0.10.0 "Added" section; the toolbar restyle and F5
+      into a "Changed" section
 - [ ] On release, sweep-close §1 (19 issues) referencing the 0.10.0 CHANGELOG entry
 - [ ] Answer §4 (9 issues) citing the decision IDs, and close

@@ -15,40 +15,89 @@
   top: 0;
   left: 0;
   z-index: 10;
-  border: 1px solid lightgrey;
+  border: 1px solid var(--st-border-color, lightgrey);
 }
 
+/* Geometry only; the visible card is `.dc-toolbar-card`. Padding is the
+   hover bridge between canvas and card, and the shadow's bleed room. */
 .dc-toolbar {
   position: absolute;
-  left: 0;
+  right: 0;
+  top: -1rem;
+  padding: 0.5rem 0 0.5rem 0.5rem;
   display: flex;
-  gap: 4px;
+  opacity: 0;
+  transition: none;
   z-index: 20;
+}
+
+.dc-container:hover > .dc-toolbar,
+.dc-toolbar:hover,
+.dc-toolbar:focus-within {
+  opacity: 1;
+  top: -2.65rem;
+  transition:
+    opacity 150ms 100ms,
+    top 100ms 100ms;
+}
+
+.dc-toolbar-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  width: fit-content;
+  padding: 0.25rem;
+  border-radius: var(--st-base-radius, 0.5rem);
+  /* Streamlit's `lightenedBg05`. First declaration is the `color-mix`
+     fallback. */
+  background: var(--st-background-color, #fff);
+  background: color-mix(in srgb, var(--st-background-color, #fff) 96%, white);
+  box-shadow: 1px 2px 8px rgba(0, 0, 0, 0.08);
+  color: color-mix(in srgb, var(--st-text-color, #31333f) 60%, transparent);
+}
+
+.dc-container[data-theme="dark"] .dc-toolbar-card {
+  box-shadow: 1px 2px 8px rgba(0, 0, 0, 0.2);
+  color: var(--st-text-color, #fafafa);
 }
 
 .dc-icon-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
+  padding: 0.25rem;
+  min-height: unset;
   border: none;
+  border-radius: var(--st-button-radius, 0.5rem);
   background: none;
-  color: var(--st-text-color, currentColor);
+  color: inherit;
   cursor: pointer;
 }
 
 .dc-icon-button svg {
-  width: 100%;
-  height: 100%;
+  width: 0.9rem;
+  height: 0.9rem;
 }
 
 .dc-icon-button:hover:not(:disabled) {
-  color: var(--st-primary-color, #ff4b4b);
+  background: color-mix(in srgb, var(--st-text-color, #31333f) 15%, transparent);
 }
 
+.dc-icon-button:active:not(:disabled),
+.dc-icon-button:focus-visible:not(:disabled) {
+  background: color-mix(in srgb, var(--st-text-color, #31333f) 25%, transparent);
+}
+
+.dc-icon-button:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Deliberately not Streamlit's disabled rule (a solid `gray30` fill), which
+   no native element toolbar exercises. */
 .dc-icon-button:disabled {
   cursor: not-allowed;
-  opacity: 0.35;
+  background: none;
+  color: color-mix(in srgb, var(--st-text-color, #31333f) 25%, transparent);
 }

@@ -1,7 +1,11 @@
-// Toolbar DOM + inline SVG icons (F5). Icons are stroked with `currentColor`
-// so `.dc-icon-button`'s CSS `color: var(--st-text-color)` drives them --
-// no PNGs, no `filter: invert(...) hue-rotate(...)` recolor hack, and dark
-// mode works because the CSS variable itself flips.
+// Toolbar DOM + inline SVG icons (F5). Icons are stroked with `currentColor`,
+// inherited from `.dc-toolbar-card`'s `color` -- no PNGs and no
+// `filter: invert(...) hue-rotate(...)` recolor hack.
+//
+// Layout mirrors Streamlit's own element toolbar (`stElementToolbar`): a
+// positioning wrapper (`.dc-toolbar`) holding a floating card
+// (`.dc-toolbar-card`), revealed above the canvas's top-right on hover. See
+// `styles.css`.
 
 const ICONS = {
   download:
@@ -48,6 +52,10 @@ export const buildToolbar = (
 ): ToolbarHandles => {
   toolbarEl.innerHTML = "";
 
+  const card = document.createElement("div");
+  card.className = "dc-toolbar-card";
+  toolbarEl.appendChild(card);
+
   const sendButton = makeButton(
     "download",
     "Send to Streamlit",
@@ -61,7 +69,7 @@ export const buildToolbar = (
     callbacks.onReset
   );
 
-  toolbarEl.append(sendButton, undoButton, redoButton, resetButton);
+  card.append(sendButton, undoButton, redoButton, resetButton);
 
   return { undoButton, redoButton };
 };
@@ -73,4 +81,56 @@ export const setToolbarState = (
 ): void => {
   handles.undoButton.disabled = !canUndo;
   handles.redoButton.disabled = !canRedo;
+};
+
+const HEX = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+/** Parse `#abc`, `#aabbcc` or `rgb(...)`/`rgba(...)` to 0-255 channels. */
+const parseRgb = (color: string): [number, number, number] | null => {
+  const trimmed = color.trim();
+
+  const hex = HEX.exec(trimmed);
+  if (hex) {
+    const digits =
+      hex[1].length === 3 ? hex[1].replace(/./g, (d) => d + d) : hex[1];
+    return [
+      parseInt(digits.slice(0, 2), 16),
+      parseInt(digits.slice(2, 4), 16),
+      parseInt(digits.slice(4, 6), 16),
+    ];
+  }
+
+  const parts = trimmed.match(/[\d.]+/g);
+  if (!parts || parts.length < 3) return null;
+  const rgb = parts.slice(0, 3).map(Number);
+  return rgb.every((c) => Number.isFinite(c))
+    ? (rgb as [number, number, number])
+    : null;
+};
+
+/** sRGB relative luminance of a CSS color, or null if unparseable. */
+const luminance = (color: string): number | null => {
+  const rgb = parseRgb(color);
+  if (!rgb) return null;
+
+  const [r, g, b] = rgb.map((c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+
+/**
+ * Stamp `data-theme` on the container from the luminance of
+ * `--st-background-color`, mirroring Streamlit's own
+ * `hasLightBackgroundColor`. Only the two toolbar values that differ by
+ * theme base -- shadow depth and icon opacity -- key off it; everything else
+ * is a `--st-*` variable and needs no branch.
+ */
+export const setToolbarTheme = (container: HTMLElement): void => {
+  const bg = getComputedStyle(container).getPropertyValue(
+    "--st-background-color"
+  );
+  const l = luminance(bg);
+  container.dataset.theme = l !== null && l <= 0.5 ? "dark" : "light";
 };

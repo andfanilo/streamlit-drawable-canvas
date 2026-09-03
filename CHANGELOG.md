@@ -46,8 +46,6 @@ replacing the React 16 / CRA v1 frontend. See
   nothing is sent back to Streamlit, and the toolbar is hidden regardless of
   `display_toolbar` -- undo/redo/reset would otherwise let a viewer mutate a canvas that
   is meant to be read-only. `initial_drawing` still renders.
-- The toolbar now supports dark mode -- icons are inline SVG on `currentColor`, replacing
-  the old recolored PNGs.
 - The component renders without an iframe (Streamlit Components v2), and undo/redo
   history now survives an unrelated widget rerun.
 - `FAQ.md`: a reference for the `json_data` structure and the behaviours that most
@@ -55,6 +53,21 @@ replacing the React 16 / CRA v1 frontend. See
   coordinates, the smoothed `freedraw` path, canvas-versus-source-image coordinates,
   and how to clear the canvas from Python.
 
+### Changed
+
+- **The toolbar now looks and behaves like a native Streamlit element toolbar.** It was a
+  row of bare icons pinned below the canvas's bottom-left corner, always visible; it is
+  now a floating, shadowed card at the canvas's top-right, above the canvas rather than
+  beside it, fading in on hover the way the `st.dataframe` and chart toolbars do.
+  Geometry, radii, hover and active tints all come from the Streamlit theme
+  (`--st-base-radius`, `--st-button-radius`, `--st-text-color`,
+  `--st-background-color`), so it tracks light, dark and custom themes -- including the
+  two values Streamlit itself varies by theme base, shadow depth and icon opacity. Icons
+  are inline SVG on `currentColor`, replacing the old recolored PNGs. The canvas border
+  follows `--st-border-color` instead of a hardcoded `lightgrey`.
+- **The toolbar no longer occupies layout space.** The component's height is now exactly
+  the `height` you pass, not `height + 32`. Incidentally fixes the bin icon sitting close
+  enough to the canvas to be hit by accident.
 ### Fixed
 
 - `CanvasResult` was returned as the class itself rather than an instance when the

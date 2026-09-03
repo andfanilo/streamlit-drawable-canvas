@@ -229,7 +229,9 @@ def st_canvas(
         bigger/smaller canvas, no rescaling is done in the canvas -- do it on
         your side.
     display_toolbar: bool
-        Display the undo/redo/reset toolbar.
+        Display the undo/redo/reset toolbar. It appears on hover as a floating
+        card above the canvas's top-right corner, like Streamlit's own element
+        toolbars, and takes up no layout space.
     point_display_radius: int
         The radius to use when displaying point objects. Defaults to 3.
     return_image_data: bool

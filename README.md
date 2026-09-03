@@ -132,14 +132,13 @@ st_canvas(
 - **stroke_color** : Color of drawing brush in hex. Defaults to "black".
 - **background_color** : Color of canvas background in CSS color property. Defaults to "" which is transparent. Overriden by background_image. Changing background_color will reset the drawing.
 - **background_image** : Image to display behind canvas: an http(s) URL, a `data:` URI, a local file path, raw image bytes, or a Pillow Image. Automatically resized to canvas dimensions. Being behind the canvas, it is not sent back to Streamlit on mouse event. Overrides background_color. Changes to this will reset canvas contents.
-- **update_streamlit** : Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up. Forced off for `drawing_mode="polygon"` -- an in-progress multi-click polygon isn't a meaningful intermediate value; the completed polygon still sends once closed with a right-click.
-- **height** : Height of canvas in pixels. Defaults to 400.
+- **update_streamlit** : Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up. Forced off for `drawing_mode="polygon"` -- an in-progress multi-click polygon isn't a meaningful intermediate value; the completed polygon still sends once closed with a right-click.- **height** : Height of canvas in pixels. Defaults to 400.
 - **width** : Width of canvas in pixels. Defaults to 600.
 - **drawing_mode** : One of `"freedraw"`, `"transform"`, `"line"`, `"rect"`, `"circle"`, `"point"`, `"polygon"`. Enable free drawing when "freedraw", object manipulation when "transform", otherwise create new objects with the rest. Defaults to "freedraw". Any other value raises `ValueError`.
   - On "polygon" mode, double-clicking will remove the latest point and right-clicking will close the polygon.
 - **initial_drawing** : Initialize canvas with drawings from here. Should be the `json_data` output from another canvas. Beware: if you try to import a drawing from a bigger/smaller canvas, no rescaling is done in the canvas and the import could fail.
 - **point_display_radius** : To make points visible on the canvas, they are drawn as circles. This parameter modifies the radius of the displayed circle.
-- **display_toolbar** : If `False`, don't display the undo/redo/reset toolbar.
+- **display_toolbar** : If `False`, don't display the undo/redo/reset toolbar. When shown, it appears on hover as a floating card above the canvas's top-right corner, matching Streamlit's own element toolbars, and takes up no layout space.
 - **return_image_data** : If `True`, populate `image_data` on the result with the canvas's RGBA pixels. `False` by default -- it PNG-encodes the whole canvas on every send. Requires the `image` extra; accessing `image_data` without both raises.
 - **key** : An optional string to use as the unique key for the widget. Assign a key so the component is not remounted on every rerun.
 - **on_change** : Optional callback invoked when the component sends a new drawing.
