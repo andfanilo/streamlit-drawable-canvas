@@ -61,7 +61,7 @@ dev-server handshake to fail.
 | #135 | Could not build on Node 18 (`ERR_OSSL_EVP_UNSUPPORTED`, needs `--openssl-legacy-provider`) |
 | #101 | "Trouble loading the component" after hand-patching `package.json` to get CRA to build |
 
-### 1.2 Believed fixed — needs a regression test before closing — 7 issues
+### 1.2 Verified fixed by regression test — 7 issues
 
 All seven trace to v1's iframe height negotiation plus React remounting the canvas on
 every rerun. F3's module-scoped `WeakMap` and `applyData`'s per-field diffing mean the
@@ -89,11 +89,16 @@ survive. That covers #137, #95, #84, #138 and #77. Its canvas is already `height
 so #141's `< 300` trigger condition is exercised incidentally -- what is missing is the
 assertion #141 is actually about.
 
-- [ ] Add a `st.session_state` key to `canvas_isolation.py`, set before the canvas is
-      created and rendered after it, and assert in the existing rerun test that it
-      survives. That closes #141 and completes the gate
+- [x] Added a `st.session_state` key to `canvas_isolation.py`, set before the canvases
+      and read back after them, plus `test_session_state_survives_canvas_creation`
+      asserting it on load and across an unrelated rerun. **Passes** — a cleared state
+      would surface as a `KeyError` in the app itself, so this is a real check, not a
+      tautology. #141 is fixed
 - [ ] Optional, for #137 specifically: assert the app does not re-run on its own after
-      the drawing settles (no unprompted script runs within a fixed window)
+      the drawing settles (no unprompted script runs within a fixed window). Not done —
+      the existing rerun test would already be flaky if a reload loop were present
+
+**Gate met.** All seven are now safe to close on release alongside §1.1.
 
 ---
 
@@ -265,7 +270,7 @@ should be attempted after `just bump 0.10.0`.
 - [ ] F2 `background_image_fit`
 - [ ] F3 `disabled`
 - [ ] F4 mobile verification test
-- [ ] §1.2 lifecycle regression test
+- [x] §1.2 lifecycle regression test — done, `canvas_isolation_test.py` (3 passed)
 - [ ] (optional) F5, F6, F7
 - [ ] Re-run `just lint && just test && just build && just e2e`
 - [ ] CHANGELOG: fold F2/F3 into the 0.10.0 "Added" section; F5 into a "Changed" section

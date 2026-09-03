@@ -1,5 +1,6 @@
-"""E2E Playwright tests for cross-canvas isolation and undo-history
-persistence across an unrelated rerun (the WeakMap instance model)."""
+"""E2E Playwright tests for cross-canvas isolation, undo-history persistence
+across an unrelated rerun (the WeakMap instance model), and session_state
+surviving canvas creation (issue #141)."""
 
 from __future__ import annotations
 
@@ -60,3 +61,16 @@ def test_undo_history_survives_an_unrelated_rerun(app: Page):
     undo_button.click()
     wait_for_app_run(app)
     assert len(_code(app, 0)["objects"]) == 1
+
+
+def test_session_state_survives_canvas_creation(app: Page):
+    # #141: creating a canvas with height < 300 was reported to clear
+    # st.session_state. Both canvases here are height=200; the app reads the
+    # key back after creating them, so a cleared state surfaces as a KeyError
+    # in the app rather than a wrong value here.
+    assert _code(app, 2)["foo"] == "value"
+
+    app.get_by_role("button", name="Trigger an unrelated rerun").click()
+    wait_for_app_run(app)
+
+    assert _code(app, 2)["foo"] == "value"
