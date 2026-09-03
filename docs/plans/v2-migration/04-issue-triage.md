@@ -127,9 +127,14 @@ Must also cover, because it is the single most-repeated confusion in the tracker
 history: **transform mode reports `scaleX`/`scaleY`, not mutated `width`/`height`** (closed
 #36, #65).
 
-- [ ] Write `FAQ.md`
-- [ ] Link it from `README.md`
-- [ ] Note it in the 0.10.0 CHANGELOG entry
+- [x] Write `FAQ.md`
+- [x] Link it from `README.md` (above the API section)
+- [x] Note it in the 0.10.0 CHANGELOG entry
+
+Every structural claim is backed by the committed `e2e_playwright/fixtures/fabric-v4/`
+captures or by an assertion in `canvas_modes_test.py` -- notably the `scaleX: 1.42` with
+unchanged `width: 120` in `transform.json`, which is #96/#36's exact confusion in real
+captured output.
 
 ### F2 — `background_image_fit` (2 issues)
 
@@ -266,7 +271,7 @@ surface. Drop them if the branch needs to land sooner; they carry cleanly to 0.1
 **Sequencing against `03-release.md`:** all of this lands *before* Phase C. Nothing here
 should be attempted after `just bump 0.10.0`.
 
-- [ ] F1 `FAQ.md`
+- [x] F1 `FAQ.md`
 - [ ] F2 `background_image_fit`
 - [ ] F3 `disabled`
 - [ ] F4 mobile verification test

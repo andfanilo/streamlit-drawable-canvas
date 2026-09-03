@@ -99,6 +99,10 @@ if canvas_result.json_data is not None:
 
 You will find more detailed examples [on the demo app](https://github.com/andfanilo/streamlit-drawable-canvas-demo/).
 
+For reading the returned drawing -- what's in `json_data`, why a resized shape keeps its
+original `width`, how to map canvas coordinates back to your source image -- see
+[FAQ.md](./FAQ.md).
+
 ## API
 
 ```

@@ -38,6 +38,10 @@ replacing the React 16 / CRA v1 frontend. See
   the old recolored PNGs.
 - The component renders without an iframe (Streamlit Components v2), and undo/redo
   history now survives an unrelated widget rerun.
+- `FAQ.md`: a reference for the `json_data` structure and the behaviours that most
+  often trip people up -- `scaleX`/`scaleY` after a transform, centre-relative `Line`
+  coordinates, the smoothed `freedraw` path, canvas-versus-source-image coordinates,
+  and how to clear the canvas from Python.
 
 ### Fixed
 
