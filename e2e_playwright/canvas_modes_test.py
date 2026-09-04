@@ -6,7 +6,7 @@ import pytest
 from conftest import canvas, click, component, drag, read_json, wait_for_app_run
 from playwright.sync_api import Page
 
-MODES = ["freedraw", "line", "rect", "circle", "point", "polygon", "text", "edit"]
+MODES = ["freedraw", "line", "rect", "circle", "point", "polygon", "text"]
 
 
 def test_freedraw_produces_a_path(app: Page):
@@ -175,20 +175,3 @@ def test_polygon_right_click_does_nothing(app: Page):
     # itself didn't close (and therefore force-send) it.
     data = read_json(app, index)
     assert data["objects"] == []
-
-
-def test_edit_moves_the_seeded_object(app: Page):
-    index = MODES.index("edit")
-    target = canvas(app, index)
-    # Seeded rect is left=50,top=50,width=60,height=40 -> center (80, 70).
-    drag(app, target, 80, 70, 110, 90, steps=10)
-    wait_for_app_run(app)
-
-    data = read_json(app, index)
-    assert len(data["objects"]) == 1
-    obj = data["objects"][0]
-    assert obj["type"] == "Rect"
-    assert obj["left"] == pytest.approx(80, abs=3)
-    assert obj["top"] == pytest.approx(70, abs=3)
-    assert obj["width"] == pytest.approx(60, abs=3)
-    assert obj["height"] == pytest.approx(40, abs=3)

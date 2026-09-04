@@ -256,7 +256,7 @@ for name, seed, kwargs in SCENARIOS:
         stroke_color="#000000",
         height=200,
         width=300,
-        drawing_mode="edit",
+        drawing_mode="rect",
         initial_drawing=seed,
         key=f"pe_{name}",
         **kwargs,

@@ -61,7 +61,7 @@ EDIT_SEED = {
 result_edit = st_canvas(
     height=200,
     width=300,
-    drawing_mode="edit",
+    drawing_mode="rect",
     initial_drawing=EDIT_SEED,
     key="toolbar_edit",
 )
@@ -83,7 +83,7 @@ TEXT_EDIT_SEED = {
 result_text_edit = st_canvas(
     height=200,
     width=300,
-    drawing_mode="edit",
+    drawing_mode="freedraw",
     initial_drawing=TEXT_EDIT_SEED,
     key="toolbar_text_edit",
 )

@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 
 import pytest
-from conftest import canvas, click, drag, read_json, wait_for_app_run
+from conftest import canvas, click, drag, enter_edit_mode, read_json, wait_for_app_run
 from playwright.sync_api import Page
 
 
@@ -63,6 +63,7 @@ def descend(app: Page, target, x: float, y: float) -> None:
 def test_polygon_descend_and_drag_moves_only_that_vertex(app: Page):
     index = index_of("polygon")
     target = canvas(app, index)
+    enter_edit_mode(app, index)
     descend(app, target, 100, 90)  # polygon centre
     drag(app, target, 50, 50, 70, 70, steps=5)
     wait_for_app_run(app)
@@ -83,6 +84,7 @@ def test_polygon_descend_and_drag_moves_only_that_vertex(app: Page):
 def test_descend_requires_a_second_click_not_a_drag(app: Page):
     index = index_of("rect")
     target = canvas(app, index)
+    enter_edit_mode(app, index)
     click(app, target, 100, 90)  # select
     drag(app, target, 100, 90, 130, 110, steps=6)  # move -- must not descend
     wait_for_app_run(app)
@@ -103,6 +105,7 @@ def test_descend_requires_a_second_click_not_a_drag(app: Page):
 def test_polygon_anchor_click_removes_vertex_with_floor(app: Page):
     index = index_of("polygon")
     target = canvas(app, index)
+    enter_edit_mode(app, index)
     descend(app, target, 100, 90)
     click(app, target, 150, 50)  # remove that vertex (index 1)
     wait_for_app_run(app)
@@ -121,6 +124,7 @@ def test_polygon_anchor_click_removes_vertex_with_floor(app: Page):
 def test_line_endpoint_drag_leaves_other_endpoint_alone(app: Page):
     index = index_of("line")
     target = canvas(app, index)
+    enter_edit_mode(app, index)
     force_send(app, index)  # a live serialization, not the literal seed echo
     before = read_json(app, index)["objects"][0]
     other_scene_before = scene_position(before, before["x2"], before["y2"])
@@ -147,6 +151,7 @@ def test_line_rotated_endpoint_drag_pins_other_endpoint_render_position(
 ):
     index = index_of("line_rotated")
     target = canvas(app, index)
+    enter_edit_mode(app, index)
     force_send(app, index)
     before = read_json(app, index)["objects"][0]
     endpoint1_scene_before = scene_position(before, before["x1"], before["y1"])
@@ -173,6 +178,7 @@ def test_line_rotated_endpoint_drag_pins_other_endpoint_render_position(
 def test_rect_corner_drag_converts_to_polygon(app: Page):
     index = index_of("rect")
     target = canvas(app, index)
+    enter_edit_mode(app, index)
     descend(app, target, 100, 90)
     drag(app, target, 150, 130, 190, 170, steps=8)
     wait_for_app_run(app)
@@ -188,6 +194,7 @@ def test_rect_corner_drag_converts_to_polygon(app: Page):
 def test_rect_and_circle_zorder_survives_conversion(app: Page):
     index = index_of("rect_and_circle")
     target = canvas(app, index)
+    enter_edit_mode(app, index)
     descend(app, target, 50, 45)  # rect centre
     drag(app, target, 80, 70, 100, 90, steps=6)
     wait_for_app_run(app)
@@ -200,6 +207,7 @@ def test_rect_and_circle_zorder_survives_conversion(app: Page):
 def test_rect_descend_without_drag_stays_rect(app: Page):
     index = index_of("rect")
     target = canvas(app, index)
+    enter_edit_mode(app, index)
     descend(app, target, 100, 90)
     click(app, target, 250, 190)  # click empty space -> exit
     wait_for_app_run(app)
@@ -211,6 +219,7 @@ def test_rect_descend_without_drag_stays_rect(app: Page):
 def test_circle_rim_drag_sets_radius(app: Page):
     index = index_of("circle")
     target = canvas(app, index)
+    enter_edit_mode(app, index)
     descend(app, target, 100, 90)
     drag(app, target, 140, 90, 160, 90, steps=5)  # right rim
     wait_for_app_run(app)
@@ -226,6 +235,7 @@ def test_circle_rim_drag_sets_radius(app: Page):
 def test_circle_nonuniform_scale_does_not_descend(app: Page):
     index = index_of("circle_nonuniform")
     target = canvas(app, index)
+    enter_edit_mode(app, index)
     descend(app, target, 100, 90)
     # Right-edge midpoint of the bbox (radius 40, scaleX 1, scaleY 1.5).
     drag(app, target, 140, 90, 160, 90, steps=5)
@@ -240,6 +250,7 @@ def test_circle_nonuniform_scale_does_not_descend(app: Page):
 def test_locked_object_does_not_descend(app: Page):
     index = index_of("locked_rect")
     target = canvas(app, index)
+    enter_edit_mode(app, index)
     descend(app, target, 100, 90)
     drag(app, target, 150, 130, 190, 170, steps=8)
     wait_for_app_run(app)
@@ -251,6 +262,7 @@ def test_locked_object_does_not_descend(app: Page):
 def test_multiselect_does_not_descend(app: Page):
     index = index_of("two_rects")
     target = canvas(app, index)
+    enter_edit_mode(app, index)
     click(app, target, 50, 45)  # select rect 1
     app.keyboard.down("Shift")
     click(app, target, 180, 125)  # add rect 2 -> ActiveSelection
@@ -266,6 +278,7 @@ def test_multiselect_does_not_descend(app: Page):
 def test_freedraw_does_not_descend(app: Page):
     index = index_of("freedraw")
     target = canvas(app, index)
+    enter_edit_mode(app, index)
     descend(app, target, 90, 45)
     drag(app, target, 90, 45, 110, 60, steps=5)
     wait_for_app_run(app)
@@ -293,6 +306,7 @@ def test_legacy_polygon_converts_and_is_point_editable(app: Page):
     assert before["type"] == "Polygon"  # converted on load, before any click
     before_point0 = before["points"][0]
 
+    enter_edit_mode(app, index)
     descend(app, target, 100, 90)
     drag(app, target, 50, 50, 70, 70, steps=5)
     wait_for_app_run(app)
@@ -309,6 +323,7 @@ def test_legacy_polygon_converts_and_is_point_editable(app: Page):
 def test_point_edit_survives_a_rerun_with_update_streamlit(app: Page):
     index = index_of("polygon_realtime")
     target = canvas(app, index)
+    enter_edit_mode(app, index)
     descend(app, target, 100, 90)
     drag(app, target, 50, 50, 70, 70, steps=5)
     wait_for_app_run(app)
@@ -326,6 +341,7 @@ def test_undo_after_rect_corner_drag_restores_rect_in_one_step(app: Page):
     index = index_of("rect_undo")
     target = canvas(app, index)
     root = app.locator("[data-testid=stBidiComponentIsolated]").nth(index)
+    enter_edit_mode(app, index)
     descend(app, target, 100, 90)
     drag(app, target, 150, 130, 190, 170, steps=8)
     wait_for_app_run(app)
@@ -341,6 +357,7 @@ def test_reset_while_in_point_edit_exits_cleanly(app: Page):
     index = index_of("polygon_reset")
     target = canvas(app, index)
     root = app.locator("[data-testid=stBidiComponentIsolated]").nth(index)
+    enter_edit_mode(app, index)
     descend(app, target, 100, 90)
     drag(app, target, 50, 50, 70, 70, steps=5)
     wait_for_app_run(app)

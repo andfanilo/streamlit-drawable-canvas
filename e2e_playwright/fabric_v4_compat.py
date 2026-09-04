@@ -29,7 +29,7 @@ for name in FIXTURE_NAMES:
     result = st_canvas(
         height=200,
         width=300,
-        drawing_mode="edit",
+        drawing_mode="rect",
         initial_drawing=fixture_data,
         key=f"fixture_{name}",
     )
@@ -63,7 +63,7 @@ native_polygon_data = {
 native_result = st_canvas(
     height=200,
     width=300,
-    drawing_mode="edit",
+    drawing_mode="rect",
     initial_drawing=native_polygon_data,
     key="fixture_polygon_native",
 )

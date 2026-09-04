@@ -184,6 +184,16 @@ def canvas(app: Page, index: int = 0) -> Locator:
     return el
 
 
+def enter_edit_mode(app: Page, index: int = 0) -> None:
+    """Turns on the nth canvas's toolbar edit toggle.
+
+    The toolbar is hover-hidden, so this hovers the canvas first -- same as
+    canvas_toolbar_test.py does for undo/redo.
+    """
+    canvas(app, index).hover()
+    component(app, index).get_by_label("Edit").click()
+
+
 def read_json(app: Page, index: int = 0) -> dict | None:
     """Parse the nth `st.code` block; every test app uses one for readback."""
     return json.loads(app.locator("[data-testid=stCode]").nth(index).inner_text())

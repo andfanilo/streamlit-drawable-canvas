@@ -35,7 +35,7 @@ result_target = st_canvas(
     stroke_width=1,
     height=200,
     width=300,
-    drawing_mode="edit",
+    drawing_mode="rect",
     initial_drawing=st.session_state.get("roundtrip_saved"),
     key="roundtrip_target",
 )

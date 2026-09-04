@@ -3,7 +3,15 @@
 from __future__ import annotations
 
 import pytest
-from conftest import canvas, click, component, drag, read_json, wait_for_app_run
+from conftest import (
+    canvas,
+    click,
+    component,
+    drag,
+    enter_edit_mode,
+    read_json,
+    wait_for_app_run,
+)
 from playwright.sync_api import Page, expect
 
 
@@ -97,6 +105,7 @@ def test_contextual_buttons_shown_only_in_edit_mode(app: Page):
     expect(rect_root.get_by_label("Send backward")).to_be_hidden()
     expect(rect_root.get_by_label("Delete selected")).to_be_hidden()
 
+    enter_edit_mode(app, 2)
     expect(edit_root.get_by_label("Bring forward")).to_be_visible()
     expect(edit_root.get_by_label("Send backward")).to_be_visible()
     expect(edit_root.get_by_label("Delete selected")).to_be_visible()
@@ -107,6 +116,7 @@ def test_delete_selected_removes_only_the_active_object(app: Page):
     edit_root = component(app, 2)
     assert len(read_json(app, 1)["objects"]) == 2
 
+    enter_edit_mode(app, 2)
     click(app, target, 25, 25)
     edit_root.get_by_label("Delete selected").click()
     wait_for_app_run(app)
@@ -122,6 +132,7 @@ def test_bring_forward_reorders_objects(app: Page):
     before = read_json(app, 1)
     assert before["objects"][0]["left"] == pytest.approx(20, abs=3)
 
+    enter_edit_mode(app, 2)
     click(app, target, 25, 25)
     edit_root.get_by_label("Bring forward").click()
     wait_for_app_run(app)
@@ -137,6 +148,7 @@ def test_double_click_in_edit_mode_no_longer_deletes(app: Page):
     assert box is not None
     assert len(read_json(app, 1)["objects"]) == 2
 
+    enter_edit_mode(app, 2)
     app.mouse.dblclick(box["x"] + 90, box["y"] + 90)
     app.wait_for_timeout(500)
 
@@ -157,6 +169,7 @@ def test_double_click_on_text_in_edit_mode_does_not_delete(app: Page):
     assert box is not None
     assert len(read_json(app, 2)["objects"]) == 1
 
+    enter_edit_mode(app, 3)
     app.mouse.dblclick(box["x"] + 50, box["y"] + 50)
     app.wait_for_timeout(500)
 
