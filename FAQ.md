@@ -41,8 +41,9 @@ carry the geometry you probably want.
 | `line` | `Line` | `left`, `top`, `width`, `height`, and `x1`/`y1`/`x2`/`y2` |
 | `point` | `Circle` | `left`, `top`, `radius` (= your `point_display_radius`) |
 | `freedraw` | `Path` | `path` (see below), plus `left`/`top`/`width`/`height` |
-| `polygon` | `Path` | `path`, plus `left`/`top`/`width`/`height` |
+| `polygon` | `Polygon` | `points`, plus `left`/`top`/`width`/`height` |
 | `text` | `IText` | `text`, `fontSize`, `fontFamily`, plus `left`/`top`/`width`/`height` |
+| `labeled_rect` | `LabeledRect` | `label`, plus `left`/`top`/`width`/`height` (a `Rect`, so `scaleX`/`scaleY` apply the same as `rect`) |
 
 ---
 
@@ -244,6 +245,50 @@ reliably work here -- it's a quirk in how Fabric's `IText` decides a click is "e
 edit" versus "just selecting", not something this library controls. Clicking in `"text"`
 mode instead always places a *new* text object, even on top of an existing one.
 
+### How do I draw and read back labeled boxes?
+
+`drawing_mode="labeled_rect"` draws boxes the same way `"rect"` does, each stamped with
+the current `label` parameter. Change `label` between draws (from a `st.selectbox` or
+`st.text_input`, say) to switch classes without leaving the mode; boxes already on the
+canvas keep the label they were drawn with.
+
+Read them back with `CanvasResult.boxes` rather than filtering `json_data["objects"]`
+yourself — it already applies the `scaleX`/`scaleY` correction from the geometry
+section above:
+
+```python
+result = st_canvas(drawing_mode="labeled_rect", label=current_label)
+for box in result.boxes:
+    print(box["label"], box["left"], box["top"], box["width"], box["height"])
+```
+
+If you also passed `background_image`, `CanvasResult.boxes_in_image_space` gives you
+the same boxes converted into the source image's own pixels (`None` when there is no
+background image), and `CanvasResult.background_fit` exposes the numbers behind that
+conversion — the image's natural size plus the scale and offset that were applied.
+
+To seed a canvas with boxes you didn't get from a canvas (a database, a model's
+predictions, a COCO file), use the module-level `boxes_to_drawing()`:
+
+```python
+from streamlit_drawable_canvas import boxes_to_drawing, st_canvas
+
+st_canvas(initial_drawing=boxes_to_drawing(saved_boxes))
+```
+
+It's the exact inverse of `.boxes` — `boxes_to_drawing(result.boxes)` round-trips.
+
+A labeled box is always axis-aligned (no rotation handle) and is excluded from point
+editing (see below) for the same reason. A drawing containing one needs this version
+or later to load: on an older version (or any other app embedding Fabric.js directly
+without this component's class registered), loading it fails entirely and none of the
+canvas's objects appear, not just the labeled ones.
+
+To relabel a box already on the canvas, turn on the toolbar's edit toggle, click it
+once to select it, then click it again (a second, separate click, the same gesture as
+re-entering text or descending into point editing) to edit its label through a small
+text field. Click elsewhere to commit.
+
 ### How do I edit an individual vertex, endpoint, or corner of a shape?
 
 Turn on the toolbar's edit toggle, click the shape once to select it, then click it again
@@ -267,9 +312,10 @@ absolute canvas coordinates — read positions as `point.x + pathOffset.x` (and 
 `y`) if you need them in canvas space.
 
 Point editing is not available for: freedraw `Path`s (no fixed vertex set to edit), any
-object with a `lock*` property set to `True`, multi-selections, and circles with
-`scaleX != scaleY` (their rim handles assume uniform scale). There is no separate
-parameter for any of this — it's part of the toolbar's edit toggle.
+object with a `lock*` property set to `True` (which includes every `LabeledRect` --
+they set `lockRotation` themselves), multi-selections, and circles with `scaleX !=
+scaleY` (their rim handles assume uniform scale). There is no separate parameter for
+any of this — it's part of the toolbar's edit toggle.
 
 ### Can I tell a left-click from a right-click?
 

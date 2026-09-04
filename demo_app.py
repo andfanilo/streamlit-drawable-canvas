@@ -9,7 +9,16 @@ from PIL import Image, ImageDraw
 
 from streamlit_drawable_canvas import st_canvas
 
-MODES = ("freedraw", "line", "rect", "circle", "point", "polygon", "text")
+MODES = (
+    "freedraw",
+    "line",
+    "rect",
+    "circle",
+    "point",
+    "polygon",
+    "text",
+    "labeled_rect",
+)
 
 MODE_HINTS = {
     "polygon": "Click to add vertices, each with a visible handle. Click the "
@@ -18,17 +27,20 @@ MODE_HINTS = {
     "point": "Each click drops a point, drawn as a circle of the radius below.",
     "text": "Click to place text and start typing immediately. Click elsewhere "
     "(or Escape/blur) to finish.",
+    "labeled_rect": "Click and drag to draw a box, same as rect, stamped with "
+    "the label below. Change the label between boxes to switch classes.",
 }
 
 EDIT_HINT = (
     "The toolbar's edit toggle (top-right of the canvas on hover) is "
     "available in every mode above. Drag to move, handles to scale/rotate. "
     "Select an object and use the toolbar's delete button to remove it. "
-    "Click an already-selected polygon, line, rect, circle or text a "
-    "second time (a separate click -- not a fast double-click) to "
-    "re-enter editing: for text that resumes typing, for the other shapes "
-    "it descends into point editing, where dragging a handle moves an "
-    "individual vertex/endpoint/rim point instead of the whole shape."
+    "Click an already-selected polygon, line, rect, circle, text or labeled "
+    "box a second time (a separate click -- not a fast double-click) to "
+    "re-enter editing: for text that resumes typing, for a labeled box it "
+    "edits the label, for the other shapes it descends into point editing, "
+    "where dragging a handle moves an individual vertex/endpoint/rim point "
+    "instead of the whole shape."
 )
 
 BG_SOURCES = ("None", "URL", "Local path", "Bytes", "PIL Image")
@@ -69,7 +81,10 @@ with st.sidebar:
     point_display_radius = st.slider(
         "Point radius", 1, 25, 3, disabled=drawing_mode != "point"
     )
-    font_size = st.slider("Font size", 8, 72, 20, disabled=drawing_mode != "text")
+    font_size = st.slider(
+        "Font size", 8, 72, 20, disabled=drawing_mode not in ("text", "labeled_rect")
+    )
+    label = st.text_input("Label", "person", disabled=drawing_mode != "labeled_rect")
     realtime_update = st.checkbox("Update in realtime", True)
     disabled = st.checkbox("Disabled (read-only)", False)
     background_image_fit = st.selectbox("Background image fit", ("stretch", "contain"))
@@ -119,6 +134,7 @@ canvas_result = st_canvas(
     point_display_radius=point_display_radius,
     return_image_data=return_image_data,
     font_size=font_size,
+    label=label if drawing_mode == "labeled_rect" else "",
     key="canvas",
 )
 

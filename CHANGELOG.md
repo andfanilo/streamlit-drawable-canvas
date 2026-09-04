@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`drawing_mode="labeled_rect"`**: a rect tool that stamps every box drawn
+  with a label chip. New `label: str = ""` parameter -- Python supplies the
+  current label, and each box drawn is stamped with whatever it was at the
+  time; changing `label` between draws does not relabel boxes already on the
+  canvas. `label=""` (the default) draws a box with no chip. Passing a
+  non-empty `label` in any other `drawing_mode` raises `ValueError`.
+  The chip sits above the box's top-left corner at a constant screen size
+  regardless of the box's scale, and flips inside the box near the top of
+  the canvas. Its colour is derived from `stroke_color`, with the text
+  colour auto-picked for contrast; its font size reuses `font_size`.
+  Labeled boxes are always axis-aligned (no rotation handle) and are
+  excluded from the toolbar edit toggle's point editing.
+- **Relabeling**: with the toolbar's edit toggle on, click an
+  already-selected labeled box a second time to edit its label through a
+  transient text field -- the same gesture that re-enters an `IText` or
+  descends into point editing. One undo entry per relabel.
+- **`CanvasResult.boxes`**: every labeled box on the canvas as
+  `{label, left, top, width, height}` dicts, in canvas pixels, with the
+  `scaleX`/`scaleY` correction already applied.
+- **`CanvasResult.boxes_in_image_space`**: `boxes` converted into
+  `background_image`'s source pixels. `None` when there is no background
+  image.
+- **`CanvasResult.background_fit`**: the background image's natural size
+  and applied scale/offset. `None` when there is no background image.
+- **`boxes_to_drawing()`**: a module-level function building an
+  `initial_drawing` from `CanvasResult.boxes`-shaped dicts -- the exact
+  inverse of `boxes`.
+- `font_size` now also applies to `drawing_mode="labeled_rect"`'s chip text,
+  in addition to `drawing_mode="text"`. No behaviour change for existing
+  calls.
+
+A drawing containing a labeled box needs this version or later to load --
+on an earlier version (or any other app embedding Fabric.js directly
+without this component's class registered), loading it fails entirely and
+none of the canvas's objects appear, not just the labeled ones.
+
 ## [0.12.0] - 2026-09-04
 
 ### Breaking

@@ -119,6 +119,7 @@ st_canvas(
     background_image_fit: str
     max_display_height: int
     font_size: int
+    label: str
 )
 ```
 
@@ -133,10 +134,11 @@ st_canvas(
 - **update_streamlit** : Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up. Forced off for `drawing_mode="polygon"` -- an in-progress multi-click polygon isn't a meaningful intermediate value; the completed polygon still sends once closed. When nothing sends automatically, the toolbar stays pinned open instead of appearing on hover, because its send button is then the only discoverable way to commit a drawing. **If what you want is "only give me the finished drawing", prefer an `st.form` over `update_streamlit=False`** -- see [FAQ.md](FAQ.md).
 - **height** : Height of canvas in pixels. Defaults to 400.
 - **width** : Width of canvas in pixels. Defaults to 600.
-- **drawing_mode** : One of `"freedraw"`, `"line"`, `"rect"`, `"circle"`, `"point"`, `"polygon"`, `"text"`. Text placement when "text", otherwise create new objects with the rest. Defaults to "freedraw". Any other value raises `ValueError`.
+- **drawing_mode** : One of `"freedraw"`, `"line"`, `"rect"`, `"circle"`, `"point"`, `"polygon"`, `"text"`, `"labeled_rect"`. Text placement when "text", a labeled bounding box when "labeled_rect", otherwise create new objects with the rest. Defaults to "freedraw". Any other value raises `ValueError`.
   - On "polygon" mode, click to add a vertex; every vertex shows a handle. Click the first vertex's handle to close the shape; click any other handle to remove that vertex.
   - On "text" mode, clicking places an empty text object and starts editing it immediately; click elsewhere (or Escape/blur) to finish. Nothing is sent to Streamlit until editing ends.
-  - Editing (moving, scaling, rotating, click-to-edit existing text) isn't a drawing mode -- it's the toolbar's edit toggle, available regardless of `drawing_mode`. It has two levels: selecting an object lets you move/scale/rotate it as a whole (level 1); clicking an already-selected polygon, line, rect or circle a second time descends into point editing (level 2), where dragging a handle moves an individual vertex/endpoint/rim point instead of the whole shape. See [FAQ.md](FAQ.md) for the per-shape gesture table.
+  - On "labeled_rect" mode, click and drag to draw a box the same way "rect" does, stamped with the current `label`. See the `label` parameter below.
+  - Editing (moving, scaling, rotating, click-to-edit existing text, click-to-relabel a box) isn't a drawing mode -- it's the toolbar's edit toggle, available regardless of `drawing_mode`. It has two levels: selecting an object lets you move/scale/rotate it as a whole (level 1); clicking an already-selected polygon, line, rect, circle or labeled box a second time re-enters it -- point editing for a shape, the label field for a box -- instead of acting on the whole object. See [FAQ.md](FAQ.md) for the per-shape gesture table.
 - **initial_drawing** : Initialize canvas with drawings from here. Should be the `json_data` output from another canvas. Beware: if you try to import a drawing from a bigger/smaller canvas, no rescaling is done in the canvas and the import could fail.
 - **point_display_radius** : To make points visible on the canvas, they are drawn as circles. This parameter modifies the radius of the displayed circle.
 - **return_image_data** : If `True`, populate `image_data` (RGBA numpy array) and `image_bytes` (raw PNG bytes, for `st.download_button`) on the result. `False` by default -- it PNG-encodes the whole canvas on every send. Accessing either without it raises `RuntimeError`.
@@ -145,7 +147,8 @@ st_canvas(
 - **background_image_fit** : One of `"stretch"` (default) or `"contain"`. `"stretch"` scales each axis independently to fill the canvas exactly, distorting the image when the aspect ratios differ -- this is the historical behaviour. `"contain"` preserves the aspect ratio, fitting the image inside the canvas and centring it, so a canvas larger than its background image gets margins instead of a stretched image. Ignored when no `background_image` is set. Any other value raises `ValueError`.
 - **disabled** : If `True`, render the canvas read-only -- drawing, selection and transforms are all inert, nothing is sent back to Streamlit, and the toolbar is hidden. `initial_drawing` still renders, so this is how you show a drawing back to someone without letting them change it. Defaults to `False`.
 - **max_display_height** : Caps the canvas's displayed height in pixels and makes it scroll vertically inside that box. `height`, canvas pixel dimensions, and `json_data` coordinates are unaffected. `None` (the default) displays the canvas at its full height. Horizontal scrolling is always available, independent of this parameter.
-- **font_size** : Font size in pixels for text placed in `drawing_mode="text"`. Defaults to 20. Ignored in every other mode.
+- **font_size** : Font size in pixels for text placed in `drawing_mode="text"`, and for the label chip on boxes drawn in `drawing_mode="labeled_rect"`. Defaults to 20. Ignored in every other mode.
+- **label** : The label stamped onto every box drawn in `drawing_mode="labeled_rect"`. Defaults to `""`, which draws a box with no label chip. Raises `ValueError` if non-empty and `drawing_mode` is not `"labeled_rect"`. Read labeled boxes back with `CanvasResult.boxes`, or relabel one on the canvas via the toolbar's edit toggle -- see [FAQ.md](FAQ.md).
 
 Example:
 
