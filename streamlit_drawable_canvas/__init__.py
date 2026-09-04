@@ -95,10 +95,26 @@ _bg_image_cache: OrderedDict[str, str] = OrderedDict()
 
 
 # Kept in sync with the `tools` registry in frontend/src/tools/index.ts, which
-# silently falls back to freedraw on an unrecognized mode.
+# silently falls back to freedraw on an unrecognized mode. The registry also
+# keeps an `edit: EditTool` entry with no counterpart here: edit is the
+# toolbar's toggle now, not a drawing_mode value, but the frontend still looks
+# it up by that key when the toggle is on.
 _VALID_DRAWING_MODES = frozenset(
-    {"circle", "freedraw", "line", "point", "polygon", "rect", "text", "edit"}
+    {"circle", "freedraw", "line", "point", "polygon", "rect", "text"}
 )
+
+_REMOVED_DRAWING_MODES = {
+    "edit": (
+        'drawing_mode="edit" was removed in 0.12.0. Editing is now the '
+        "toolbar's edit toggle, available in every mode -- there is no "
+        "argument for it."
+    ),
+    "transform": (
+        'drawing_mode="transform" was renamed to "edit" in 0.10.0, then '
+        "removed in 0.12.0. Editing is now the toolbar's edit toggle, "
+        "available in every mode -- there is no argument for it."
+    ),
+}
 
 # Kept in sync with BackgroundImageFit in frontend/src/background.ts.
 _VALID_BACKGROUND_IMAGE_FITS = frozenset({"contain", "stretch"})
@@ -231,11 +247,12 @@ def st_canvas(
         Height of canvas in pixels. Defaults to 400.
     width: int
         Width of canvas in pixels. Defaults to 600.
-    drawing_mode: {'freedraw', 'edit', 'line', 'rect', 'circle', 'point', 'polygon', 'text'}
-        Enable free drawing when "freedraw", object manipulation (move,
-        scale, rotate, and click-to-edit existing text) when "edit", text
-        placement when "text", or shape drawing for the rest. Defaults to
-        "freedraw".
+    drawing_mode: {'freedraw', 'line', 'rect', 'circle', 'point', 'polygon', 'text'}
+        Which drawing tool is active: free drawing, a shape, or text
+        placement. Defaults to "freedraw". Editing what's already on the
+        canvas (move, scale, rotate, delete, click-to-edit existing text) is
+        the toolbar's edit toggle, available in every mode -- not a
+        drawing_mode value.
     initial_drawing: dict
         Redraw canvas with the given initial_drawing. If changed to None,
         empties the canvas. Should generally be the `json_data` output from
@@ -290,6 +307,8 @@ def st_canvas(
         which you can manipulate, store, and reinject into another canvas
         through the `initial_drawing` argument.
     """
+    if drawing_mode in _REMOVED_DRAWING_MODES:
+        raise ValueError(_REMOVED_DRAWING_MODES[drawing_mode])
     if drawing_mode not in _VALID_DRAWING_MODES:
         raise ValueError(
             f"drawing_mode must be one of {sorted(_VALID_DRAWING_MODES)}, "

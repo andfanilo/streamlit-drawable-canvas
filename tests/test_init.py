@@ -16,6 +16,16 @@ def test_st_canvas_rejects_non_positive_max_display_height():
         st_canvas(max_display_height=-10)
 
 
+def test_st_canvas_rejects_edit_drawing_mode():
+    with pytest.raises(ValueError, match="toolbar"):
+        st_canvas(drawing_mode="edit")
+
+
+def test_st_canvas_rejects_transform_drawing_mode():
+    with pytest.raises(ValueError, match="toolbar"):
+        st_canvas(drawing_mode="transform")
+
+
 def test_st_canvas_accepts_text_drawing_mode(monkeypatch):
     captured = {}
 
