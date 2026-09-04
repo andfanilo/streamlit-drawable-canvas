@@ -6,6 +6,7 @@ import type {
 
 import {
   applyBackgroundImage,
+  BackgroundFit,
   BackgroundImageFit,
   rescaleBackgroundImage,
 } from "./background";
@@ -36,6 +37,8 @@ export interface DrawableCanvasData {
   backgroundImageFit: BackgroundImageFit;
   maxDisplayHeight: number | null;
   fontSize: number;
+  /** labeled_rect-only: the label stamped onto every box this tool draws. */
+  label: string;
 }
 
 export interface DrawableCanvasDrawing {
@@ -45,6 +48,8 @@ export interface DrawableCanvasDrawing {
 
 export interface DrawableCanvasState extends FrontendState {
   drawing?: DrawableCanvasDrawing;
+  /** The background's applied fit. `null` with no background image. */
+  backgroundFit?: BackgroundFit | null;
 }
 
 type SetStateValue = FrontendRendererArgs<
@@ -68,6 +73,7 @@ export interface CanvasInstance {
   lastInitialDrawingKey: string | null;
   lastBackgroundImageURL: string | null;
   lastBackgroundImageFit: BackgroundImageFit | null;
+  lastBackgroundFit: BackgroundFit | null;
   width: number;
   height: number;
   loadGeneration: number;
@@ -160,6 +166,32 @@ const applyReadOnly = (canvas: Canvas): void => {
   canvas.renderAll();
 };
 
+const backgroundFitEqual = (
+  a: BackgroundFit | null,
+  b: BackgroundFit | null
+): boolean => {
+  if (a === b) return true;
+  if (a === null || b === null) return false;
+  return (
+    a.naturalWidth === b.naturalWidth &&
+    a.naturalHeight === b.naturalHeight &&
+    a.scaleX === b.scaleX &&
+    a.scaleY === b.scaleY &&
+    a.offsetX === b.offsetX &&
+    a.offsetY === b.offsetY
+  );
+};
+
+/** Sends `backgroundFit` only when it actually changed. */
+const reportBackgroundFit = (
+  instance: CanvasInstance,
+  fit: BackgroundFit | null
+): void => {
+  if (backgroundFitEqual(fit, instance.lastBackgroundFit)) return;
+  instance.lastBackgroundFit = fit;
+  instance.latest.setStateValue("backgroundFit", fit);
+};
+
 const resolveCssVar = (
   container: HTMLElement,
   name: string,
@@ -188,6 +220,7 @@ const reconfigureTool = (
     strokeColor: data.strokeColor,
     displayRadius: data.displayRadius,
     fontSize: data.fontSize,
+    label: data.label,
     hiddenTextareaContainer: instance.textareaHostEl,
     onPolygonClosed: () => {
       instance.polygonJustClosed = true;
@@ -256,6 +289,7 @@ export const toolKeyFor = (
     data.displayRadius,
     data.disabled,
     data.fontSize,
+    data.label,
   ]);
 
 export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
@@ -317,6 +351,7 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
     lastInitialDrawingKey: null,
     lastBackgroundImageURL: null,
     lastBackgroundImageFit: null,
+    lastBackgroundFit: null,
     width: 0,
     height: 0,
     loadGeneration: 0,
@@ -516,18 +551,27 @@ export const applyData = (
       data.backgroundImageURL,
       () => generation === instance.backgroundGeneration,
       data.backgroundImageFit
-    ).catch((error) => {
-      console.error(
-        "streamlit-drawable-canvas: failed to load background image",
-        error
-      );
-      // Un-memoize so a later rerun with the same URL retries.
-      if (generation === instance.backgroundGeneration) {
-        instance.lastBackgroundImageURL = null;
-      }
-    });
+    )
+      .then((fit) => {
+        if (generation === instance.backgroundGeneration) {
+          reportBackgroundFit(instance, fit);
+        }
+      })
+      .catch((error) => {
+        console.error(
+          "streamlit-drawable-canvas: failed to load background image",
+          error
+        );
+        // Un-memoize so a later rerun with the same URL retries.
+        if (generation === instance.backgroundGeneration) {
+          instance.lastBackgroundImageURL = null;
+        }
+      });
   } else if (resized || fitChanged) {
-    rescaleBackgroundImage(instance.backgroundCanvas, data.backgroundImageFit);
+    reportBackgroundFit(
+      instance,
+      rescaleBackgroundImage(instance.backgroundCanvas, data.backgroundImageFit)
+    );
   }
 
   // 3. Initial drawing (memoized) -- reloading on every rerun would wipe the

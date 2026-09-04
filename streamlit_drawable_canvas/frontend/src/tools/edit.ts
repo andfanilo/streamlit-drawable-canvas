@@ -1,6 +1,7 @@
 import {
   Circle,
   FabricObject,
+  IText,
   Line,
   Polygon,
   Rect,
@@ -16,6 +17,7 @@ import {
   applyRectPlaceholderAnchors,
   installRectPointEditSwap,
 } from "./anchors";
+import { chipPlacement, LabeledRect } from "./labeled";
 
 const CLICK_SLOP_PX = 3;
 const CORNER_SIZE = 10;
@@ -63,12 +65,53 @@ export class EditTool extends FabricTool {
     pointEdit,
     pointEditCornerColor,
     pointEditCornerStrokeColor,
+    hiddenTextareaContainer,
   }: ConfigureCanvasProps): () => void {
     const canvas = this.canvas;
     canvas.isDrawingMode = false;
     canvas.selection = true;
     canvas.forEachObject((o) => (o.selectable = o.evented = true));
     if (pointEdit.get()) canvas.selection = false;
+
+    let relabelState: { rect: LabeledRect; itext: IText } | null = null;
+
+    const beginRelabel = (rect: LabeledRect) => {
+      const placement = chipPlacement(rect);
+      rect.chipSuppressed = true;
+      rect.dirty = true;
+      const itext = new IText(rect.label, {
+        left: placement.left,
+        top: placement.top,
+        originX: "left",
+        originY: "top",
+        fontSize: rect.fontSize,
+        fill: placement.textColor,
+        backgroundColor: placement.fillStyle,
+        hiddenTextareaContainer,
+        excludeFromExport: true,
+      });
+      canvas.add(itext);
+      canvas.setActiveObject(itext);
+      itext.enterEditing();
+      itext.selectAll();
+      canvas.selection = false;
+      relabelState = { rect, itext };
+      canvas.requestRenderAll();
+    };
+
+    const onTextEditingExited = (o: { target: IText }) => {
+      if (!relabelState || o.target !== relabelState.itext) return;
+      const { rect, itext } = relabelState;
+      rect.label = itext.text ?? "";
+      canvas.remove(itext);
+      rect.chipSuppressed = false;
+      rect.dirty = true;
+      canvas.selection = true;
+      relabelState = null;
+      canvas.setActiveObject(rect);
+      canvas.requestRenderAll();
+    };
+    canvas.on("text:editing:exited", onTextEditingExited);
 
     let downInfo: {
       target: FabricObject | null;
@@ -157,12 +200,15 @@ export class EditTool extends FabricTool {
 
       const p = canvas.getScenePoint(o.e);
       const moved = Math.hypot(p.x - info.x, p.y - info.y);
-      if (
-        moved < CLICK_SLOP_PX &&
-        info.alreadySelected &&
-        isDescendEligible(target)
-      ) {
-        enterPointEdit(target);
+      if (moved < CLICK_SLOP_PX && info.alreadySelected) {
+        if (target instanceof LabeledRect) {
+          beginRelabel(target);
+          applyCursorHint();
+          return;
+        }
+        if (isDescendEligible(target)) {
+          enterPointEdit(target);
+        }
       }
       applyCursorHint();
     };
@@ -179,10 +225,14 @@ export class EditTool extends FabricTool {
     );
 
     return () => {
+      if (relabelState) {
+        relabelState.itext.exitEditing();
+      }
       canvas.off("mouse:down", onMouseDown);
       canvas.off("mouse:up", onMouseUp);
       canvas.off("selection:created", applyCursorHint);
       canvas.off("selection:updated", applyCursorHint);
+      canvas.off("text:editing:exited", onTextEditingExited);
       rectSwapCleanup();
       clearCursorPatch();
       exitPointEdit();

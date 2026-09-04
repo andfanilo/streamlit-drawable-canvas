@@ -8,6 +8,7 @@ import { RectTool } from "./rect";
 import { EditTool } from "./edit";
 import { PointTool } from "./point";
 import { TextTool } from "./text";
+import { LabeledRectTool } from "./labeledrect";
 
 export type FabricToolConstructor = new (canvas: Canvas) => FabricTool;
 
@@ -20,6 +21,7 @@ export const tools: Record<string, FabricToolConstructor> = {
   edit: EditTool,
   point: PointTool,
   text: TextTool,
+  labeled_rect: LabeledRectTool,
 };
 
 export { FabricTool };

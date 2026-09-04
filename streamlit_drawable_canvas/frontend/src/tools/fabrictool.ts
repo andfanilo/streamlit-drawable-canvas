@@ -27,6 +27,8 @@ export interface ConfigureCanvasProps {
   strokeColor: string;
   displayRadius: number;
   fontSize: number;
+  /** labeled_rect-only: the label stamped onto every box this tool draws. */
+  label: string;
   /** Text-only: anchor for IText's hidden textarea. Must be inside the
    *  shadow root (so it can take focus/input) but outside `.dc-scroll` and
    *  zero-sized (so Fabric's page-absolute positioning math -- which double-
