@@ -142,6 +142,7 @@ def test_toggle_on_mid_polygon_discards_the_in_progress_shape(app: Page):
 def test_toggle_on_while_typing_commits_text_exactly_once(app: Page):
     index = 3
     target = canvas(app, index)
+    root = component(app, index)
 
     click(app, target, 30, 30)
     app.keyboard.type("Hi")
@@ -153,6 +154,12 @@ def test_toggle_on_while_typing_commits_text_exactly_once(app: Page):
     obj = data["objects"][0]
     assert obj["type"] == "IText"
     assert obj["text"] == "Hi"
+
+    # One undo removes the whole object -- if toggling had written its own
+    # history entry on top of the text commit, this would take two.
+    root.get_by_label("Undo").click()
+    wait_for_app_run(app)
+    assert read_json(app, index)["objects"] == []
 
 
 def test_toggling_writes_no_history_entry(app: Page):
