@@ -14,6 +14,7 @@ import { HistoryStore } from "./history";
 import { buildToolbar, setToolbarState, ToolbarHandles } from "./toolbar";
 import { tools } from "./tools";
 import { convertLegacyPolygons } from "./tools/convert";
+import type { PointEditState } from "./tools/fabrictool";
 import { LOCK_PROPERTIES } from "./tools/lockProperties";
 
 const SEND_DEBOUNCE_MS = 200;
@@ -79,6 +80,7 @@ export interface CanvasInstance {
   };
   isTextEditing: boolean;
   polygonJustClosed: boolean;
+  pointEdit: PointEditState | null;
 }
 
 /** Saves canvas state to history, scheduling a debounced realtime send if it
@@ -135,6 +137,7 @@ const reloadCanvasFromHistory = async (
   fixTextareaContainers(instance.canvas, instance.textareaHostEl);
   convertLegacyPolygons(instance.canvas);
   instance.canvas.renderAll();
+  instance.pointEdit = null;
   if (instance.latest.data) {
     reconfigureTool(instance, instance.latest.data);
   }
@@ -152,6 +155,13 @@ const applyReadOnly = (canvas: Canvas): void => {
   });
   canvas.renderAll();
 };
+
+const resolveCssVar = (
+  container: HTMLElement,
+  name: string,
+  fallback: string
+): string =>
+  getComputedStyle(container).getPropertyValue(name).trim() || fallback;
 
 const reconfigureTool = (
   instance: CanvasInstance,
@@ -176,6 +186,22 @@ const reconfigureTool = (
     onPolygonClosed: () => {
       instance.polygonJustClosed = true;
     },
+    pointEdit: {
+      get: () => instance.pointEdit,
+      set: (state) => {
+        instance.pointEdit = state;
+      },
+    },
+    pointEditCornerColor: resolveCssVar(
+      instance.container,
+      "--st-text-color",
+      "#31333f"
+    ),
+    pointEditCornerStrokeColor: resolveCssVar(
+      instance.container,
+      "--st-background-color",
+      "#fff"
+    ),
   });
 };
 
@@ -284,6 +310,7 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
     },
     isTextEditing: false,
     polygonJustClosed: false,
+    pointEdit: null,
   };
 
   instance.sender = createSender(
@@ -484,20 +511,13 @@ export const applyData = (
       fixTextareaContainers(instance.canvas, instance.textareaHostEl);
       const convertedLegacyPolygon = convertLegacyPolygons(instance.canvas);
       instance.canvas.renderAll();
-      // Snapshot the actual (post-conversion) canvas state, not the literal
-      // input -- a legacy path-polygon must round-trip as the polygon it was
-      // converted to, even for a canvas nothing else ever mutates.
       const loadedState = instance.canvas.toObject(LOCK_PROPERTIES);
       instance.history.reset(loadedState);
+      instance.pointEdit = null;
       const latestData = instance.latest.data ?? data;
       reconfigureTool(instance, latestData);
       instance.lastToolKey = toolKeyFor(latestData);
       syncToolbar(instance);
-      // Propagate the reload immediately (not just on the next user
-      // mutation), so a canvas fed by this one's json_data round-trips it
-      // without lagging a rerun behind. A legacy-polygon conversion always
-      // sends, even on first load and with update_streamlit=False -- display-
-      // only must still hand back the converted payload (§3.4.2).
       if (
         (!isFirstLoad && instance.latest.realtimeUpdateStreamlit) ||
         convertedLegacyPolygon

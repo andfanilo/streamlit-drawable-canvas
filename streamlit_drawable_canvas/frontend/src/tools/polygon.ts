@@ -11,6 +11,7 @@ import { buildPathString, PolygonPoint } from "./polygon-path";
 // A closed polygon needs at least a triangle -- clicking the first handle
 // before then is not a valid close, so it's ignored.
 const MIN_VERTICES_TO_CLOSE = 3;
+const DRAW_HANDLE_RADIUS = 10;
 
 export class PolygonTool extends FabricTool {
   private fillColor = "#ffffff";
@@ -71,7 +72,7 @@ export class PolygonTool extends FabricTool {
       top: pointer.y,
       originX: "center",
       originY: "center",
-      radius: this.strokeWidth,
+      radius: DRAW_HANDLE_RADIUS,
       fill: this.strokeColor,
       stroke: this.strokeColor,
       selectable: false,

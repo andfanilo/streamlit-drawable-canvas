@@ -1,4 +1,25 @@
-import type { Canvas } from "fabric";
+import type { Canvas, Control, FabricObject } from "fabric";
+
+export interface PointEditSnapshot {
+  controls: Record<string, Control>;
+  hasBorders: boolean;
+  cornerStyle: string;
+  cornerColor?: string;
+  cornerStrokeColor?: string;
+  transparentCorners: boolean;
+  cornerSize: number;
+  touchCornerSize: number;
+}
+
+export interface PointEditState {
+  object: FabricObject;
+  saved: PointEditSnapshot;
+}
+
+export interface PointEditController {
+  get(): PointEditState | null;
+  set(state: PointEditState | null): void;
+}
 
 export interface ConfigureCanvasProps {
   fillColor: string;
@@ -15,6 +36,9 @@ export interface ConfigureCanvasProps {
   /** Polygon-only: called once the shape is closed, so the caller can force
    *  a send regardless of update_streamlit. */
   onPolygonClosed: () => void;
+  pointEdit: PointEditController;
+  pointEditCornerColor: string;
+  pointEditCornerStrokeColor: string;
 }
 
 /**
