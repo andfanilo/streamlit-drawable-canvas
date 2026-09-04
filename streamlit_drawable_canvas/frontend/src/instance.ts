@@ -81,6 +81,10 @@ export interface CanvasInstance {
   isTextEditing: boolean;
   polygonJustClosed: boolean;
   pointEdit: PointEditState | null;
+  /** The toolbar's edit toggle. Frontend-only; never part of `data`. */
+  editActive: boolean;
+  /** Last `data.drawingMode` seen. */
+  lastDrawingMode: string | null;
 }
 
 /** Saves canvas state to history, scheduling a debounced realtime send if it
@@ -174,7 +178,9 @@ const reconfigureTool = (
     applyReadOnly(instance.canvas);
     return;
   }
-  const ToolConstructor = tools[data.drawingMode] ?? tools.freedraw;
+  const ToolConstructor = instance.editActive
+    ? tools.edit
+    : (tools[data.drawingMode] ?? tools.freedraw);
   const tool = new ToolConstructor(instance.canvas);
   instance.activeToolCleanup = tool.configureCanvas({
     fillColor: data.fillColor,
@@ -211,8 +217,7 @@ const syncToolbar = (instance: CanvasInstance): void => {
     instance.toolbarHandles,
     instance.history.canUndo(),
     instance.history.canRedo(),
-    // TODO(0.12.0 §4.8 step 2): wire to instance.editActive.
-    false,
+    instance.editActive,
     instance.canvas.getActiveObject() != null
   );
 };
@@ -229,9 +234,13 @@ export const isToolbarVisible = (data: DrawableCanvasData): boolean =>
   !data.disabled;
 
 /** Diffing key: changes iff a tool-affecting param changes. */
-export const toolKeyFor = (data: DrawableCanvasData): string =>
+export const toolKeyFor = (
+  data: DrawableCanvasData,
+  editActive: boolean
+): string =>
   JSON.stringify([
     data.drawingMode,
+    editActive,
     data.fillColor,
     data.strokeWidth,
     data.strokeColor,
@@ -312,6 +321,8 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
     isTextEditing: false,
     polygonJustClosed: false,
     pointEdit: null,
+    editActive: false,
+    lastDrawingMode: null,
   };
 
   instance.sender = createSender(
@@ -439,6 +450,11 @@ export const applyData = (
   instance.latest.setStateValue = setStateValue;
   instance.latest.data = data;
 
+  if (data.drawingMode !== instance.lastDrawingMode) {
+    instance.editActive = false;
+  }
+  instance.lastDrawingMode = data.drawingMode;
+
   // 1. Resize
   const resized =
     instance.width !== data.canvasWidth ||
@@ -466,7 +482,9 @@ export const applyData = (
   }
   instance.toolbarEl.style.display = isToolbarVisible(data) ? "flex" : "none";
   // Also covers polygon mode, where `realtimeUpdateStreamlit` is always false.
-  instance.toolbarEl.dataset.pinned = String(!data.realtimeUpdateStreamlit);
+  instance.toolbarEl.dataset.pinned = String(
+    !data.realtimeUpdateStreamlit || instance.editActive
+  );
 
   // 2. Background image (memoized on URL; a fit or size change re-fits the
   //    image already loaded rather than re-fetching it)
@@ -520,7 +538,7 @@ export const applyData = (
       instance.pointEdit = null;
       const latestData = instance.latest.data ?? data;
       reconfigureTool(instance, latestData);
-      instance.lastToolKey = toolKeyFor(latestData);
+      instance.lastToolKey = toolKeyFor(latestData, instance.editActive);
       syncToolbar(instance);
       if (
         (!isFirstLoad && instance.latest.realtimeUpdateStreamlit) ||
@@ -531,8 +549,8 @@ export const applyData = (
     });
   } else {
     // 4. Tool (memoized) -- only reconfigure when drawing-mode/style params
-    //    actually changed.
-    const toolKey = toolKeyFor(data);
+    //    (or the edit toggle) actually changed.
+    const toolKey = toolKeyFor(data, instance.editActive);
     if (toolKey !== instance.lastToolKey) {
       instance.lastToolKey = toolKey;
       reconfigureTool(instance, data);

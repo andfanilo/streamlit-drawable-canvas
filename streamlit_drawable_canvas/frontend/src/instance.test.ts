@@ -32,47 +32,60 @@ describe("isToolbarVisible", () => {
 
 describe("toolKeyFor", () => {
   it("is stable across calls with equivalent tool-affecting fields", () => {
-    expect(toolKeyFor(baseData)).toBe(toolKeyFor({ ...baseData }));
-  });
-
-  it("changes when drawingMode changes", () => {
-    expect(toolKeyFor(baseData)).not.toBe(
-      toolKeyFor({ ...baseData, drawingMode: "rect" })
+    expect(toolKeyFor(baseData, false)).toBe(
+      toolKeyFor({ ...baseData }, false)
     );
   });
 
+  it("changes when drawingMode changes", () => {
+    expect(toolKeyFor(baseData, false)).not.toBe(
+      toolKeyFor({ ...baseData, drawingMode: "rect" }, false)
+    );
+  });
+
+  it("changes when editActive changes", () => {
+    expect(toolKeyFor(baseData, false)).not.toBe(toolKeyFor(baseData, true));
+  });
+
   it("changes when disabled is toggled", () => {
-    // Toggling `disabled` must re-run reconfigureTool: on -> off has to
-    // re-register a tool, off -> on has to tear one down.
-    expect(toolKeyFor({ ...baseData, disabled: true })).not.toBe(
-      toolKeyFor(baseData)
+    expect(toolKeyFor({ ...baseData, disabled: true }, false)).not.toBe(
+      toolKeyFor(baseData, false)
     );
   });
 
   it("changes when fillColor, strokeWidth, strokeColor, displayRadius, or fontSize change", () => {
-    const base = toolKeyFor(baseData);
-    expect(toolKeyFor({ ...baseData, fillColor: "#fff" })).not.toBe(base);
-    expect(toolKeyFor({ ...baseData, strokeWidth: 5 })).not.toBe(base);
-    expect(toolKeyFor({ ...baseData, strokeColor: "red" })).not.toBe(base);
-    expect(toolKeyFor({ ...baseData, displayRadius: 10 })).not.toBe(base);
-    expect(toolKeyFor({ ...baseData, fontSize: 30 })).not.toBe(base);
+    const base = toolKeyFor(baseData, false);
+    expect(toolKeyFor({ ...baseData, fillColor: "#fff" }, false)).not.toBe(
+      base
+    );
+    expect(toolKeyFor({ ...baseData, strokeWidth: 5 }, false)).not.toBe(base);
+    expect(toolKeyFor({ ...baseData, strokeColor: "red" }, false)).not.toBe(
+      base
+    );
+    expect(toolKeyFor({ ...baseData, displayRadius: 10 }, false)).not.toBe(
+      base
+    );
+    expect(toolKeyFor({ ...baseData, fontSize: 30 }, false)).not.toBe(base);
   });
 
   it("ignores fields that don't affect tool configuration", () => {
-    const base = toolKeyFor(baseData);
+    const base = toolKeyFor(baseData, false);
     expect(
-      toolKeyFor({
-        ...baseData,
-        canvasWidth: 999,
-        canvasHeight: 999,
-        backgroundColor: "#000",
-        backgroundImageURL: "https://example.com/x.png",
-        realtimeUpdateStreamlit: false,
-        initialDrawing: { objects: [{ type: "rect" }] },
-        returnImageData: true,
-        backgroundImageFit: "contain",
-        maxDisplayHeight: 300,
-      })
+      toolKeyFor(
+        {
+          ...baseData,
+          canvasWidth: 999,
+          canvasHeight: 999,
+          backgroundColor: "#000",
+          backgroundImageURL: "https://example.com/x.png",
+          realtimeUpdateStreamlit: false,
+          initialDrawing: { objects: [{ type: "rect" }] },
+          returnImageData: true,
+          backgroundImageFit: "contain",
+          maxDisplayHeight: 300,
+        },
+        false
+      )
     ).toBe(base);
   });
 });
