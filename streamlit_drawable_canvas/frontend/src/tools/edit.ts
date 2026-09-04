@@ -132,7 +132,11 @@ export class EditTool extends FabricTool {
     const applyCursorHint = () => {
       const active = canvas.getActiveObject();
       clearCursorPatch();
-      if (!pointEdit.get() && isDescendEligible(active)) {
+      if (
+        !pointEdit.get() &&
+        active &&
+        (isDescendEligible(active) || active instanceof LabeledRect)
+      ) {
         cursorPatch = { object: active, original: active.hoverCursor };
         active.hoverCursor = "pointer";
       }

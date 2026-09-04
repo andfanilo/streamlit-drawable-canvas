@@ -226,6 +226,28 @@ def test_boxes_applies_scale_correction():
     ]
 
 
+def test_boxes_normalizes_center_origin_to_top_left():
+    result = CanvasResult(
+        json_data={
+            "objects": [
+                _labeled_rect(
+                    left=60,
+                    top=45,
+                    width=100,
+                    height=50,
+                    originX="center",
+                    originY="center",
+                )
+            ]
+        },
+        image_data_url=None,
+        return_image_data=False,
+    )
+    assert result.boxes == [
+        {"label": "person", "left": 10, "top": 20, "width": 100, "height": 50}
+    ]
+
+
 def test_boxes_filters_to_labeled_rect_only():
     result = CanvasResult(
         json_data={

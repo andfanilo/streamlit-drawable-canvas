@@ -26,6 +26,9 @@ out = st.components.v2.component(
 )
 
 
+_ORIGIN_OFFSET = {"left": 0.0, "top": 0.0, "center": 0.5, "right": 1.0, "bottom": 1.0}
+
+
 class CanvasResult:
     """The result of an `st_canvas` call.
 
@@ -118,13 +121,19 @@ class CanvasResult:
                 continue
             scale_x = obj.get("scaleX", 1)
             scale_y = obj.get("scaleY", 1)
+            width = obj.get("width", 0) * scale_x
+            height = obj.get("height", 0) * scale_y
+            left = (
+                obj.get("left", 0) - _ORIGIN_OFFSET[obj.get("originX", "left")] * width
+            )
+            top = obj.get("top", 0) - _ORIGIN_OFFSET[obj.get("originY", "top")] * height
             result.append(
                 {
                     "label": obj.get("label", ""),
-                    "left": obj.get("left", 0),
-                    "top": obj.get("top", 0),
-                    "width": obj.get("width", 0) * scale_x,
-                    "height": obj.get("height", 0) * scale_y,
+                    "left": left,
+                    "top": top,
+                    "width": width,
+                    "height": height,
                 }
             )
         return result
