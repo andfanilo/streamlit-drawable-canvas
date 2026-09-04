@@ -29,57 +29,6 @@ MODE_HINTS = {
 
 BG_SOURCES = ("None", "URL", "Local path", "Bytes", "PIL Image")
 
-EDIT_MODE_SEED = {
-    "objects": [
-        {
-            "type": "Polygon",
-            "points": [
-                {"x": 50, "y": 50},
-                {"x": 150, "y": 50},
-                {"x": 150, "y": 130},
-                {"x": 50, "y": 130},
-            ],
-            "fill": "#eeeeee",
-            "stroke": "#000000",
-            "strokeWidth": 2,
-        },
-        {
-            "type": "Line",
-            "x1": -50,
-            "y1": -30,
-            "x2": 50,
-            "y2": 30,
-            "left": 280,
-            "top": 90,
-            "stroke": "#000000",
-            "strokeWidth": 2,
-            "originX": "center",
-            "originY": "center",
-        },
-        {
-            "type": "Rect",
-            "left": 380,
-            "top": 50,
-            "width": 100,
-            "height": 80,
-            "fill": "#eeeeee",
-            "stroke": "#000000",
-            "strokeWidth": 2,
-        },
-        {
-            "type": "Circle",
-            "left": 520,
-            "top": 90,
-            "radius": 40,
-            "fill": "#eeeeee",
-            "stroke": "#000000",
-            "strokeWidth": 2,
-            "originX": "center",
-            "originY": "center",
-        },
-    ]
-}
-
 
 @st.cache_resource
 def _sample_image() -> Image.Image:
@@ -165,7 +114,6 @@ canvas_result = st_canvas(
     point_display_radius=point_display_radius,
     return_image_data=return_image_data,
     font_size=font_size,
-    initial_drawing=EDIT_MODE_SEED,
     key="canvas",
 )
 
