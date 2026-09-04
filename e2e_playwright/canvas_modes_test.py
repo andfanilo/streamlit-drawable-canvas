@@ -138,7 +138,8 @@ def test_polygon_closes_on_first_vertex_handle_click(app: Page):
     data = read_json(app, index)
     assert len(data["objects"]) == 1
     obj = data["objects"][0]
-    assert obj["type"] == "Path"
+    assert obj["type"] == "Polygon"
+    assert len(obj["points"]) == 3
     assert obj["width"] > 0
     assert obj["height"] > 0
 
@@ -157,9 +158,8 @@ def test_polygon_clicking_another_handle_removes_that_vertex(app: Page):
     data = read_json(app, index)
     assert len(data["objects"]) == 1
     obj = data["objects"][0]
-    assert obj["type"] == "Path"
-    line_segments = [seg for seg in obj["path"] if seg[0] == "L"]
-    assert len(line_segments) == 2  # started with 4 vertices, removed 1
+    assert obj["type"] == "Polygon"
+    assert len(obj["points"]) == 3  # started with 4 vertices, removed 1
 
 
 def test_polygon_right_click_does_nothing(app: Page):

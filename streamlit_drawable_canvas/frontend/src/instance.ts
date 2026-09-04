@@ -13,21 +13,10 @@ import { createSender, Sender } from "./debounce";
 import { HistoryStore } from "./history";
 import { buildToolbar, setToolbarState, ToolbarHandles } from "./toolbar";
 import { tools } from "./tools";
+import { convertLegacyPolygons } from "./tools/convert";
+import { LOCK_PROPERTIES } from "./tools/lockProperties";
 
 const SEND_DEBOUNCE_MS = 200;
-
-// Not part of Fabric's default toObject() output; listed so these round-trip
-// through json_data. selectable/evented deliberately excluded.
-const LOCK_PROPERTIES = [
-  "lockMovementX",
-  "lockMovementY",
-  "lockRotation",
-  "lockScalingX",
-  "lockScalingY",
-  "lockSkewingX",
-  "lockSkewingY",
-  "lockScalingFlip",
-];
 
 export interface DrawableCanvasData {
   fillColor: string;
@@ -144,6 +133,7 @@ const reloadCanvasFromHistory = async (
   await instance.canvas.loadFromJSON(state);
   if (generation !== instance.loadGeneration) return false;
   fixTextareaContainers(instance.canvas, instance.textareaHostEl);
+  convertLegacyPolygons(instance.canvas);
   instance.canvas.renderAll();
   if (instance.latest.data) {
     reconfigureTool(instance, instance.latest.data);
@@ -492,17 +482,27 @@ export const applyData = (
         return;
       }
       fixTextareaContainers(instance.canvas, instance.textareaHostEl);
+      const convertedLegacyPolygon = convertLegacyPolygons(instance.canvas);
       instance.canvas.renderAll();
-      instance.history.reset(data.initialDrawing);
+      // Snapshot the actual (post-conversion) canvas state, not the literal
+      // input -- a legacy path-polygon must round-trip as the polygon it was
+      // converted to, even for a canvas nothing else ever mutates.
+      const loadedState = instance.canvas.toObject(LOCK_PROPERTIES);
+      instance.history.reset(loadedState);
       const latestData = instance.latest.data ?? data;
       reconfigureTool(instance, latestData);
       instance.lastToolKey = toolKeyFor(latestData);
       syncToolbar(instance);
       // Propagate the reload immediately (not just on the next user
       // mutation), so a canvas fed by this one's json_data round-trips it
-      // without lagging a rerun behind.
-      if (!isFirstLoad && instance.latest.realtimeUpdateStreamlit) {
-        instance.sender.now(instance.canvas.toObject(LOCK_PROPERTIES));
+      // without lagging a rerun behind. A legacy-polygon conversion always
+      // sends, even on first load and with update_streamlit=False -- display-
+      // only must still hand back the converted payload (§3.4.2).
+      if (
+        (!isFirstLoad && instance.latest.realtimeUpdateStreamlit) ||
+        convertedLegacyPolygon
+      ) {
+        instance.sender.now(loadedState);
       }
     });
   } else {

@@ -1,4 +1,10 @@
-import { Circle, Path, TPointerEventInfo, TPointerEvent } from "fabric";
+import {
+  Circle,
+  Path,
+  Polygon,
+  TPointerEventInfo,
+  TPointerEvent,
+} from "fabric";
 import { FabricTool, ConfigureCanvasProps } from "./fabrictool";
 import { buildPathString, PolygonPoint } from "./polygon-path";
 
@@ -90,8 +96,19 @@ export class PolygonTool extends FabricTool {
   }
 
   private close() {
-    this.render(true);
+    if (this.currentPath) this.canvas.remove(this.currentPath);
     this.removeHandles();
+    // The closed shape is a Polygon, not a Path (0.12.0-spec.md §3.4.1):
+    // `points` round-trips as data instead of an SVG command scan, and it's
+    // what createPolyControls (point editing) requires.
+    const polygon = new Polygon(this.points, {
+      strokeWidth: this.strokeWidth,
+      fill: this.fillColor,
+      stroke: this.strokeColor,
+      selectable: false,
+      evented: false,
+    });
+    this.canvas.add(polygon);
     this.points = [];
     this.currentPath = null;
     this.onPolygonClosed();
