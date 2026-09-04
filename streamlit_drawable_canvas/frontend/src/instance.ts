@@ -335,7 +335,16 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
       instance.sender.now(canvas.toObject(LOCK_PROPERTIES));
     },
     onEditToggle: () => {
-      // TODO(0.12.0 §4.8 step 3): the toggle click handler.
+      if (instance.isTextEditing) {
+        canvas.discardActiveObject();
+      }
+      instance.editActive = !instance.editActive;
+      const latestData = instance.latest.data;
+      if (latestData) {
+        reconfigureTool(instance, latestData);
+        instance.lastToolKey = toolKeyFor(latestData, instance.editActive);
+      }
+      syncToolbar(instance);
     },
     onUndo: () => {
       if (instance.history.undo()) {

@@ -52,6 +52,10 @@ export class PolygonTool extends FabricTool {
     return () => {
       this.canvas.off("mouse:down", onMouseDown);
       this.removeHandles();
+      if (this.currentPath) {
+        this.canvas.remove(this.currentPath);
+        this.currentPath = null;
+      }
     };
   }
 
