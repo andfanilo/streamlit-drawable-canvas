@@ -6,6 +6,7 @@ const callbacks = {
   onSend: noop,
   onUndo: noop,
   onRedo: noop,
+  onEditToggle: noop,
   onBringForward: noop,
   onSendBackward: noop,
   onDeleteSelected: noop,
@@ -26,7 +27,7 @@ describe("buildToolbar", () => {
     expect(toolbarEl.children).toHaveLength(1);
     const card = toolbarEl.firstElementChild as HTMLElement;
     expect(card.className).toBe("dc-toolbar-card");
-    expect(card.querySelectorAll("button.dc-icon-button")).toHaveLength(7);
+    expect(card.querySelectorAll("button.dc-icon-button")).toHaveLength(8);
     expect(toolbarEl.querySelectorAll(":scope > button")).toHaveLength(0);
   });
 
@@ -40,6 +41,7 @@ describe("buildToolbar", () => {
       "Update the app with this drawing",
       "Undo",
       "Redo",
+      "Edit",
       "Bring forward",
       "Send backward",
       "Delete selected",
@@ -52,7 +54,7 @@ describe("buildToolbar", () => {
     buildToolbar(toolbarEl, callbacks);
 
     expect(toolbarEl.querySelectorAll(".dc-toolbar-card")).toHaveLength(1);
-    expect(toolbarEl.querySelectorAll("button")).toHaveLength(7);
+    expect(toolbarEl.querySelectorAll("button")).toHaveLength(8);
   });
 
   it("disables undo/redo through setToolbarState", () => {
@@ -67,14 +69,16 @@ describe("buildToolbar", () => {
     expect(handles.redoButton.disabled).toBe(true);
   });
 
-  it("shows the contextual group only in edit mode", () => {
+  it("shows the contextual group and presses the edit button only in edit mode", () => {
     const handles = buildToolbar(toolbarEl, callbacks);
 
     setToolbarState(handles, false, false, false, false);
     expect(handles.contextualGroup.style.display).toBe("none");
+    expect(handles.editButton.getAttribute("aria-pressed")).toBe("false");
 
     setToolbarState(handles, false, false, true, false);
     expect(handles.contextualGroup.style.display).toBe("flex");
+    expect(handles.editButton.getAttribute("aria-pressed")).toBe("true");
   });
 
   it("disables the contextual buttons without an active selection", () => {

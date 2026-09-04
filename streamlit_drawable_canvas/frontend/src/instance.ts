@@ -211,7 +211,8 @@ const syncToolbar = (instance: CanvasInstance): void => {
     instance.toolbarHandles,
     instance.history.canUndo(),
     instance.history.canRedo(),
-    instance.latest.data?.drawingMode === "edit",
+    // TODO(0.12.0 §4.8 step 2): wire to instance.editActive.
+    false,
     instance.canvas.getActiveObject() != null
   );
 };
@@ -321,6 +322,9 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
   instance.toolbarHandles = buildToolbar(toolbarEl, {
     onSend: () => {
       instance.sender.now(canvas.toObject(LOCK_PROPERTIES));
+    },
+    onEditToggle: () => {
+      // TODO(0.12.0 §4.8 step 3): the toggle click handler.
     },
     onUndo: () => {
       if (instance.history.undo()) {

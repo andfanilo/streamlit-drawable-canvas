@@ -130,7 +130,8 @@
 }
 
 .dc-icon-button:active:not(:disabled),
-.dc-icon-button:focus-visible:not(:disabled) {
+.dc-icon-button:focus-visible:not(:disabled),
+.dc-icon-button[aria-pressed="true"] {
   background: color-mix(
     in srgb,
     var(--st-text-color, #31333f) 25%,

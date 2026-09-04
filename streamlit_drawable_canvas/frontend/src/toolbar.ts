@@ -16,12 +16,15 @@ const ICONS = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 8v8"/><path d="M8 12l4 4 4-4"/></svg>',
   deleteSelected:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>',
+  // Feather's mouse-pointer glyph -- the universal select/move affordance.
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>',
 } as const;
 
 export interface ToolbarCallbacks {
   onSend: () => void;
   onUndo: () => void;
   onRedo: () => void;
+  onEditToggle: () => void;
   onBringForward: () => void;
   onSendBackward: () => void;
   onDeleteSelected: () => void;
@@ -31,6 +34,7 @@ export interface ToolbarCallbacks {
 export interface ToolbarHandles {
   undoButton: HTMLButtonElement;
   redoButton: HTMLButtonElement;
+  editButton: HTMLButtonElement;
   contextualGroup: HTMLDivElement;
   bringForwardButton: HTMLButtonElement;
   sendBackwardButton: HTMLButtonElement;
@@ -71,8 +75,14 @@ export const buildToolbar = (
   const undoButton = makeButton("undo", "Undo", callbacks.onUndo);
   const redoButton = makeButton("redo", "Redo", callbacks.onRedo);
 
+  // Always visible, unlike the contextual group below -- the toggle's
+  // pressed state is the mode indicator, so it can't itself be gated on
+  // edit being active.
   const separator = document.createElement("div");
   separator.className = "dc-toolbar-separator";
+
+  const editButton = makeButton("edit", "Edit", callbacks.onEditToggle);
+  editButton.setAttribute("aria-pressed", "false");
 
   const bringForwardButton = makeButton(
     "forward",
@@ -93,7 +103,6 @@ export const buildToolbar = (
   const contextualGroup = document.createElement("div");
   contextualGroup.className = "dc-toolbar-contextual";
   contextualGroup.append(
-    separator,
     bringForwardButton,
     sendBackwardButton,
     deleteSelectedButton
@@ -105,11 +114,20 @@ export const buildToolbar = (
     callbacks.onReset
   );
 
-  card.append(sendButton, undoButton, redoButton, contextualGroup, resetButton);
+  card.append(
+    sendButton,
+    undoButton,
+    redoButton,
+    separator,
+    editButton,
+    contextualGroup,
+    resetButton
+  );
 
   return {
     undoButton,
     redoButton,
+    editButton,
     contextualGroup,
     bringForwardButton,
     sendBackwardButton,
@@ -126,6 +144,7 @@ export const setToolbarState = (
 ): void => {
   handles.undoButton.disabled = !canUndo;
   handles.redoButton.disabled = !canRedo;
+  handles.editButton.setAttribute("aria-pressed", String(isEditMode));
   handles.contextualGroup.style.display = isEditMode ? "flex" : "none";
   handles.bringForwardButton.disabled = !hasActiveSelection;
   handles.sendBackwardButton.disabled = !hasActiveSelection;
