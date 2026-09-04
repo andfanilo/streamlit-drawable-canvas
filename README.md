@@ -51,7 +51,7 @@ from streamlit_drawable_canvas import st_canvas
 
 # Specify canvas parameters in application
 drawing_mode = st.sidebar.selectbox(
-    "Drawing tool:", ("point", "freedraw", "line", "rect", "circle", "transform")
+    "Drawing tool:", ("point", "freedraw", "line", "rect", "circle", "edit")
 )
 
 stroke_width = st.sidebar.slider("Stroke width: ", 1, 25, 3)
@@ -118,19 +118,24 @@ st_canvas(
     disabled: bool
     background_image_fit: str
     max_display_height: int
+    font_size: int
 )
 ```
 
-- **fill_color** : Color of fill for Rect in CSS color property. Defaults to "#eee".
+- **fill_color** : Color of fill for Rect/Circle/Polygon in CSS color property. Defaults
+  to "#eee". In `drawing_mode="text"`, defaults to `stroke_color` instead -- "#eee" text
+  on a default canvas would be all but invisible. Passing a value explicitly behaves
+  identically in every mode.
 - **stroke_width** : Width of drawing brush in CSS color property. Defaults to 20.
 - **stroke_color** : Color of drawing brush in hex. Defaults to "black".
 - **background_color** : Color of canvas background in CSS color property. Defaults to "" which is transparent. Overriden by background_image. Changing background_color will reset the drawing.
 - **background_image** : Image to display behind canvas: an http(s) URL, a `data:` URI, a local file path, raw image bytes, or a Pillow Image. Automatically resized to canvas dimensions. Being behind the canvas, it is not sent back to Streamlit on mouse event. Overrides background_color. Changes to this will reset canvas contents.
-- **update_streamlit** : Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up. Forced off for `drawing_mode="polygon"` -- an in-progress multi-click polygon isn't a meaningful intermediate value; the completed polygon still sends once closed with a right-click. When nothing sends automatically, the toolbar stays pinned open instead of appearing on hover, because its send button is then the only discoverable way to commit a drawing. **If what you want is "only give me the finished drawing", prefer an `st.form` over `update_streamlit=False`** -- see [FAQ.md](FAQ.md).
+- **update_streamlit** : Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up. Forced off for `drawing_mode="polygon"` -- an in-progress multi-click polygon isn't a meaningful intermediate value; the completed polygon still sends once closed. When nothing sends automatically, the toolbar stays pinned open instead of appearing on hover, because its send button is then the only discoverable way to commit a drawing. **If what you want is "only give me the finished drawing", prefer an `st.form` over `update_streamlit=False`** -- see [FAQ.md](FAQ.md).
 - **height** : Height of canvas in pixels. Defaults to 400.
 - **width** : Width of canvas in pixels. Defaults to 600.
-- **drawing_mode** : One of `"freedraw"`, `"transform"`, `"line"`, `"rect"`, `"circle"`, `"point"`, `"polygon"`. Enable free drawing when "freedraw", object manipulation when "transform", otherwise create new objects with the rest. Defaults to "freedraw". Any other value raises `ValueError`.
-  - On "polygon" mode, double-clicking will remove the latest point and right-clicking will close the polygon.
+- **drawing_mode** : One of `"freedraw"`, `"edit"`, `"line"`, `"rect"`, `"circle"`, `"point"`, `"polygon"`, `"text"`. Enable free drawing when "freedraw", object manipulation (move, scale, rotate, and click-to-edit existing text) when "edit", text placement when "text", otherwise create new objects with the rest. Defaults to "freedraw". Any other value raises `ValueError`.
+  - On "polygon" mode, click to add a vertex; every vertex shows a handle. Click the first vertex's handle to close the shape; click any other handle to remove that vertex.
+  - On "text" mode, clicking places an empty text object and starts editing it immediately; click elsewhere (or Escape/blur) to finish. Nothing is sent to Streamlit until editing ends.
 - **initial_drawing** : Initialize canvas with drawings from here. Should be the `json_data` output from another canvas. Beware: if you try to import a drawing from a bigger/smaller canvas, no rescaling is done in the canvas and the import could fail.
 - **point_display_radius** : To make points visible on the canvas, they are drawn as circles. This parameter modifies the radius of the displayed circle.
 - **return_image_data** : If `True`, populate `image_data` (RGBA numpy array) and `image_bytes` (raw PNG bytes, for `st.download_button`) on the result. `False` by default -- it PNG-encodes the whole canvas on every send. Accessing either without it raises `RuntimeError`.
@@ -139,6 +144,7 @@ st_canvas(
 - **background_image_fit** : One of `"stretch"` (default) or `"contain"`. `"stretch"` scales each axis independently to fill the canvas exactly, distorting the image when the aspect ratios differ -- this is the historical behaviour. `"contain"` preserves the aspect ratio, fitting the image inside the canvas and centring it, so a canvas larger than its background image gets margins instead of a stretched image. Ignored when no `background_image` is set. Any other value raises `ValueError`.
 - **disabled** : If `True`, render the canvas read-only -- drawing, selection and transforms are all inert, nothing is sent back to Streamlit, and the toolbar is hidden. `initial_drawing` still renders, so this is how you show a drawing back to someone without letting them change it. Defaults to `False`.
 - **max_display_height** : Caps the canvas's displayed height in pixels and makes it scroll vertically inside that box. `height`, canvas pixel dimensions, and `json_data` coordinates are unaffected. `None` (the default) displays the canvas at its full height. Horizontal scrolling is always available, independent of this parameter.
+- **font_size** : Font size in pixels for text placed in `drawing_mode="text"`. Defaults to 20. Ignored in every other mode.
 
 Example:
 
@@ -164,7 +170,7 @@ upgrading:
   `Circle.startAngle`/`endAngle` in radians; Fabric 7 reinterprets those same JSON keys
   as degrees, and `loadFromJSON` doesn't consult the JSON's `version` field to tell the
   difference. This is declared breaking, with no migration shim. Line, Rect, freedraw,
-  Polygon, and Transform objects are unaffected -- only objects from `circle`/`point`
+  Polygon, and Edit-mode objects are unaffected -- only objects from `circle`/`point`
   drawing modes carry `startAngle`/`endAngle`.
 
 ## Development

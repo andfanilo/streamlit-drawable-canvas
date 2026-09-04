@@ -29,7 +29,7 @@ for name in FIXTURE_NAMES:
     result = st_canvas(
         height=200,
         width=300,
-        drawing_mode="transform",
+        drawing_mode="edit",
         initial_drawing=fixture_data,
         key=f"fixture_{name}",
     )

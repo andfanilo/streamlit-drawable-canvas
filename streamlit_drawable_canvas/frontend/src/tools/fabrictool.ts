@@ -5,6 +5,16 @@ export interface ConfigureCanvasProps {
   strokeWidth: number;
   strokeColor: string;
   displayRadius: number;
+  fontSize: number;
+  /** Text-only: anchor for IText's hidden textarea. Must be inside the
+   *  shadow root (so it can take focus/input) but outside `.dc-scroll` and
+   *  zero-sized (so Fabric's page-absolute positioning math -- which double-
+   *  counts the canvas's own offset once reparented off `doc.body` -- can't
+   *  inflate the scroll container or drag the canvas out of view). */
+  hiddenTextareaContainer: HTMLElement;
+  /** Polygon-only: called once the shape is closed, so the caller can force
+   *  a send regardless of update_streamlit. */
+  onPolygonClosed: () => void;
 }
 
 /**

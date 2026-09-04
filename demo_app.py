@@ -9,14 +9,19 @@ from PIL import Image, ImageDraw
 
 from streamlit_drawable_canvas import st_canvas
 
-MODES = ("freedraw", "line", "rect", "circle", "point", "polygon", "transform")
+MODES = ("freedraw", "line", "rect", "circle", "point", "polygon", "text", "edit")
 
 MODE_HINTS = {
-    "polygon": "Click to add points. Double-click removes the last ones; "
-    "**right-click closes the polygon**.",
-    "transform": "Drag to move, handles to scale/rotate. Select an object and "
-    "use the toolbar's delete button to remove it.",
+    "polygon": "Click to add vertices, each with a visible handle. Click the "
+    "first vertex's handle to close the shape (needs 3+ vertices); click any "
+    "other handle to remove that vertex.",
+    "edit": "Drag to move, handles to scale/rotate. Select an object and use "
+    "the toolbar's delete button to remove it. For text, click once to "
+    "select it, then click again (a second, separate click -- not a fast "
+    "double-click) to re-enter editing.",
     "point": "Each click drops a point, drawn as a circle of the radius below.",
+    "text": "Click to place text and start typing immediately. Click elsewhere "
+    "(or Escape/blur) to finish.",
 }
 
 BG_SOURCES = ("None", "URL", "Local path", "Bytes", "PIL Image")
@@ -57,6 +62,7 @@ with st.sidebar:
     point_display_radius = st.slider(
         "Point radius", 1, 25, 3, disabled=drawing_mode != "point"
     )
+    font_size = st.slider("Font size", 8, 72, 20, disabled=drawing_mode != "text")
     realtime_update = st.checkbox("Update in realtime", True)
     disabled = st.checkbox("Disabled (read-only)", False)
     background_image_fit = st.selectbox("Background image fit", ("stretch", "contain"))
@@ -104,6 +110,7 @@ canvas_result = st_canvas(
     background_image_fit=background_image_fit,
     point_display_radius=point_display_radius,
     return_image_data=return_image_data,
+    font_size=font_size,
     key="canvas",
 )
 
@@ -122,7 +129,7 @@ st.divider()
 st.subheader("initial_drawing round-trip")
 st.caption(
     "The canvas above's `json_data` fed back in as `initial_drawing` on a second, "
-    "independent canvas -- drag its objects around in transform mode."
+    "independent canvas -- drag its objects around in edit mode."
 )
 st_canvas(
     fill_color=f"rgba({red}, {green}, {blue}, {fill_opacity})",
@@ -131,7 +138,7 @@ st_canvas(
     background_color="#eee",
     height=400,
     width=600,
-    drawing_mode="transform",
+    drawing_mode="edit",
     initial_drawing=canvas_result.json_data,
     key="canvas_round_trip",
 )

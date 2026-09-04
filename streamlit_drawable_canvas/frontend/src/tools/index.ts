@@ -5,8 +5,9 @@ import { FreedrawTool } from "./freedraw";
 import { LineTool } from "./line";
 import { PolygonTool } from "./polygon";
 import { RectTool } from "./rect";
-import { TransformTool } from "./transform";
+import { EditTool } from "./edit";
 import { PointTool } from "./point";
+import { TextTool } from "./text";
 
 export type FabricToolConstructor = new (canvas: Canvas) => FabricTool;
 
@@ -16,8 +17,9 @@ export const tools: Record<string, FabricToolConstructor> = {
   line: LineTool,
   polygon: PolygonTool,
   rect: RectTool,
-  transform: TransformTool,
+  edit: EditTool,
   point: PointTool,
+  text: TextTool,
 };
 
 export { FabricTool };

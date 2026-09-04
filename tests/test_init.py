@@ -16,6 +16,66 @@ def test_st_canvas_rejects_non_positive_max_display_height():
         st_canvas(max_display_height=-10)
 
 
+def test_st_canvas_accepts_text_drawing_mode(monkeypatch):
+    captured = {}
+
+    def fake_out(*, data, **kwargs):
+        captured["data"] = data
+        return {"drawing": {"raw": data["initialDrawing"], "data": None}}
+
+    monkeypatch.setattr("streamlit_drawable_canvas.out", fake_out)
+    st_canvas(drawing_mode="text")
+    assert captured["data"]["drawingMode"] == "text"
+
+
+def test_fill_color_defaults_to_eee_outside_text_mode(monkeypatch):
+    captured = {}
+
+    def fake_out(*, data, **kwargs):
+        captured["data"] = data
+        return {"drawing": {"raw": data["initialDrawing"], "data": None}}
+
+    monkeypatch.setattr("streamlit_drawable_canvas.out", fake_out)
+    st_canvas(drawing_mode="rect")
+    assert captured["data"]["fillColor"] == "#eee"
+
+
+def test_fill_color_defaults_to_stroke_color_in_text_mode(monkeypatch):
+    captured = {}
+
+    def fake_out(*, data, **kwargs):
+        captured["data"] = data
+        return {"drawing": {"raw": data["initialDrawing"], "data": None}}
+
+    monkeypatch.setattr("streamlit_drawable_canvas.out", fake_out)
+    st_canvas(drawing_mode="text", stroke_color="blue")
+    assert captured["data"]["fillColor"] == "blue"
+
+
+def test_fill_color_explicit_value_respected_in_text_mode(monkeypatch):
+    captured = {}
+
+    def fake_out(*, data, **kwargs):
+        captured["data"] = data
+        return {"drawing": {"raw": data["initialDrawing"], "data": None}}
+
+    monkeypatch.setattr("streamlit_drawable_canvas.out", fake_out)
+    st_canvas(drawing_mode="text", fill_color="red", stroke_color="blue")
+    assert captured["data"]["fillColor"] == "red"
+
+
+def test_font_size_passed_through(monkeypatch):
+    captured = {}
+
+    def fake_out(*, data, **kwargs):
+        captured["data"] = data
+        return {"drawing": {"raw": data["initialDrawing"], "data": None}}
+
+    monkeypatch.setattr("streamlit_drawable_canvas.out", fake_out)
+    st_canvas(font_size=42)
+    assert captured["data"]["fontSize"] == 42
+
+
 def test_canvas_result_json_data():
     result = CanvasResult(
         json_data={"objects": []}, image_data_url=None, return_image_data=False

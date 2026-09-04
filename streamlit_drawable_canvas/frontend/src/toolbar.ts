@@ -121,12 +121,12 @@ export const setToolbarState = (
   handles: ToolbarHandles,
   canUndo: boolean,
   canRedo: boolean,
-  isTransformMode: boolean,
+  isEditMode: boolean,
   hasActiveSelection: boolean
 ): void => {
   handles.undoButton.disabled = !canUndo;
   handles.redoButton.disabled = !canRedo;
-  handles.contextualGroup.style.display = isTransformMode ? "flex" : "none";
+  handles.contextualGroup.style.display = isEditMode ? "flex" : "none";
   handles.bringForwardButton.disabled = !hasActiveSelection;
   handles.sendBackwardButton.disabled = !hasActiveSelection;
   handles.deleteSelectedButton.disabled = !hasActiveSelection;

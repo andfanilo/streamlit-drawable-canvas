@@ -17,6 +17,7 @@ const baseData: DrawableCanvasData = {
   disabled: false,
   backgroundImageFit: "stretch",
   maxDisplayHeight: null,
+  fontSize: 20,
 };
 
 describe("isToolbarVisible", () => {
@@ -48,12 +49,13 @@ describe("toolKeyFor", () => {
     );
   });
 
-  it("changes when fillColor, strokeWidth, strokeColor, or displayRadius change", () => {
+  it("changes when fillColor, strokeWidth, strokeColor, displayRadius, or fontSize change", () => {
     const base = toolKeyFor(baseData);
     expect(toolKeyFor({ ...baseData, fillColor: "#fff" })).not.toBe(base);
     expect(toolKeyFor({ ...baseData, strokeWidth: 5 })).not.toBe(base);
     expect(toolKeyFor({ ...baseData, strokeColor: "red" })).not.toBe(base);
     expect(toolKeyFor({ ...baseData, displayRadius: 10 })).not.toBe(base);
+    expect(toolKeyFor({ ...baseData, fontSize: 30 })).not.toBe(base);
   });
 
   it("ignores fields that don't affect tool configuration", () => {

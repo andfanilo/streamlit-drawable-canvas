@@ -13,6 +13,18 @@
   box-sizing: content-box;
 }
 
+/* IText's hidden textarea anchor -- see instance.ts's `textareaHostEl`.
+   Zero-sized and clipped so Fabric's page-absolute positioning math can't
+   inflate this or expand `.dc-scroll`'s scrollable area. */
+.dc-textarea-host {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
 .dc-background-canvas {
   position: absolute;
   top: 0;

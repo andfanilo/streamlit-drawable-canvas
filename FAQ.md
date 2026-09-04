@@ -42,13 +42,14 @@ carry the geometry you probably want.
 | `point` | `Circle` | `left`, `top`, `radius` (= your `point_display_radius`) |
 | `freedraw` | `Path` | `path` (see below), plus `left`/`top`/`width`/`height` |
 | `polygon` | `Path` | `path`, plus `left`/`top`/`width`/`height` |
-| `transform` | *(unchanged)* | edits the objects already present |
+| `text` | `IText` | `text`, `fontSize`, `fontFamily`, plus `left`/`top`/`width`/`height` |
+| `edit` | *(unchanged)* | edits the objects already present |
 
 ---
 
-## The one that catches everyone: transform reports `scaleX`/`scaleY`, not a new `width`
+## The one that catches everyone: edit mode reports `scaleX`/`scaleY`, not a new `width`
 
-Resize a shape in `transform` mode and its `width`/`height` **do not change**. Fabric
+Resize a shape in `edit` mode and its `width`/`height` **do not change**. Fabric
 records the resize as a scale factor against the original dimensions:
 
 ```json
@@ -149,8 +150,8 @@ that difference is why the crop can look slightly too small — expand by
 
 ### How do I delete one shape without pressing undo repeatedly?
 
-Switch to `drawing_mode="transform"`, select the shape, and click the toolbar's delete
-button. It's shown only in transform mode, next to bring-forward/send-backward; the
+Switch to `drawing_mode="edit"`, select the shape, and click the toolbar's delete
+button. It's shown only in edit mode, next to bring-forward/send-backward; the
 toolbar's bin icon is separate and clears everything.
 
 ### Can I let an object move but not resize, or lock it entirely?
@@ -158,7 +159,7 @@ toolbar's bin icon is separate and clears everything.
 Yes, through Fabric's own `lock*` properties on an object in `initial_drawing`:
 `lockMovementX`/`Y`, `lockScalingX`/`Y`, `lockRotation`, `lockSkewingX`/`Y`,
 `lockScalingFlip`. Set the ones you want on an object before passing it in, and
-transform mode respects them — a `lockScalingX: True, lockScalingY: True` rectangle can
+edit mode respects them — a `lockScalingX: True, lockScalingY: True` rectangle can
 be dragged but not resized. They round-trip through `json_data` too, so a canvas fed its
 own previous output keeps the locks.
 
@@ -213,16 +214,41 @@ to commit a drawing.
 
 ### Why doesn't my polygon appear in `json_data`?
 
-A polygon is only sent once it is **closed with a right-click**. Left-click adds a vertex;
-double-click removes the most recent ones. `update_streamlit` is ignored in
+A polygon is only sent once it's **closed**. Click to add a vertex; every vertex shows a
+handle. Click the first vertex's handle to close the shape (needs at least three vertices);
+click any other handle to remove that vertex. `update_streamlit` is ignored in
 `drawing_mode="polygon"` for this reason — a half-drawn polygon is not a meaningful value
-to send. (This makes polygons impractical on touch devices, which have no right-click.)
+to send, but the completed shape always sends regardless, the moment it closes.
+
+### How do I place and style text?
+
+`drawing_mode="text"`: click anywhere on the canvas to place an empty text object and
+start typing immediately. Click elsewhere (or Escape/blur the browser tab) to finish —
+nothing is sent to Streamlit until then, so one undo removes the whole text object, not
+one keystroke. `fill_color` sets the letter colour and defaults to `stroke_color` in this
+mode specifically (`"#eee"`, the default everywhere else, would be nearly invisible as
+text); `font_size` sets the size in pixels. There is no `font_family` parameter and no
+bundled fonts — new text renders in the host page's own font stack, matching your app.
+
+To set a per-object font, colour, or anything else Fabric's `IText` serializes, feed
+`initial_drawing` a `json_data` dict with the object already carrying that key (e.g.
+`{"type": "IText", "text": "hi", "fontFamily": "Georgia", ...}`); it round-trips through
+`json_data` like any other property.
+
+There's no `emoji` mode: once text exists, an emoji is just a character you type into it.
+
+### How do I edit text after placing it?
+
+Switch to `drawing_mode="edit"`, click the text object once to select it, then click it
+again (a second, separate click) to re-enter editing. A fast double-click doesn't
+reliably work here -- it's a quirk in how Fabric's `IText` decides a click is "entering
+edit" versus "just selecting", not something this library controls. Clicking in `"text"`
+mode instead always places a *new* text object, even on top of an existing one.
 
 ### Can I tell a left-click from a right-click?
 
-Not from `json_data`. In `point` mode only a left-click places a point; a right-click
-does nothing (the browser's own context menu opens instead), except in `polygon` mode,
-where it closes the shape. The distinction is not recorded.
+Not from `json_data`. Every drawing mode only acts on a left-click; a right-click does
+nothing (the browser's own context menu opens instead). The distinction is not recorded.
 
 ### `image_data` or `image_bytes` raises `RuntimeError`
 
@@ -247,7 +273,7 @@ to a file. Both require `return_image_data=True`.
 Only `circle` and `point` objects, and only from drawings saved by 0.9.x. Fabric 4 wrote
 `startAngle`/`endAngle` in radians; Fabric 7 reads those same keys as degrees. There is no
 migration shim — see the `[0.10.0]` entry in `CHANGELOG.md`. Every other shape type
-(`Line`, `Rect`, `Path`, freedraw, polygon, transform) loads unchanged.
+(`Line`, `Rect`, `Path`, freedraw, polygon, edit-mode objects) loads unchanged.
 
 ### Can the canvas resize with the browser window?
 

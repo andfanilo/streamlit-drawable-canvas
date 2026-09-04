@@ -1,4 +1,4 @@
-import { Canvas, StaticCanvas } from "fabric";
+import { Canvas, IText, StaticCanvas } from "fabric";
 import type {
   FrontendRendererArgs,
   FrontendState,
@@ -45,6 +45,7 @@ export interface DrawableCanvasData {
   disabled: boolean;
   backgroundImageFit: BackgroundImageFit;
   maxDisplayHeight: number | null;
+  fontSize: number;
 }
 
 export interface DrawableCanvasDrawing {
@@ -65,6 +66,7 @@ export interface CanvasInstance {
   container: HTMLDivElement;
   scrollEl: HTMLDivElement;
   canvasBox: HTMLDivElement;
+  textareaHostEl: HTMLDivElement;
   canvas: Canvas;
   backgroundCanvas: StaticCanvas;
   toolbarEl: HTMLDivElement;
@@ -86,6 +88,8 @@ export interface CanvasInstance {
     setStateValue: SetStateValue;
     data: DrawableCanvasData | null;
   };
+  isTextEditing: boolean;
+  polygonJustClosed: boolean;
 }
 
 /** Saves canvas state to history, scheduling a debounced realtime send if it
@@ -113,6 +117,22 @@ const emit = (
   instance.latest.setStateValue("drawing", { raw: state, data });
 };
 
+/** `hiddenTextareaContainer` isn't part of Fabric's serialized JSON -- it's a
+ *  DOM reference -- so every IText arriving via `loadFromJSON` (initial load,
+ *  undo/redo, reset) needs it re-applied, not just ones this tool creates
+ *  fresh. Left unset, Fabric mounts the hidden textarea on `doc.body`, which
+ *  is outside the shadow root (`isolate_styles=True`) and can't take input. */
+const fixTextareaContainers = (
+  canvas: Canvas,
+  textareaHostEl: HTMLElement
+): void => {
+  canvas.forEachObject((o) => {
+    if (o instanceof IText) {
+      o.hiddenTextareaContainer = textareaHostEl;
+    }
+  });
+};
+
 /** Reloads the canvas from `history.current`. Returns false if a newer load
  *  superseded this one. */
 const reloadCanvasFromHistory = async (
@@ -123,6 +143,7 @@ const reloadCanvasFromHistory = async (
   const generation = ++instance.loadGeneration;
   await instance.canvas.loadFromJSON(state);
   if (generation !== instance.loadGeneration) return false;
+  fixTextareaContainers(instance.canvas, instance.textareaHostEl);
   instance.canvas.renderAll();
   if (instance.latest.data) {
     reconfigureTool(instance, instance.latest.data);
@@ -160,6 +181,11 @@ const reconfigureTool = (
     strokeWidth: data.strokeWidth,
     strokeColor: data.strokeColor,
     displayRadius: data.displayRadius,
+    fontSize: data.fontSize,
+    hiddenTextareaContainer: instance.textareaHostEl,
+    onPolygonClosed: () => {
+      instance.polygonJustClosed = true;
+    },
   });
 };
 
@@ -169,7 +195,7 @@ const syncToolbar = (instance: CanvasInstance): void => {
     instance.toolbarHandles,
     instance.history.canUndo(),
     instance.history.canRedo(),
-    instance.latest.data?.drawingMode === "transform",
+    instance.latest.data?.drawingMode === "edit",
     instance.canvas.getActiveObject() != null
   );
 };
@@ -194,6 +220,7 @@ export const toolKeyFor = (data: DrawableCanvasData): string =>
     data.strokeColor,
     data.displayRadius,
     data.disabled,
+    data.fontSize,
   ]);
 
 export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
@@ -215,15 +242,25 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
   const toolbarEl = document.createElement("div");
   toolbarEl.className = "dc-toolbar";
 
+  // Anchor for IText's hidden textarea -- see ConfigureCanvasProps'
+  // `hiddenTextareaContainer` doc. Deliberately a sibling of `scrollEl`, not
+  // a descendant: Fabric positions the textarea assuming a doc.body-relative
+  // (page-absolute) coordinate space, so reparenting it under any ancestor
+  // that isn't zero-sized/clipped either drags that ancestor's scrollable
+  // area along with it (if inside `.dc-scroll`) or mispositions the textarea
+  // relative to the canvas (if inside `.dc-container`).
+  const textareaHostEl = document.createElement("div");
+  textareaHostEl.className = "dc-textarea-host";
+
   canvasBox.append(backgroundCanvasEl, canvasEl);
   scrollEl.appendChild(canvasBox);
-  container.append(scrollEl, toolbarEl);
+  container.append(scrollEl, toolbarEl, textareaHostEl);
   mountPoint.appendChild(container);
 
   const canvas = new Canvas(canvasEl, { enableRetinaScaling: false });
-  // Polygon still needs right-click to close.
+  // Fabric suppresses the browser's context menu by default; right-click has
+  // no special meaning in any mode now, so let it show.
   canvas.stopContextMenu = false;
-  canvas.fireRightClick = true;
 
   const backgroundCanvas = new StaticCanvas(backgroundCanvasEl, {
     enableRetinaScaling: false,
@@ -233,6 +270,7 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
     container,
     scrollEl,
     canvasBox,
+    textareaHostEl,
     canvas,
     backgroundCanvas,
     toolbarEl,
@@ -254,6 +292,8 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
       setStateValue: () => {},
       data: null,
     },
+    isTextEditing: false,
+    polygonJustClosed: false,
   };
 
   instance.sender = createSender(
@@ -323,15 +363,18 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
   // Both handlers defer via microtask so tool listeners, registered later,
   // run first within the same synchronous `fire()`. Both are canvas-level, so
   // they must bail out explicitly on a disabled canvas.
-  canvas.on("mouse:up", (opt) => {
+  canvas.on("mouse:up", () => {
     if (instance.latest.data?.disabled) return;
-    const domEvent = opt.e as MouseEvent;
-    const isPolygonClose =
-      instance.latest.data?.drawingMode === "polygon" &&
-      domEvent != null &&
-      domEvent.button === 2;
+    // While an IText is being edited, every click that moves the caret would
+    // otherwise write a history entry; the whole edit is saved once, on exit.
+    if (instance.isTextEditing) return;
+    const isPolygonClose = instance.polygonJustClosed;
+    instance.polygonJustClosed = false;
     queueMicrotask(() => {
       const state = saveAndMaybeSend(instance);
+      // A closed polygon always sends, even with update_streamlit=False --
+      // an in-progress one is never a meaningful value, but the completed
+      // shape is exactly the "give me the finished drawing" case.
       if (isPolygonClose) {
         instance.sender.now(state);
       }
@@ -340,9 +383,19 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
   });
   canvas.on("mouse:dblclick", () => {
     if (instance.latest.data?.disabled) return;
+    if (instance.isTextEditing) return;
     queueMicrotask(() => {
-      // A polygon double-click removes points; only a right-click closes it,
-      // so this never forces a send.
+      saveAndMaybeSend(instance);
+      syncToolbar(instance);
+    });
+  });
+
+  canvas.on("text:editing:entered", () => {
+    instance.isTextEditing = true;
+  });
+  canvas.on("text:editing:exited", () => {
+    instance.isTextEditing = false;
+    queueMicrotask(() => {
       saveAndMaybeSend(instance);
       syncToolbar(instance);
     });
@@ -438,6 +491,7 @@ export const applyData = (
       if (generation !== instance.loadGeneration) {
         return;
       }
+      fixTextareaContainers(instance.canvas, instance.textareaHostEl);
       instance.canvas.renderAll();
       instance.history.reset(data.initialDrawing);
       const latestData = instance.latest.data ?? data;

@@ -70,8 +70,8 @@ Module-level `st.components.v2.component(...)` registration (JS glob `"index-*.j
   schedule/now/cancel policy above). Hand-rolled, not a library — see its file header for
   why.
 - **`tools/`** — `fabrictool.ts`'s `FabricTool` abstract base, one file per
-  `drawing_mode` (`freedraw`, `line`, `rect`, `circle`, `point`, `polygon`, `transform`),
-  and `index.ts`'s `tools` registry mapping mode name → tool class.
+  `drawing_mode` (`freedraw`, `line`, `rect`, `circle`, `point`, `polygon`, `text`,
+  `edit`), and `index.ts`'s `tools` registry mapping mode name → tool class.
 
 ## Build & Validation Commands
 

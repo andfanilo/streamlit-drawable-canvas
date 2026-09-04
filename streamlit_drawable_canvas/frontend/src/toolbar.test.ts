@@ -67,7 +67,7 @@ describe("buildToolbar", () => {
     expect(handles.redoButton.disabled).toBe(true);
   });
 
-  it("shows the contextual group only in transform mode", () => {
+  it("shows the contextual group only in edit mode", () => {
     const handles = buildToolbar(toolbarEl, callbacks);
 
     setToolbarState(handles, false, false, false, false);

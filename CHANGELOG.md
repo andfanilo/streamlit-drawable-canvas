@@ -5,7 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.11.0] - Unreleased
+## [Unreleased]
+
+### Breaking
+
+- **`drawing_mode="transform"` is renamed to `"edit"`.** The mode now does more than
+  geometric transforms -- it's also how you re-enter editing on an existing text object
+  -- so "transform" undersold it. Passing `"transform"` now raises `ValueError`; update
+  to `"edit"`.
+
+### Added
+
+- **`drawing_mode="text"`**: click to place a Fabric `IText` and start typing
+  immediately. Nothing is sent to Streamlit until you click away (or Escape/blur) --
+  one undo removes the whole text object, not one keystroke. New `font_size: int = 20`
+  parameter, ignored outside text mode. In `"edit"` mode, click an existing text object
+  to select it, then click it again (a second, separate click) to re-enter editing --
+  a fast double-click doesn't reliably trigger it, a pre-existing Fabric quirk.
+
+### Fixed
+
+- **Clicking to place text near the canvas edge could scroll the canvas out of view,
+  leaving it blank.** Fabric positions `IText`'s hidden input textarea assuming it's
+  parented on `doc.body` (page-absolute coordinates); reparenting it to stay inside the
+  shadow root (needed since 0.10.0's `isolate_styles=True`) made that math double-count
+  the canvas's own page offset, placing the textarea far outside the canvas. Focusing it
+  then made the browser auto-scroll the canvas's internal scroll container to reveal it.
+  Fixed with a dedicated zero-size, clipped anchor element outside that scroll container.
+
+### Changed
+
+- **`fill_color` now defaults to `None`** (was `"#eee"`), resolved per mode: shapes
+  (rect/circle/polygon) still get `"#eee"`; text gets `stroke_color` instead, since
+  `"#eee"` text on a default canvas would be all but invisible. Passing `fill_color`
+  explicitly behaves identically to before in every mode.
+- **Polygon is reworked: every vertex now shows a visible handle.** Click the first
+  vertex's handle to close the shape (needs at least three vertices); click any other
+  handle to remove that vertex. This replaces the double-click-removes-last-points
+  gesture and, completing the `0.11.0` right-click cleanup, **right-click no longer
+  closes the polygon** -- it has no special meaning in any mode now. The completed
+  polygon still always sends once closed, regardless of `update_streamlit`.
+
+## [0.11.0] - 2026-09-04
 
 Breaking cleanup plus a handful of cheap wins. No new drawing modes -- those (text,
 a reworked polygon) are next.

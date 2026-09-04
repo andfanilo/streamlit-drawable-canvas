@@ -9,9 +9,9 @@ from streamlit_drawable_canvas import st_canvas
 st.set_page_config(layout="wide")
 st.title("Canvas drawing-mode E2E tests")
 
-MODES = ["freedraw", "line", "rect", "circle", "point", "polygon", "transform"]
+MODES = ["freedraw", "line", "rect", "circle", "point", "polygon", "text", "edit"]
 
-TRANSFORM_SEED = {
+EDIT_SEED = {
     "objects": [
         {
             "type": "rect",
@@ -38,7 +38,7 @@ for mode in MODES:
         height=200,
         width=300,
         drawing_mode=mode,
-        initial_drawing=TRANSFORM_SEED if mode == "transform" else None,
+        initial_drawing=EDIT_SEED if mode == "edit" else None,
         key=f"mode_{mode}",
     )
     st.code(json.dumps(result.json_data), language="json")

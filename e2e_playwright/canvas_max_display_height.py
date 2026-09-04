@@ -27,7 +27,7 @@ st.subheader("capped")
 result_capped = st_canvas(
     height=800,
     width=300,
-    drawing_mode="transform",
+    drawing_mode="edit",
     initial_drawing=SEED,
     max_display_height=200,
     key="capped",
@@ -38,7 +38,7 @@ st.subheader("uncapped control")
 result_uncapped = st_canvas(
     height=800,
     width=300,
-    drawing_mode="transform",
+    drawing_mode="edit",
     initial_drawing=SEED,
     key="uncapped",
 )

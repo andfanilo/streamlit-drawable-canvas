@@ -29,8 +29,8 @@ st_canvas(
     key="toolbar_pinned",
 )
 
-st.subheader("transform mode: contextual buttons")
-TRANSFORM_SEED = {
+st.subheader("edit mode: contextual buttons")
+EDIT_SEED = {
     "objects": [
         {
             "type": "rect",
@@ -58,11 +58,33 @@ TRANSFORM_SEED = {
         },
     ]
 }
-result_transform = st_canvas(
+result_edit = st_canvas(
     height=200,
     width=300,
-    drawing_mode="transform",
-    initial_drawing=TRANSFORM_SEED,
-    key="toolbar_transform",
+    drawing_mode="edit",
+    initial_drawing=EDIT_SEED,
+    key="toolbar_edit",
 )
-st.code(json.dumps(result_transform.json_data), language="json")
+st.code(json.dumps(result_edit.json_data), language="json")
+
+st.subheader("edit mode: double-click on text enters editing, not delete")
+TEXT_EDIT_SEED = {
+    "objects": [
+        {
+            "type": "IText",
+            "left": 40,
+            "top": 40,
+            "text": "hi",
+            "fontSize": 20,
+            "fill": "#000000",
+        }
+    ]
+}
+result_text_edit = st_canvas(
+    height=200,
+    width=300,
+    drawing_mode="edit",
+    initial_drawing=TEXT_EDIT_SEED,
+    key="toolbar_text_edit",
+)
+st.code(json.dumps(result_text_edit.json_data), language="json")

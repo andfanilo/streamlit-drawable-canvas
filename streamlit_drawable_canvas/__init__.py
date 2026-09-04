@@ -97,7 +97,7 @@ _bg_image_cache: OrderedDict[str, str] = OrderedDict()
 # Kept in sync with the `tools` registry in frontend/src/tools/index.ts, which
 # silently falls back to freedraw on an unrecognized mode.
 _VALID_DRAWING_MODES = frozenset(
-    {"circle", "freedraw", "line", "point", "polygon", "rect", "transform"}
+    {"circle", "freedraw", "line", "point", "polygon", "rect", "text", "edit"}
 )
 
 # Kept in sync with BackgroundImageFit in frontend/src/background.ts.
@@ -181,7 +181,7 @@ def _resolve_background_image_url(
 
 
 def st_canvas(
-    fill_color: str = "#eee",
+    fill_color: str | None = None,
     stroke_width: int = 20,
     stroke_color: str = "black",
     background_color: str = "",
@@ -198,6 +198,7 @@ def st_canvas(
     disabled: bool = False,
     background_image_fit: str = "stretch",
     max_display_height: int | None = None,
+    font_size: int = 20,
 ) -> CanvasResult:
     """Create a drawing canvas in a Streamlit app.
 
@@ -205,7 +206,9 @@ def st_canvas(
     ----------
     fill_color: str
         Color of fill for Rect/Circle/Polygon in CSS color property. Defaults
-        to "#eee".
+        to "#eee" for shape modes. In "text" mode, defaults to stroke_color
+        instead -- "#eee" text on a default canvas would be all but invisible.
+        Passing a value explicitly behaves identically in every mode.
     stroke_width: int
         Width of drawing brush in CSS color property. Defaults to 20.
     stroke_color: str
@@ -222,15 +225,17 @@ def st_canvas(
     update_streamlit: bool
         Whenever True, send canvas data to Streamlit when an object or
         selection is updated, or on mouse up. Ignored when
-        drawing_mode="polygon": a polygon is only ever sent once closed with
-        a right-click, regardless of this flag.
+        drawing_mode="polygon": a polygon is only ever sent once closed
+        (click its first vertex's handle again), regardless of this flag.
     height: int
         Height of canvas in pixels. Defaults to 400.
     width: int
         Width of canvas in pixels. Defaults to 600.
-    drawing_mode: {'freedraw', 'transform', 'line', 'rect', 'circle', 'point', 'polygon'}
-        Enable free drawing when "freedraw", object manipulation when
-        "transform", or shape drawing for the rest. Defaults to "freedraw".
+    drawing_mode: {'freedraw', 'edit', 'line', 'rect', 'circle', 'point', 'polygon', 'text'}
+        Enable free drawing when "freedraw", object manipulation (move,
+        scale, rotate, and click-to-edit existing text) when "edit", text
+        placement when "text", or shape drawing for the rest. Defaults to
+        "freedraw".
     initial_drawing: dict
         Redraw canvas with the given initial_drawing. If changed to None,
         empties the canvas. Should generally be the `json_data` output from
@@ -272,6 +277,9 @@ def st_canvas(
         (the default) displays the canvas at its full height. Horizontal
         scrolling is always available, independent of this parameter, for a
         canvas wider than the space Streamlit gives it.
+    font_size: int
+        Font size in pixels for text placed in drawing_mode="text". Defaults
+        to 20. Ignored in every other mode.
 
     Returns
     -------
@@ -305,13 +313,17 @@ def st_canvas(
         # An image takes precedence over a flat background color.
         background_color = ""
 
+    resolved_fill_color = fill_color
+    if resolved_fill_color is None:
+        resolved_fill_color = stroke_color if drawing_mode == "text" else "#eee"
+
     base_drawing: dict[str, Any] = (
         {"objects": []} if initial_drawing is None else dict(initial_drawing)
     )
     base_drawing["background"] = background_color
 
     data = {
-        "fillColor": fill_color,
+        "fillColor": resolved_fill_color,
         "strokeWidth": stroke_width,
         "strokeColor": stroke_color,
         "backgroundColor": background_color,
@@ -326,6 +338,7 @@ def st_canvas(
         "disabled": disabled,
         "backgroundImageFit": background_image_fit,
         "maxDisplayHeight": max_display_height,
+        "fontSize": font_size,
     }
 
     result = out(

@@ -89,26 +89,26 @@ def test_toolbar_is_pinned_when_update_streamlit_is_false(app: Page):
     expect(root.get_by_label("Update the app with this drawing")).to_be_visible()
 
 
-def test_contextual_buttons_shown_only_in_transform_mode(app: Page):
+def test_contextual_buttons_shown_only_in_edit_mode(app: Page):
     rect_root = component(app, 0)
-    transform_root = component(app, 2)
+    edit_root = component(app, 2)
 
     expect(rect_root.get_by_label("Bring forward")).to_be_hidden()
     expect(rect_root.get_by_label("Send backward")).to_be_hidden()
     expect(rect_root.get_by_label("Delete selected")).to_be_hidden()
 
-    expect(transform_root.get_by_label("Bring forward")).to_be_visible()
-    expect(transform_root.get_by_label("Send backward")).to_be_visible()
-    expect(transform_root.get_by_label("Delete selected")).to_be_visible()
+    expect(edit_root.get_by_label("Bring forward")).to_be_visible()
+    expect(edit_root.get_by_label("Send backward")).to_be_visible()
+    expect(edit_root.get_by_label("Delete selected")).to_be_visible()
 
 
 def test_delete_selected_removes_only_the_active_object(app: Page):
     target = canvas(app, 2)
-    transform_root = component(app, 2)
+    edit_root = component(app, 2)
     assert len(read_json(app, 1)["objects"]) == 2
 
     click(app, target, 25, 25)
-    transform_root.get_by_label("Delete selected").click()
+    edit_root.get_by_label("Delete selected").click()
     wait_for_app_run(app)
 
     after = read_json(app, 1)
@@ -118,19 +118,19 @@ def test_delete_selected_removes_only_the_active_object(app: Page):
 
 def test_bring_forward_reorders_objects(app: Page):
     target = canvas(app, 2)
-    transform_root = component(app, 2)
+    edit_root = component(app, 2)
     before = read_json(app, 1)
     assert before["objects"][0]["left"] == pytest.approx(20, abs=3)
 
     click(app, target, 25, 25)
-    transform_root.get_by_label("Bring forward").click()
+    edit_root.get_by_label("Bring forward").click()
     wait_for_app_run(app)
 
     after = read_json(app, 1)
     assert after["objects"][1]["left"] == pytest.approx(20, abs=3)
 
 
-def test_double_click_in_transform_mode_no_longer_deletes(app: Page):
+def test_double_click_in_edit_mode_no_longer_deletes(app: Page):
     target = canvas(app, 2)
     target.scroll_into_view_if_needed()
     box = target.bounding_box()
@@ -141,3 +141,23 @@ def test_double_click_in_transform_mode_no_longer_deletes(app: Page):
     app.wait_for_timeout(500)
 
     assert len(read_json(app, 1)["objects"]) == 2
+
+
+def test_double_click_on_text_in_edit_mode_does_not_delete(app: Page):
+    # Editing IText via a genuine double-click is verified manually in a real
+    # browser (see 0.12.0 notes): Chrome's synthetic app.mouse.dblclick()
+    # reports the click pair with click-count 2, which Fabric's click/
+    # dblclick disambiguation treats differently from two independent clicks,
+    # so it's not reliable to drive automatically here. This test covers the
+    # regression that matters for text specifically: 0.11.0 removed
+    # double-click-to-delete, and text objects must not be an exception.
+    target = canvas(app, 3)
+    target.scroll_into_view_if_needed()
+    box = target.bounding_box()
+    assert box is not None
+    assert len(read_json(app, 2)["objects"]) == 1
+
+    app.mouse.dblclick(box["x"] + 50, box["y"] + 50)
+    app.wait_for_timeout(500)
+
+    assert len(read_json(app, 2)["objects"]) == 1

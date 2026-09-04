@@ -1,20 +1,25 @@
-import { Circle, Line, Path, TPointerEventInfo, TPointerEvent } from "fabric";
+import { Circle, Path, TPointerEventInfo, TPointerEvent } from "fabric";
 import { FabricTool, ConfigureCanvasProps } from "./fabrictool";
+import { buildPathString, PolygonPoint } from "./polygon-path";
+
+// A closed polygon needs at least a triangle -- clicking the first handle
+// before then is not a valid close, so it's ignored.
+const MIN_VERTICES_TO_CLOSE = 3;
 
 export class PolygonTool extends FabricTool {
-  private isMouseDown = false;
   private fillColor = "#ffffff";
   private strokeWidth = 10;
   private strokeColor = "#ffffff";
-  private startCircle: Circle = new Circle();
-  private currentLine: Line = new Line();
-  private currentPath: Path = new Path("M 0 0");
-  private pathString = "M ";
+  private points: PolygonPoint[] = [];
+  private handles: Circle[] = [];
+  private currentPath: Path | null = null;
+  private onPolygonClosed: () => void = () => {};
 
   configureCanvas({
     strokeWidth,
     strokeColor,
     fillColor,
+    onPolygonClosed,
   }: ConfigureCanvasProps): () => void {
     this.canvas.isDrawingMode = false;
     this.canvas.selection = false;
@@ -23,139 +28,97 @@ export class PolygonTool extends FabricTool {
     this.strokeWidth = strokeWidth;
     this.strokeColor = strokeColor;
     this.fillColor = fillColor;
+    this.onPolygonClosed = onPolygonClosed;
+    this.points = [];
+    this.handles = [];
+    this.currentPath = null;
 
     const onMouseDown = (o: TPointerEventInfo<TPointerEvent>) =>
       this.onMouseDown(o);
-    const onMouseMove = (o: TPointerEventInfo<TPointerEvent>) =>
-      this.onMouseMove(o);
-    const onMouseUp = () => this.onMouseUp();
-    const onMouseOut = () => this.onMouseOut();
-    const onMouseDoubleClick = () => this.onMouseDoubleClick();
-
     this.canvas.on("mouse:down", onMouseDown);
-    this.canvas.on("mouse:move", onMouseMove);
-    this.canvas.on("mouse:up", onMouseUp);
-    this.canvas.on("mouse:out", onMouseOut);
-    this.canvas.on("mouse:dblclick", onMouseDoubleClick);
     return () => {
       this.canvas.off("mouse:down", onMouseDown);
-      this.canvas.off("mouse:move", onMouseMove);
-      this.canvas.off("mouse:up", onMouseUp);
-      this.canvas.off("mouse:out", onMouseOut);
-      this.canvas.off("mouse:dblclick", onMouseDoubleClick);
+      this.removeHandles();
     };
   }
 
   private onMouseDown(o: TPointerEventInfo<TPointerEvent>) {
-    const canvas = this.canvas;
-    const clicked = (o.e as MouseEvent).button;
-    let start = this.pathString === "M ";
+    if ((o.e as MouseEvent).button !== 0) return;
+    const handleIndex = this.handles.indexOf(o.target as Circle);
 
-    this.isMouseDown = true;
-    const pointer = canvas.getScenePoint(o.e);
+    if (handleIndex === 0) {
+      if (this.points.length >= MIN_VERTICES_TO_CLOSE) this.close();
+      return;
+    }
+    if (handleIndex > 0) {
+      this.removeVertex(handleIndex);
+      return;
+    }
 
-    canvas.remove(this.currentLine);
-    this.currentLine = new Line([pointer.x, pointer.y, pointer.x, pointer.y], {
-      strokeWidth: this.strokeWidth,
+    const pointer = this.canvas.getScenePoint(o.e);
+    this.addVertex(pointer);
+  }
+
+  private addVertex(pointer: PolygonPoint) {
+    const handle = new Circle({
+      left: pointer.x,
+      top: pointer.y,
+      originX: "center",
+      originY: "center",
+      radius: this.strokeWidth,
       fill: this.strokeColor,
       stroke: this.strokeColor,
-      originX: "center",
-      originY: "center",
       selectable: false,
-      evented: false,
+      evented: true,
+      hoverCursor: "pointer",
+      // A bookkeeping handle, not part of the drawing -- must never appear
+      // in json_data, unlike the in-progress path itself (see polygon.ts
+      // header note in 0.12.0-spec.md).
+      excludeFromExport: true,
     });
-    if (clicked === 0) {
-      canvas.add(this.currentLine);
-    }
-
-    if (start && clicked === 0) {
-      // Initialize pathString
-      this.pathString += `${pointer.x} ${pointer.y} `;
-      this.startCircle = new Circle({
-        left: pointer.x,
-        top: pointer.y,
-        originX: "center",
-        originY: "center",
-        strokeWidth: this.strokeWidth,
-        stroke: this.strokeColor,
-        fill: this.strokeColor,
-        selectable: false,
-        evented: false,
-        radius: this.strokeWidth,
-      });
-      canvas.add(this.startCircle);
-
-      start = false;
-    } else {
-      canvas.remove(this.currentPath);
-      if (clicked === 0) {
-        // Update pathString
-        this.pathString += `L ${pointer.x} ${pointer.y} `;
-      }
-      if (clicked === 2) {
-        // Close pathString
-        this.pathString += "z";
-        canvas.remove(this.startCircle);
-      }
-    }
-    this.currentPath = new Path(this.pathString, {
-      strokeWidth: this.strokeWidth,
-      fill: this.fillColor,
-      stroke: this.strokeColor,
-      originX: "center",
-      originY: "center",
-      selectable: false,
-      evented: false,
-    });
-    if (this.currentPath.width !== 0 && this.currentPath.height !== 0) {
-      canvas.add(this.currentPath);
-    }
-    if (clicked === 2) {
-      this.pathString = "M ";
-    }
+    this.points.push(pointer);
+    this.handles.push(handle);
+    this.canvas.add(handle);
+    this.render();
   }
 
-  private onMouseMove(o: TPointerEventInfo<TPointerEvent>) {
-    if (!this.isMouseDown) return;
+  private removeVertex(index: number) {
+    this.canvas.remove(this.handles[index]);
+    this.handles.splice(index, 1);
+    this.points.splice(index, 1);
+    this.render();
+  }
+
+  private close() {
+    this.render(true);
+    this.removeHandles();
+    this.points = [];
+    this.currentPath = null;
+    this.onPolygonClosed();
+  }
+
+  private removeHandles() {
+    this.handles.forEach((h) => this.canvas.remove(h));
+    this.handles = [];
+  }
+
+  private render(closed = false) {
     const canvas = this.canvas;
-    const pointer = canvas.getScenePoint(o.e);
-    this.currentLine.set({ x2: pointer.x, y2: pointer.y });
-    this.currentLine.setCoords();
+    if (this.currentPath) canvas.remove(this.currentPath);
+    this.currentPath =
+      this.points.length >= 2
+        ? new Path(buildPathString(this.points, closed), {
+            strokeWidth: this.strokeWidth,
+            fill: this.fillColor,
+            stroke: this.strokeColor,
+            originX: "center",
+            originY: "center",
+            selectable: false,
+            evented: false,
+          })
+        : null;
+    if (this.currentPath) canvas.add(this.currentPath);
+    this.handles.forEach((h) => canvas.bringObjectToFront(h));
     canvas.renderAll();
-  }
-
-  private onMouseUp() {
-    this.isMouseDown = true;
-  }
-
-  private onMouseOut() {
-    this.isMouseDown = false;
-  }
-
-  private onMouseDoubleClick() {
-    const canvas = this.canvas;
-    // Double click adds two more points at the end, so we have to move back twice more...
-    for (let i = 0; i < 3; i++) {
-      const lastPtIdx = this.pathString.lastIndexOf("L");
-      if (lastPtIdx === -1) {
-        this.pathString = "M ";
-        canvas.remove(this.startCircle);
-      } else {
-        this.pathString = this.pathString.slice(0, lastPtIdx);
-      }
-    }
-
-    canvas.remove(this.currentLine);
-    canvas.remove(this.currentPath);
-    this.currentPath = new Path(this.pathString, {
-      strokeWidth: this.strokeWidth,
-      fill: this.fillColor,
-      stroke: this.strokeColor,
-      originX: "center",
-      originY: "center",
-      selectable: false,
-      evented: false,
-    });
-    canvas.add(this.currentPath);
   }
 }

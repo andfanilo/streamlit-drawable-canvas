@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from conftest import canvas, click, drag, read_json, wait_for_app_run
+from conftest import canvas, click, component, drag, read_json, wait_for_app_run
 from playwright.sync_api import Page
 
-MODES = ["freedraw", "line", "rect", "circle", "point", "polygon", "transform"]
+MODES = ["freedraw", "line", "rect", "circle", "point", "polygon", "text", "edit"]
 
 
 def test_freedraw_produces_a_path(app: Page):
@@ -83,15 +83,56 @@ def test_point_places_a_fixed_radius_circle(app: Page):
     assert obj["top"] == pytest.approx(80, abs=3)
 
 
-def test_polygon_right_click_closes_the_path(app: Page):
-    # A right-click closes the path from the last vertex already placed by a
-    # left-click -- its own position isn't added as a vertex. Two non-collinear
-    # left-clicks are needed so the closed path has nonzero width *and* height.
+def test_text_places_and_commits_on_escape(app: Page):
+    index = MODES.index("text")
+    target = canvas(app, index)
+    click(app, target, 30, 30)
+    app.keyboard.type("Hi")
+    app.keyboard.press("Escape")
+    wait_for_app_run(app)
+
+    data = read_json(app, index)
+    assert len(data["objects"]) == 1
+    obj = data["objects"][0]
+    assert obj["type"] == "IText"
+    assert obj["text"] == "Hi"
+
+
+def test_text_nothing_sent_to_streamlit_until_editing_exits(app: Page):
+    index = MODES.index("text")
+    target = canvas(app, index)
+    click(app, target, 30, 30)
+    app.keyboard.type("Hi")
+    app.wait_for_timeout(300)  # longer than the 200ms realtime debounce
+    assert read_json(app, index)["objects"] == []
+
+    app.keyboard.press("Escape")
+    wait_for_app_run(app)
+    assert len(read_json(app, index)["objects"]) == 1
+
+
+def test_text_one_undo_removes_the_whole_object(app: Page):
+    index = MODES.index("text")
+    target = canvas(app, index)
+    root = component(app, index)
+    click(app, target, 30, 30)
+    app.keyboard.type("hello")
+    app.keyboard.press("Escape")
+    wait_for_app_run(app)
+    assert len(read_json(app, index)["objects"]) == 1
+
+    root.get_by_label("Undo").click()
+    wait_for_app_run(app)
+    assert read_json(app, index)["objects"] == []
+
+
+def test_polygon_closes_on_first_vertex_handle_click(app: Page):
     index = MODES.index("polygon")
     target = canvas(app, index)
     click(app, target, 50, 50)
+    click(app, target, 120, 50)
     click(app, target, 120, 100)
-    click(app, target, 120, 100, button="right")
+    click(app, target, 50, 50)  # first vertex's handle again -> closes
     wait_for_app_run(app)
 
     data = read_json(app, index)
@@ -102,8 +143,42 @@ def test_polygon_right_click_closes_the_path(app: Page):
     assert obj["height"] > 0
 
 
-def test_transform_moves_the_seeded_object(app: Page):
-    index = MODES.index("transform")
+def test_polygon_clicking_another_handle_removes_that_vertex(app: Page):
+    index = MODES.index("polygon")
+    target = canvas(app, index)
+    click(app, target, 20, 20)
+    click(app, target, 80, 20)
+    click(app, target, 80, 80)
+    click(app, target, 20, 80)
+    click(app, target, 80, 20)  # second vertex's handle -> removes it
+    click(app, target, 20, 20)  # first vertex's handle -> closes (3 left)
+    wait_for_app_run(app)
+
+    data = read_json(app, index)
+    assert len(data["objects"]) == 1
+    obj = data["objects"][0]
+    assert obj["type"] == "Path"
+    line_segments = [seg for seg in obj["path"] if seg[0] == "L"]
+    assert len(line_segments) == 2  # started with 4 vertices, removed 1
+
+
+def test_polygon_right_click_does_nothing(app: Page):
+    index = MODES.index("polygon")
+    target = canvas(app, index)
+    click(app, target, 50, 50)
+    click(app, target, 120, 100)
+    click(app, target, 90, 90, button="right")
+    app.wait_for_timeout(300)
+
+    # update_streamlit is forced off for polygon mode, so an in-progress
+    # shape never sends regardless -- this only proves the right-click
+    # itself didn't close (and therefore force-send) it.
+    data = read_json(app, index)
+    assert data["objects"] == []
+
+
+def test_edit_moves_the_seeded_object(app: Page):
+    index = MODES.index("edit")
     target = canvas(app, index)
     # Seeded rect is left=50,top=50,width=60,height=40 -> center (80, 70).
     drag(app, target, 80, 70, 110, 90, steps=10)
