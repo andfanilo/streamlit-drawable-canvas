@@ -32,7 +32,7 @@ BG_SOURCES = ("None", "URL", "Local path", "Bytes", "PIL Image")
 EDIT_MODE_SEED = {
     "objects": [
         {
-            "type": "polygon",
+            "type": "Polygon",
             "points": [
                 {"x": 50, "y": 50},
                 {"x": 150, "y": 50},
@@ -44,7 +44,7 @@ EDIT_MODE_SEED = {
             "strokeWidth": 2,
         },
         {
-            "type": "line",
+            "type": "Line",
             "x1": -50,
             "y1": -30,
             "x2": 50,
@@ -57,7 +57,7 @@ EDIT_MODE_SEED = {
             "originY": "center",
         },
         {
-            "type": "rect",
+            "type": "Rect",
             "left": 380,
             "top": 50,
             "width": 100,
@@ -67,7 +67,7 @@ EDIT_MODE_SEED = {
             "strokeWidth": 2,
         },
         {
-            "type": "circle",
+            "type": "Circle",
             "left": 520,
             "top": 90,
             "radius": 40,
@@ -165,7 +165,7 @@ canvas_result = st_canvas(
     point_display_radius=point_display_radius,
     return_image_data=return_image_data,
     font_size=font_size,
-    initial_drawing=EDIT_MODE_SEED if drawing_mode == "edit" else None,
+    initial_drawing=EDIT_MODE_SEED,
     key="canvas",
 )
 
