@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   geometric transforms -- it's also how you re-enter editing on an existing text object
   -- so "transform" undersold it. Passing `"transform"` now raises `ValueError`; update
   to `"edit"`.
+- **Polygons now serialize as `{type: "Polygon", points: [...]}`** instead of
+  `{type: "Path", path: [...]}`. A closed (`M`/`L`/`Z`) `Path` in `initial_drawing` is
+  converted to an equivalent `Polygon` on load, so a display-only canvas can return a
+  different payload than the one it was given.
+- **Dragging a rect's corner in edit mode's point editing converts it to a `Polygon`.**
+  A rect stays a `Rect` for any other interaction, including point editing's other three
+  corners without a drag.
 
 ### Added
 
@@ -22,6 +29,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   parameter, ignored outside text mode. In `"edit"` mode, click an existing text object
   to select it, then click it again (a second, separate click) to re-enter editing --
   a fast double-click doesn't reliably trigger it, a pre-existing Fabric quirk.
+- **Point editing, edit mode's second level.** Select a polygon, line, rect or circle,
+  then click it again (same gesture as re-entering text) to edit its individual points
+  instead of moving/scaling/rotating the whole shape. No new parameter -- it's part of
+  `"edit"` mode.
+
+  | Shape   | Drag a handle...                       | Click a handle... |
+  |---------|-----------------------------------------|--------------------|
+  | Polygon | moves that vertex                       | removes it (floor: 3 vertices) |
+  | Line    | moves that endpoint                     | -- |
+  | Circle  | sets the radius from that rim point     | -- |
+  | Rect    | converts it to a `Polygon`, then moves that corner as a vertex | -- |
+
+  Excluded from point editing: freedraw `Path`s, any object with a `lock*` property set,
+  multi-selections, and non-uniformly-scaled circles.
 
 ### Fixed
 
@@ -45,6 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gesture and, completing the `0.11.0` right-click cleanup, **right-click no longer
   closes the polygon** -- it has no special meaning in any mode now. The completed
   polygon still always sends once closed, regardless of `update_streamlit`.
+- **Draw-time polygon vertex handles are a fixed 10px radius** instead of scaling with
+  `stroke_width`, matching point editing's handle size.
 
 ## [0.11.0] - 2026-09-04
 

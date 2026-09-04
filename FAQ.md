@@ -245,6 +245,33 @@ reliably work here -- it's a quirk in how Fabric's `IText` decides a click is "e
 edit" versus "just selecting", not something this library controls. Clicking in `"text"`
 mode instead always places a *new* text object, even on top of an existing one.
 
+### How do I edit an individual vertex, endpoint, or corner of a shape?
+
+Switch to `drawing_mode="edit"`, click the shape once to select it, then click it again
+(a second, separate click, same gesture as re-entering text) to descend into point
+editing. Click elsewhere, or press Undo/Redo/Reset, to exit back to the whole-shape
+level.
+
+| Shape     | Drag a handle...                                            | Click a handle...              |
+|-----------|--------------------------------------------------------------|---------------------------------|
+| Polygon   | moves that vertex                                             | removes it (floor: 3 vertices) |
+| Line      | moves that endpoint                                            | -- |
+| Circle    | sets the radius from that rim point                            | -- |
+| Rect      | converts it to a `Polygon`, then moves that corner as a vertex | -- |
+
+A rect converts to a `Polygon` on its first corner drag because a rect has no vertex to
+move independently of the other three — corner dragging is scaling. Point editing a
+`Polygon`'s corners individually is well-defined, so the conversion happens once, on
+that drag, and every corner after that is a normal polygon vertex. `points` on the
+resulting object is relative to the polygon's own `pathOffset` (its centroid), not
+absolute canvas coordinates — read positions as `point.x + pathOffset.x` (and same for
+`y`) if you need them in canvas space.
+
+Point editing is not available for: freedraw `Path`s (no fixed vertex set to edit), any
+object with a `lock*` property set to `True`, multi-selections, and circles with
+`scaleX != scaleY` (their rim handles assume uniform scale). There is no separate
+parameter for any of this — it's part of `drawing_mode="edit"`.
+
 ### Can I tell a left-click from a right-click?
 
 Not from `json_data`. Every drawing mode only acts on a left-click; a right-click does

@@ -16,15 +16,69 @@ MODE_HINTS = {
     "first vertex's handle to close the shape (needs 3+ vertices); click any "
     "other handle to remove that vertex.",
     "edit": "Drag to move, handles to scale/rotate. Select an object and use "
-    "the toolbar's delete button to remove it. For text, click once to "
-    "select it, then click again (a second, separate click -- not a fast "
-    "double-click) to re-enter editing.",
+    "the toolbar's delete button to remove it. Click an already-selected "
+    "polygon, line, rect, circle or text a second time (a separate click -- "
+    "not a fast double-click) to re-enter editing: for text that resumes "
+    "typing, for the other shapes it descends into point editing, where "
+    "dragging a handle moves an individual vertex/endpoint/rim point "
+    "instead of the whole shape.",
     "point": "Each click drops a point, drawn as a circle of the radius below.",
     "text": "Click to place text and start typing immediately. Click elsewhere "
     "(or Escape/blur) to finish.",
 }
 
 BG_SOURCES = ("None", "URL", "Local path", "Bytes", "PIL Image")
+
+EDIT_MODE_SEED = {
+    "objects": [
+        {
+            "type": "polygon",
+            "points": [
+                {"x": 50, "y": 50},
+                {"x": 150, "y": 50},
+                {"x": 150, "y": 130},
+                {"x": 50, "y": 130},
+            ],
+            "fill": "#eeeeee",
+            "stroke": "#000000",
+            "strokeWidth": 2,
+        },
+        {
+            "type": "line",
+            "x1": -50,
+            "y1": -30,
+            "x2": 50,
+            "y2": 30,
+            "left": 280,
+            "top": 90,
+            "stroke": "#000000",
+            "strokeWidth": 2,
+            "originX": "center",
+            "originY": "center",
+        },
+        {
+            "type": "rect",
+            "left": 380,
+            "top": 50,
+            "width": 100,
+            "height": 80,
+            "fill": "#eeeeee",
+            "stroke": "#000000",
+            "strokeWidth": 2,
+        },
+        {
+            "type": "circle",
+            "left": 520,
+            "top": 90,
+            "radius": 40,
+            "fill": "#eeeeee",
+            "stroke": "#000000",
+            "strokeWidth": 2,
+            "originX": "center",
+            "originY": "center",
+        },
+    ]
+}
 
 
 @st.cache_resource
@@ -111,6 +165,7 @@ canvas_result = st_canvas(
     point_display_radius=point_display_radius,
     return_image_data=return_image_data,
     font_size=font_size,
+    initial_drawing=EDIT_MODE_SEED if drawing_mode == "edit" else None,
     key="canvas",
 )
 
