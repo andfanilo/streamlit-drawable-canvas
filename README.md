@@ -51,7 +51,7 @@ from streamlit_drawable_canvas import st_canvas
 
 # Specify canvas parameters in application
 drawing_mode = st.sidebar.selectbox(
-    "Drawing tool:", ("point", "freedraw", "line", "rect", "circle", "edit")
+    "Drawing tool:", ("point", "freedraw", "line", "rect", "circle", "polygon", "text")
 )
 
 stroke_width = st.sidebar.slider("Stroke width: ", 1, 25, 3)
@@ -133,10 +133,10 @@ st_canvas(
 - **update_streamlit** : Whenever True, send canvas data to Streamlit when object/selection is updated or mouse up. Forced off for `drawing_mode="polygon"` -- an in-progress multi-click polygon isn't a meaningful intermediate value; the completed polygon still sends once closed. When nothing sends automatically, the toolbar stays pinned open instead of appearing on hover, because its send button is then the only discoverable way to commit a drawing. **If what you want is "only give me the finished drawing", prefer an `st.form` over `update_streamlit=False`** -- see [FAQ.md](FAQ.md).
 - **height** : Height of canvas in pixels. Defaults to 400.
 - **width** : Width of canvas in pixels. Defaults to 600.
-- **drawing_mode** : One of `"freedraw"`, `"edit"`, `"line"`, `"rect"`, `"circle"`, `"point"`, `"polygon"`, `"text"`. Enable free drawing when "freedraw", object manipulation (move, scale, rotate, and click-to-edit existing text) when "edit", text placement when "text", otherwise create new objects with the rest. Defaults to "freedraw". Any other value raises `ValueError`.
+- **drawing_mode** : One of `"freedraw"`, `"line"`, `"rect"`, `"circle"`, `"point"`, `"polygon"`, `"text"`. Text placement when "text", otherwise create new objects with the rest. Defaults to "freedraw". Any other value raises `ValueError`.
   - On "polygon" mode, click to add a vertex; every vertex shows a handle. Click the first vertex's handle to close the shape; click any other handle to remove that vertex.
   - On "text" mode, clicking places an empty text object and starts editing it immediately; click elsewhere (or Escape/blur) to finish. Nothing is sent to Streamlit until editing ends.
-  - "edit" mode has two levels: selecting an object lets you move/scale/rotate it as a whole (level 1); clicking an already-selected polygon, line, rect or circle a second time descends into point editing (level 2), where dragging a handle moves an individual vertex/endpoint/rim point instead of the whole shape. See [FAQ.md](FAQ.md) for the per-shape gesture table.
+  - Editing (moving, scaling, rotating, click-to-edit existing text) isn't a drawing mode -- it's the toolbar's edit toggle, available regardless of `drawing_mode`. It has two levels: selecting an object lets you move/scale/rotate it as a whole (level 1); clicking an already-selected polygon, line, rect or circle a second time descends into point editing (level 2), where dragging a handle moves an individual vertex/endpoint/rim point instead of the whole shape. See [FAQ.md](FAQ.md) for the per-shape gesture table.
 - **initial_drawing** : Initialize canvas with drawings from here. Should be the `json_data` output from another canvas. Beware: if you try to import a drawing from a bigger/smaller canvas, no rescaling is done in the canvas and the import could fail.
 - **point_display_radius** : To make points visible on the canvas, they are drawn as circles. This parameter modifies the radius of the displayed circle.
 - **return_image_data** : If `True`, populate `image_data` (RGBA numpy array) and `image_bytes` (raw PNG bytes, for `st.download_button`) on the result. `False` by default -- it PNG-encodes the whole canvas on every send. Accessing either without it raises `RuntimeError`.

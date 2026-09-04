@@ -9,23 +9,27 @@ from PIL import Image, ImageDraw
 
 from streamlit_drawable_canvas import st_canvas
 
-MODES = ("freedraw", "line", "rect", "circle", "point", "polygon", "text", "edit")
+MODES = ("freedraw", "line", "rect", "circle", "point", "polygon", "text")
 
 MODE_HINTS = {
     "polygon": "Click to add vertices, each with a visible handle. Click the "
     "first vertex's handle to close the shape (needs 3+ vertices); click any "
     "other handle to remove that vertex.",
-    "edit": "Drag to move, handles to scale/rotate. Select an object and use "
-    "the toolbar's delete button to remove it. Click an already-selected "
-    "polygon, line, rect, circle or text a second time (a separate click -- "
-    "not a fast double-click) to re-enter editing: for text that resumes "
-    "typing, for the other shapes it descends into point editing, where "
-    "dragging a handle moves an individual vertex/endpoint/rim point "
-    "instead of the whole shape.",
     "point": "Each click drops a point, drawn as a circle of the radius below.",
     "text": "Click to place text and start typing immediately. Click elsewhere "
     "(or Escape/blur) to finish.",
 }
+
+EDIT_HINT = (
+    "The toolbar's edit toggle (top-right of the canvas on hover) is "
+    "available in every mode above. Drag to move, handles to scale/rotate. "
+    "Select an object and use the toolbar's delete button to remove it. "
+    "Click an already-selected polygon, line, rect, circle or text a "
+    "second time (a separate click -- not a fast double-click) to "
+    "re-enter editing: for text that resumes typing, for the other shapes "
+    "it descends into point editing, where dragging a handle moves an "
+    "individual vertex/endpoint/rim point instead of the whole shape."
+)
 
 BG_SOURCES = ("None", "URL", "Local path", "Bytes", "PIL Image")
 
@@ -90,6 +94,7 @@ elif bg_source == "Bytes":
 else:
     background_image = _sample_image()
 
+st.caption(EDIT_HINT)
 if drawing_mode in MODE_HINTS:
     st.caption(MODE_HINTS[drawing_mode])
 if not realtime_update:
@@ -132,7 +137,7 @@ st.divider()
 st.subheader("initial_drawing round-trip")
 st.caption(
     "The canvas above's `json_data` fed back in as `initial_drawing` on a second, "
-    "independent canvas -- drag its objects around in edit mode."
+    "independent canvas -- turn on its toolbar's edit toggle to drag objects around."
 )
 st_canvas(
     fill_color=f"rgba({red}, {green}, {blue}, {fill_opacity})",
@@ -141,7 +146,7 @@ st_canvas(
     background_color="#eee",
     height=400,
     width=600,
-    drawing_mode="edit",
+    drawing_mode="rect",
     initial_drawing=canvas_result.json_data,
     key="canvas_round_trip",
 )

@@ -9,10 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking
 
-- **`drawing_mode="transform"` is renamed to `"edit"`.** The mode now does more than
-  geometric transforms -- it's also how you re-enter editing on an existing text object
-  -- so "transform" undersold it. Passing `"transform"` now raises `ValueError`; update
-  to `"edit"`.
+- **`drawing_mode="edit"` (formerly `"transform"`) is removed. Editing is now the
+  toolbar's edit toggle, on in every mode -- there is no argument for it.** Passing
+  `"edit"` or `"transform"` now raises `ValueError`. There is no replacement argument:
+  an edit-only canvas is no longer expressible this way -- use `disabled=True` for a
+  read-only canvas instead.
 - **Polygons now serialize as `{type: "Polygon", points: [...]}`** instead of
   `{type: "Path", path: [...]}`. A closed (`M`/`L`/`Z`) `Path` in `initial_drawing` is
   converted to an equivalent `Polygon` on load, so a display-only canvas can return a
@@ -26,13 +27,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`drawing_mode="text"`**: click to place a Fabric `IText` and start typing
   immediately. Nothing is sent to Streamlit until you click away (or Escape/blur) --
   one undo removes the whole text object, not one keystroke. New `font_size: int = 20`
-  parameter, ignored outside text mode. In `"edit"` mode, click an existing text object
-  to select it, then click it again (a second, separate click) to re-enter editing --
-  a fast double-click doesn't reliably trigger it, a pre-existing Fabric quirk.
+  parameter, ignored outside text mode. With the toolbar's edit toggle on, click an
+  existing text object to select it, then click it again (a second, separate click) to
+  re-enter editing -- a fast double-click doesn't reliably trigger it, a pre-existing
+  Fabric quirk.
 - **Point editing, edit mode's second level.** Select a polygon, line, rect or circle,
   then click it again (same gesture as re-entering text) to edit its individual points
   instead of moving/scaling/rotating the whole shape. No new parameter -- it's part of
-  `"edit"` mode.
+  the toolbar's edit toggle.
 
   | Shape   | Drag a handle...                       | Click a handle... |
   |---------|-----------------------------------------|--------------------|

@@ -211,6 +211,15 @@ const reconfigureTool = (
   });
 };
 
+const updateToolbarPin = (
+  instance: CanvasInstance,
+  realtimeUpdateStreamlit: boolean
+): void => {
+  instance.toolbarEl.dataset.pinned = String(
+    !realtimeUpdateStreamlit || instance.editActive
+  );
+};
+
 /** Reflects history depth, drawing mode and selection onto the toolbar. */
 const syncToolbar = (instance: CanvasInstance): void => {
   setToolbarState(
@@ -344,6 +353,7 @@ export const createInstance = (mountPoint: HTMLElement): CanvasInstance => {
         reconfigureTool(instance, latestData);
         instance.lastToolKey = toolKeyFor(latestData, instance.editActive);
       }
+      updateToolbarPin(instance, instance.latest.realtimeUpdateStreamlit);
       syncToolbar(instance);
     },
     onUndo: () => {
@@ -491,9 +501,7 @@ export const applyData = (
   }
   instance.toolbarEl.style.display = isToolbarVisible(data) ? "flex" : "none";
   // Also covers polygon mode, where `realtimeUpdateStreamlit` is always false.
-  instance.toolbarEl.dataset.pinned = String(
-    !data.realtimeUpdateStreamlit || instance.editActive
-  );
+  updateToolbarPin(instance, data.realtimeUpdateStreamlit);
 
   // 2. Background image (memoized on URL; a fit or size change re-fits the
   //    image already loaded rather than re-fetching it)

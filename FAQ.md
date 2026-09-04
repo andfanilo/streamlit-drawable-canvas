@@ -43,13 +43,12 @@ carry the geometry you probably want.
 | `freedraw` | `Path` | `path` (see below), plus `left`/`top`/`width`/`height` |
 | `polygon` | `Path` | `path`, plus `left`/`top`/`width`/`height` |
 | `text` | `IText` | `text`, `fontSize`, `fontFamily`, plus `left`/`top`/`width`/`height` |
-| `edit` | *(unchanged)* | edits the objects already present |
 
 ---
 
 ## The one that catches everyone: edit mode reports `scaleX`/`scaleY`, not a new `width`
 
-Resize a shape in `edit` mode and its `width`/`height` **do not change**. Fabric
+Resize a shape with the toolbar's edit toggle on and its `width`/`height` **do not change**. Fabric
 records the resize as a scale factor against the original dimensions:
 
 ```json
@@ -150,16 +149,16 @@ that difference is why the crop can look slightly too small — expand by
 
 ### How do I delete one shape without pressing undo repeatedly?
 
-Switch to `drawing_mode="edit"`, select the shape, and click the toolbar's delete
-button. It's shown only in edit mode, next to bring-forward/send-backward; the
+Turn on the toolbar's edit toggle, select the shape, and click the toolbar's delete
+button. It's shown only while the toggle is on, next to bring-forward/send-backward; the
 toolbar's bin icon is separate and clears everything.
 
 ### Can I let an object move but not resize, or lock it entirely?
 
 Yes, through Fabric's own `lock*` properties on an object in `initial_drawing`:
 `lockMovementX`/`Y`, `lockScalingX`/`Y`, `lockRotation`, `lockSkewingX`/`Y`,
-`lockScalingFlip`. Set the ones you want on an object before passing it in, and
-edit mode respects them — a `lockScalingX: True, lockScalingY: True` rectangle can
+`lockScalingFlip`. Set the ones you want on an object before passing it in, and the
+edit toggle respects them — a `lockScalingX: True, lockScalingY: True` rectangle can
 be dragged but not resized. They round-trip through `json_data` too, so a canvas fed its
 own previous output keeps the locks.
 
@@ -239,7 +238,7 @@ There's no `emoji` mode: once text exists, an emoji is just a character you type
 
 ### How do I edit text after placing it?
 
-Switch to `drawing_mode="edit"`, click the text object once to select it, then click it
+Turn on the toolbar's edit toggle, click the text object once to select it, then click it
 again (a second, separate click) to re-enter editing. A fast double-click doesn't
 reliably work here -- it's a quirk in how Fabric's `IText` decides a click is "entering
 edit" versus "just selecting", not something this library controls. Clicking in `"text"`
@@ -247,7 +246,7 @@ mode instead always places a *new* text object, even on top of an existing one.
 
 ### How do I edit an individual vertex, endpoint, or corner of a shape?
 
-Switch to `drawing_mode="edit"`, click the shape once to select it, then click it again
+Turn on the toolbar's edit toggle, click the shape once to select it, then click it again
 (a second, separate click, same gesture as re-entering text) to descend into point
 editing. Click elsewhere, or press Undo/Redo/Reset, to exit back to the whole-shape
 level.
@@ -270,7 +269,7 @@ absolute canvas coordinates — read positions as `point.x + pathOffset.x` (and 
 Point editing is not available for: freedraw `Path`s (no fixed vertex set to edit), any
 object with a `lock*` property set to `True`, multi-selections, and circles with
 `scaleX != scaleY` (their rim handles assume uniform scale). There is no separate
-parameter for any of this — it's part of `drawing_mode="edit"`.
+parameter for any of this — it's part of the toolbar's edit toggle.
 
 ### Can I tell a left-click from a right-click?
 
@@ -300,7 +299,7 @@ to a file. Both require `return_image_data=True`.
 Only `circle` and `point` objects, and only from drawings saved by 0.9.x. Fabric 4 wrote
 `startAngle`/`endAngle` in radians; Fabric 7 reads those same keys as degrees. There is no
 migration shim — see the `[0.10.0]` entry in `CHANGELOG.md`. Every other shape type
-(`Line`, `Rect`, `Path`, freedraw, polygon, edit-mode objects) loads unchanged.
+(`Line`, `Rect`, `Path`, freedraw, polygon) loads unchanged.
 
 ### Can the canvas resize with the browser window?
 
