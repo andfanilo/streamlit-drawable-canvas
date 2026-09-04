@@ -17,6 +17,8 @@ export class PolygonTool extends FabricTool {
   private fillColor = "#ffffff";
   private strokeWidth = 10;
   private strokeColor = "#ffffff";
+  private handleColor = "#31333f";
+  private handleStrokeColor = "#fff";
   private points: PolygonPoint[] = [];
   private handles: Circle[] = [];
   private currentPath: Path | null = null;
@@ -27,6 +29,8 @@ export class PolygonTool extends FabricTool {
     strokeColor,
     fillColor,
     onPolygonClosed,
+    pointEditCornerColor,
+    pointEditCornerStrokeColor,
   }: ConfigureCanvasProps): () => void {
     this.canvas.isDrawingMode = false;
     this.canvas.selection = false;
@@ -36,6 +40,8 @@ export class PolygonTool extends FabricTool {
     this.strokeColor = strokeColor;
     this.fillColor = fillColor;
     this.onPolygonClosed = onPolygonClosed;
+    this.handleColor = pointEditCornerColor;
+    this.handleStrokeColor = pointEditCornerStrokeColor;
     this.points = [];
     this.handles = [];
     this.currentPath = null;
@@ -73,8 +79,9 @@ export class PolygonTool extends FabricTool {
       originX: "center",
       originY: "center",
       radius: DRAW_HANDLE_RADIUS,
-      fill: this.strokeColor,
-      stroke: this.strokeColor,
+      fill: this.handleColor,
+      stroke: this.handleStrokeColor,
+      strokeWidth: 2,
       selectable: false,
       evented: true,
       hoverCursor: "pointer",
